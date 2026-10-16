@@ -1,4 +1,4 @@
-// Brick Battlegrounds / classic ninja prototype rig, v0.6.1.
+// Brick Battlegrounds / classic ninja prototype rig, v0.6.2.
 // Original simplified minifigure-inspired character geometry.
 // Only applied to VERDANT and CRIMSON, not the rest of the roster.
 import * as THREE from '/vendor/three.module.js';
@@ -50,20 +50,26 @@ function simpleArm(parent,main,hand,sx){
 }
 function buildSimpleHead(body,main,skin,ink){
  const head=new THREE.Group();head.position.set(0,2.52,0);body.add(head);
- // Slim cylindrical hood with a top stud: not an oversized helmet.
- cyl(head,.45,.45,.73,main,0,.07,.02,28);
+ // Sculpt the hood as an open shell instead of covering a pasted-on face panel.
+ // Three.js CylinderGeometry angles: Math.PI faces the front (-Z).
+ add(head,new THREE.CylinderGeometry(.45,.45,.73,28,1,true,Math.PI+.64,Math.PI*2-1.28),main,[0,.07,.02]);
  cyl(head,.165,.165,.14,main,0,.51,.03,20);
- // Simple yellow eye opening over the front, then clean mask below it.
- const face=box(head,.66,.28,.065,skin,0,.14,-.440);
- // Tapered lower face wrap, very little surface detail.
- box(head,.76,.25,.08,main,0,-.13,-.453);
- // One subtle crease defines the ninja mask without additional armor.
- box(head,.74,.035,.065,main,0,-.265,-.455);
+ // Slightly recessed curved yellow face; the front hood shell is genuinely open.
+ add(head,new THREE.CylinderGeometry(.405,.405,.31,20,1,true,Math.PI-.65,1.30),skin,[0,.15,.02]);
+ // Upper brow and lower face wrap cover the opening's top and bottom.
+ cyl(head,.452,.452,.14,main,0,.41,.02,28);
+ cyl(head,.455,.45,.29,main,0,-.21,.02,28);
+ // Short edges follow the perimeter; mask lip projects in front of the eyes.
+ box(head,.085,.31,.105,main,-.30,.135,-.37);
+ box(head,.085,.31,.105,main,.30,.135,-.37);
+ box(head,.69,.070,.10,main,0,-.04,-.408);
+ box(head,.72,.025,.06,main,0,-.27,-.437);
  for(const sx of [-1,1]){
-  const eye=box(head,.075,.086,.012,ink,sx*.15,.14,-.487);
+  // Eyes are attached to the curved yellow face with minimal separation.
+  const eye=box(head,.075,.085,.013,ink,sx*.135,.145,-.383);
   eye.rotation.z=sx*.13;
-  const eyebrow=box(head,.135,.03,.018,ink,sx*.15,.224,-.49);
-  eyebrow.rotation.z=-sx*.20;
+  const eyebrow=box(head,.137,.031,.015,ink,sx*.135,.231,-.385);
+  eyebrow.rotation.z=-sx*.19;
  }
  return head;
 }
