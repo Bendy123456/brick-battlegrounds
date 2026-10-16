@@ -1,4 +1,5 @@
 import * as THREE from '/vendor/three.module.js';
+import {buildClassicNinja} from './classic-ninja.js';
 
 const $ = id => document.getElementById(id);
 const scene = new THREE.Scene();
@@ -167,6 +168,19 @@ let gameMode='solo',remoteState=null,netTick=0,playerSlot=0;
 export function setMode(m,slot=0){gameMode=m;playerSlot=slot;remoteState=null;netTick=0}
 const fighterSymbols={AZURE:'✦',CRIMSON:'◆',VERDANT:'❖',SHADE:'☽',GOLDEN:'♛',IVORY:'❄',CINDER:'▲',ORCHID:'✧',ROSE:'✿'};
 function dressFighter(f,c){
+ // Swap only the two approved prototype fighters. Their classic geometry keeps
+ // the exact shoulder/elbow/hip/head animation pivots used by v0.5 combat.
+ if(!f.originalVisual)f.originalVisual=f.visual;
+ if(c[0]==='VERDANT'||c[0]==='CRIMSON'){
+  const color=new THREE.Color(c[1]);
+  if(!f.classicVisual)f.classicVisual=buildClassicNinja(color);
+  f.classicVisual.userData.cloth.color.copy(color);
+  if(f.visual!==f.classicVisual){f.root.remove(f.visual);f.visual=f.classicVisual;f.root.add(f.visual);}
+  f.name=c[0];
+  return;
+ }
+ if(f.visual!==f.originalVisual){f.root.remove(f.visual);f.visual=f.originalVisual;f.root.add(f.visual);}
+
  f.name=c[0];
  const ud=f.visual.userData;
  ud.cloth.color.set(c[1]);ud.pants.color.set(c[1]);
