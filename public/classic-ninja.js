@@ -1,4 +1,4 @@
-// Brick Battlegrounds / classic ninja prototype rig, v0.6.2.
+// Brick Battlegrounds / classic ninja prototype rig, v0.6.3.
 // Original simplified minifigure-inspired character geometry.
 // Only applied to VERDANT and CRIMSON, not the rest of the roster.
 import * as THREE from '/vendor/three.module.js';
@@ -36,40 +36,50 @@ function simpleLeg(parent,mat,x){
 }
 function simpleArm(parent,main,hand,sx){
  const shoulder=new THREE.Group();shoulder.position.set(sx*.72,2.03,0);parent.add(shoulder);
- // Curved single sleeve, with no armored pauldrons or forearm plates.
- add(shoulder,new THREE.CapsuleGeometry(.215,.45,4,12),main,[0,-.34,0]);
- const elbow=new THREE.Group();elbow.position.set(0,-.58,0);shoulder.add(elbow);
- // The tiny lower sleeve preserves the original animation's elbow pivot.
- add(elbow,new THREE.CylinderGeometry(.17,.18,.27,14),main,[0,-.13,0]);
- cyl(elbow,.115,.115,.12,hand,0,-.34,0,16);
- // Proper C-shaped clamp hand. Openings are visible from the front of the character.
- add(elbow,new THREE.TorusGeometry(.14,.057,9,22,Math.PI*1.55),hand,[0,-.49,0],[0,0,-.75]);
+ // One uncluttered classic arm silhouette; no cuff or differently colored floating hand.
+ add(shoulder,new THREE.CapsuleGeometry(.205,.42,4,14),main,[0,-.32,0]);
+ const elbow=new THREE.Group();elbow.position.set(0,-.56,0);shoulder.add(elbow);
+ // Forearm and C-clamp are a single continuous piece of geometry, in the sleeve color.
+ // Retain the elbow pivot so the existing punch/block animations still work.
+ const outline=new THREE.Shape();
+ outline.moveTo(-.18,.01);outline.lineTo(.18,.01);
+ outline.quadraticCurveTo(.21,-.19,.18,-.33);
+ outline.quadraticCurveTo(.28,-.43,.26,-.54);
+ outline.quadraticCurveTo(.26,-.73,.095,-.74);
+ outline.quadraticCurveTo(.015,-.75,.025,-.65);
+ outline.lineTo(.025,-.58);
+ outline.quadraticCurveTo(.16,-.62,.15,-.52);
+ outline.quadraticCurveTo(.13,-.43,0,-.44);
+ outline.quadraticCurveTo(-.13,-.43,-.15,-.52);
+ outline.quadraticCurveTo(-.16,-.62,-.025,-.58);
+ outline.lineTo(-.025,-.65);
+ outline.quadraticCurveTo(-.015,-.75,-.095,-.74);
+ outline.quadraticCurveTo(-.26,-.73,-.26,-.54);
+ outline.quadraticCurveTo(-.28,-.43,-.18,-.33);
+ outline.closePath();
+ const geo=new THREE.ExtrudeGeometry(outline,{depth:.19,steps:1,bevelEnabled:true,bevelThickness:.024,bevelSize:.021,bevelSegments:2,curveSegments:8});
+ add(elbow,geo,main,[0,0,-.095]);
  shoulder.userData.elbow=elbow;
- shoulder.rotation.z=sx*.14;
+ shoulder.rotation.z=sx*.12;
  return shoulder;
 }
 function buildSimpleHead(body,main,skin,ink){
  const head=new THREE.Group();head.position.set(0,2.52,0);body.add(head);
- // Sculpt the hood as an open shell instead of covering a pasted-on face panel.
- // Three.js CylinderGeometry angles: Math.PI faces the front (-Z).
- add(head,new THREE.CylinderGeometry(.45,.45,.73,28,1,true,Math.PI+.64,Math.PI*2-1.28),main,[0,.07,.02]);
- cyl(head,.165,.165,.14,main,0,.51,.03,20);
- // Slightly recessed curved yellow face; the front hood shell is genuinely open.
- add(head,new THREE.CylinderGeometry(.405,.405,.31,20,1,true,Math.PI-.65,1.30),skin,[0,.15,.02]);
- // Upper brow and lower face wrap cover the opening's top and bottom.
- cyl(head,.452,.452,.14,main,0,.41,.02,28);
- cyl(head,.455,.45,.29,main,0,-.21,.02,28);
- // Short edges follow the perimeter; mask lip projects in front of the eyes.
- box(head,.085,.31,.105,main,-.30,.135,-.37);
- box(head,.085,.31,.105,main,.30,.135,-.37);
- box(head,.69,.070,.10,main,0,-.04,-.408);
- box(head,.72,.025,.06,main,0,-.27,-.437);
+ // Slim rounded hood with a genuine opening, not a yellow face plate on top.
+ const hoodRadius=.435;
+ add(head,new THREE.CylinderGeometry(hoodRadius,hoodRadius,.70,32,1,true,Math.PI+.60,Math.PI*2-1.20),main,[0,.08,.02]);
+ cyl(head,.145,.145,.12,main,0,.49,.03,24);
+ // Curved yellow minifigure face sits slightly behind the hood opening.
+ add(head,new THREE.CylinderGeometry(.400,.400,.29,24,1,true,Math.PI-.62,1.24),skin,[0,.145,.02]);
+ // Simple smooth top rim and narrow lower mask, no boxy face side plates.
+ cyl(head,.44,.44,.13,main,0,.395,.02,32);
+ cyl(head,.443,.44,.275,main,0,-.205,.02,32);
+ box(head,.65,.055,.06,main,0,-.038,-.408);
  for(const sx of [-1,1]){
-  // Eyes are attached to the curved yellow face with minimal separation.
-  const eye=box(head,.075,.085,.013,ink,sx*.135,.145,-.383);
-  eye.rotation.z=sx*.13;
-  const eyebrow=box(head,.137,.031,.015,ink,sx*.135,.231,-.385);
-  eyebrow.rotation.z=-sx*.19;
+  const eye=box(head,.072,.079,.012,ink,sx*.13,.145,-.386);
+  eye.rotation.z=sx*.11;
+  const brow=box(head,.129,.027,.015,ink,sx*.13,.222,-.386);
+  brow.rotation.z=-sx*.16;
  }
  return head;
 }
