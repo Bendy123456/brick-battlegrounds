@@ -1,33 +1,30 @@
-# Brick Battlegrounds — browser prototype v0.2
+# Brick Battlegrounds v0.3
 
-Original brick-character 3D fighting game. No copyrighted LEGO assets or Ninjago game code are included. The public-facing title is **Brick Battlegrounds** (not the LEGO trademark).
+Browser-based local-versus-bot and experimental private-room ninja fighting game.
 
-## Go live (browser URL — no downloads for your friends)
+## Deployment (Render)
 
-1. Put this repository on GitHub.
-2. Deploy it on any Node.js host supporting persistent WebSockets (e.g. Render / Railway). Set build command `npm install` and start command `npm start` (Node 18+). No environment secrets needed. The host assigns `PORT` automatically.
-3. Share the resulting `https://...` URL with friends. Both visit the same URL. Player 1 selects CREATE ONLINE ROOM and shares a code; Player 2 enters it and joins. Both pick fighters and click READY.
+This application runs as a **Node Web Service**, not a static website.
+- Build command: `npm install`
+- Start command: `npm start`
+- Root directory: repository root (where package.json lives)
+- Node 18+
 
-Static-only hosts cannot run the multiplayer server; do **not** deploy to plain GitHub Pages or static Vercel without a separate WebSocket backend. The app also loads Three.js from a CDN at runtime.
+The game now serves Three.js locally from the installed `three` npm dependency (`/vendor/three.module.js`) rather than a CDN. This prevents loss of all menu interactions when an external 3D module fails to load. The 3D engine is loaded only when a match starts; menu clicks are wired at page startup.
 
-## Local development
+## Update existing hosted game
 
-Run `npm install` and `npm start` in this folder and open http://localhost:3000. A solo CPU mode is included.
+Replace the existing files in your GitHub repository with these updated files, **preserving the directory structure**. Commit them to `main`. Render auto-deploy should rebuild using `npm install`. Check its logs for build success and a Live status, then reload the website (Ctrl+Shift+R).
 
-## Controls
+## Current scope
 
-- WASD / left stick: move
-- Mouse drag / right stick: camera
-- J / Square (PS5) / X (Xbox): light attack
-- K / Triangle (PS5) / Y (Xbox): heavy attack
-- L / L1 (PS5) / LB (Xbox): block
-- Left Shift / Circle (PS5) / B (Xbox): dodge
-- Space / Cross (PS5) / A (Xbox): jump
-- Q / R1 (PS5) / RB (Xbox): special
-- Tab / R2 (PS5) / RT (Xbox): toggle opponent lock-on
+- V0.3 original brick-inspired ninja roster: Tempest (blue), Inferno (red), Verdant (green), Shade (black)
+- Circular fighter portraits; 3D fighter minifigure-inspired proportions
+- Bot fight and prototype online room code flow
+- Controller/keyboard input and existing combat system
 
-Gamepad input works on supported desktop browsers; controllers must be connected and sometimes require pressing a button to become available.
+Online multiplayer remains experimental. Server currently relays combat claims rather than being authoritative. Test with a friend before calling it stable or competitive.
 
-## Current prototype limitations
+## If an arena will not load
 
-This is an experimental alpha, not a finished/fully secure competitive multiplayer build: the WebSocket room relays player positions and hit events and applies basic rate/size checks, but still trusts client-reported combat data. Latency compensation, guard synchronization, secure server-authoritative combat and production anti-cheat need further work. Remote animations are simplified. Opponents who leave a match trigger a disconnect screen. Character abilities currently share a combat moveset and portraits use original CSS art. Some controllers/browsers may need mapping adjustments. Round restarts are local, not server synchronized. No deployment has been performed for you.
+Use Chrome/Brave on a computer with WebGL enabled. Open Developer Tools (F12) > Console to inspect errors. If there is a `/vendor/three.module.js` 404, check that Render ran `npm install` after this update.
