@@ -1,30 +1,41 @@
-# Brick Battlegrounds v0.3
+# BRICK BATTLEGROUNDS — v0.5
 
-Browser-based local-versus-bot and experimental private-room ninja fighting game.
+Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
-## Deployment (Render)
+## What's new
 
-This application runs as a **Node Web Service**, not a static website.
-- Build command: `npm install`
-- Start command: `npm start`
-- Root directory: repository root (where package.json lives)
-- Node 18+
+- Exactly **nine** ninja fighters displayed in a **3 × 3** clickable circular portrait roster.
+- Individual chest crests and helmet/armor touches across all nine original fighters.
+- A new procedural dojo courtyard: octagonal platform, engraved tile crest, lanterns, twin temple buildings, entrance gates, flags and lighting. The fighting space is unobstructed.
+- Keyframed, smoothly interpolated character rig poses for left punch, right punch, right-leg kick, a heavy hook-and-roundhouse pair, block, movement, dodge and hit reactions.
+- **150 starting health** per fighter. Each unblocked light hit = **10** damage. Heavy is **one button press for two hits**, each hit = **20** damage if it lands (40 total maximum). Blocking mitigates damage; misses do no damage.
+- 60 FPS **target**, not guaranteed. On-screen FPS readout in combat. A fullscreen toggle stays available.
+- Preserves existing CPU match flow and **experimental** private online rooms (online combat is not yet server-authoritative).
+- Menu startup is independent of 3D import, preserving the known click-handler fix.
 
-The game now serves Three.js locally from the installed `three` npm dependency (`/vendor/three.module.js`) rather than a CDN. This prevents loss of all menu interactions when an external 3D module fails to load. The 3D engine is loaded only when a match starts; menu clicks are wired at page startup.
+## Controls
 
-## Update existing hosted game
+Keyboard: WASD move, **J** light attack (**press up to 3 times** within the combo window for left/right/kick), **K** heavy attack (automatically plays the two-hit hook + kick sequence), **L** block, Shift dodge, Space jump, Q special, Tab lock on, mouse drag camera.
 
-Replace the existing files in your GitHub repository with these updated files, **preserving the directory structure**. Commit them to `main`. Render auto-deploy should rebuild using `npm install`. Check its logs for build success and a Live status, then reload the website (Ctrl+Shift+R).
+Controller (standard Xbox/PS5 browser mapping): left stick move, right stick camera, X/Square light, Y/Triangle heavy, LB/L1 block, B/Circle dodge, A/Cross jump, RB/R1 special, Menu/Options lock on. Controller mappings may vary across browser/OS setups.
 
-## Current scope
+## Deploying to your existing GitHub + Render site
 
-- V0.3 original brick-inspired ninja roster: Tempest (blue), Inferno (red), Verdant (green), Shade (black)
-- Circular fighter portraits; 3D fighter minifigure-inspired proportions
-- Bot fight and prototype online room code flow
-- Controller/keyboard input and existing combat system
+1. Extract this ZIP.
+2. Replace the existing repository's **root** `server.js` and `package.json` and the four files in **`public/`** (`app.js`, `arena.js`, `index.html`, `style.css`). You may also replace this README.
+3. Commit to `main`; your already-configured Render service should auto-deploy if its setting is enabled.
+4. After the new Render deployment becomes **Live**, hard-refresh your website (Ctrl+Shift+R) and verify the menu shows **v0.5** at the top.
+5. Start Fight the Bot, select a fighter, test J/J/J and K, read 150 HP in the HUD, and verify fullscreen and FPS counter.
 
-Online multiplayer remains experimental. Server currently relays combat claims rather than being authoritative. Test with a friend before calling it stable or competitive.
+Do not upload only the ZIP file to GitHub; unpack it first. Keep the `public` directory name and structure unchanged.
 
-## If an arena will not load
+## Requirements
 
-Use Chrome/Brave on a computer with WebGL enabled. Open Developer Tools (F12) > Console to inspect errors. If there is a `/vendor/three.module.js` 404, check that Render ran `npm install` after this update.
+Node.js 18+ and `npm install` for local server testing. Start with `npm start`; open the localhost port in a browser. The Node WebSocket server is required for online rooms. On Render, `npm install` and `npm start` are the intended build/start commands.
+
+## Known limitations
+
+- Local browser graphics and physical controller behavior have **not** been validated in the authoring environment; test against your live Render deployment.
+- 60 FPS depends on your device, resolution and browser settings.
+- Multiplayer is experimental and currently trusts client reports of hits and player state; it needs server-authoritative validation and latency handling before competitive public use.
+- This is an original minifigure-inspired visual style, not licensed LEGO artwork or game assets.
