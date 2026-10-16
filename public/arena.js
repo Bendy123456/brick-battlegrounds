@@ -99,62 +99,66 @@ const plasticSkin=mat(0xf4c86f,.37),eyes=mat(0x11191d,.9),steel=mat(0xd9e3e8,.28
 function fighter(color,x,z){
  const root=new THREE.Group();root.position.set(x,0,z);scene.add(root);
  const visual=new THREE.Group();root.add(visual);
- const cloth=mat(color,.43), accent=mat(0xdbb46a,.4,.24),pants=mat(color,.49);
+ const cloth=mat(color,.34), accent=mat(0xe2bf76,.32,.28), pants=mat(color,.39), trim=mat(0x191c22,.74), boot=mat(0x14171b,.68), skin=plasticSkin;
  const body=new THREE.Group();visual.add(body);
- // Tapered torso with physical layered armor and printed folds.
- const tg=new THREE.CylinderGeometry(.69,.55,1.12,4,1);tg.rotateY(Math.PI/4);
- const torso=mesh(body,tg,cloth,0,1.54,0);torso.scale.z=.82;
- box(body,1.05,.15,.72,0,.98,0,strap);
- box(body,.92,.105,.12,0,1.91,-.37,accent);
- box(body,.15,.69,.065,-.25,1.58,-.435,accent);
- box(body,.08,.69,.065,.23,1.59,-.435,strap);
- box(body,.37,.19,.095,0,1.22,-.45,accent);
- box(body,.41,.15,.12,0,1.5,-.46,strap);
- // Shoulder guards and collar give the model a distinct minifigure ninja silhouette.
+ // Premium LEGO-style torso: rounded shell, layered armor, sash and trim.
+ const torsoShell=mesh(body,new THREE.BoxGeometry(1.08,1.04,.74),cloth,0,1.57,0);torsoShell.scale.z=.95;
+ box(body,1.0,.86,.16,0,1.6,-.34,accent);
+ box(body,1.1,.12,.76,0,2.08,0,trim);
+ box(body,1.12,.11,.78,0,1.02,0,trim);
+ box(body,.18,.98,.1,-.34,1.58,-.4,trim); box(body,.18,.98,.1,.34,1.58,-.4,trim);
+ box(body,.84,.11,.08,0,1.4,-.44,accent);
+ const sash=box(body,.18,1.18,.08,.17,1.53,-.43,accent); sash.rotation.z=-.55;
+ box(body,.62,.14,.1,0,1.12,-.44,trim);
  for(const sx of [-1,1]){
-  const shoulder=box(body,.46,.22,.85,sx*.70,2.08,0,accent);shoulder.rotation.z=sx*.15;
-  box(body,.10,.32,.08,sx*.45,1.62,-.44,accent);
+  const pauldron=mesh(body,new THREE.SphereGeometry(.29,16,12,0,Math.PI*2,0,Math.PI/2),accent,sx*.68,2.03,.04);
+  pauldron.scale.set(1.25,.7,1.55); pauldron.rotation.z=sx*.18; pauldron.rotation.x=Math.PI;
+  box(body,.1,.3,.12,sx*.49,1.66,-.37,accent);
  }
- cyl(body,.40,.39,.18,0,2.2,0,strap,18);
- const head=new THREE.Group();head.position.set(0,2.54,0);body.add(head);
- cyl(head,.41,.41,.67,0,0,0,plasticSkin,24);
- cyl(head,.44,.44,.11,0,.43,0,cloth,24);
- cyl(head,.48,.46,.34,0,.43,.065,cloth,24);
- cyl(head,.42,.39,.48,0,.02,.25,cloth,20);
- box(head,.83,.18,.16,0,-.23,-.34,cloth);
- box(head,.83,.12,.15,0,.18,-.39,strap);
- box(head,.76,.065,.1,0,-.34,-.40,accent);
+ // Head and hood: smooth premium ninja hood while keeping the minifigure identity.
+ const head=new THREE.Group();head.position.set(0,2.52,0);body.add(head);
+ cyl(head,.41,.41,.66,0,0,0,skin,28);
+ const hoodBack=cyl(head,.55,.58,.78,0,.10,.08,cloth,28);hoodBack.scale.z=.85;
+ const hoodCowl=mesh(head,new THREE.SphereGeometry(.56,24,18,0,Math.PI*2,0,Math.PI*.60),cloth,0,.22,.05);hoodCowl.scale.set(1.02,.92,.92);hoodCowl.rotation.x=Math.PI;
+ box(head,.96,.4,.18,0,-.02,-.30,cloth).scale.x=.88;
+ box(head,.84,.14,.14,0,-.26,-.34,trim);
+ box(head,.88,.10,.12,0,.34,-.36,accent);
  for(const sx of [-1,1]){
-  const ey=box(head,.155,.095,.055,sx*.18,.032,-.414,eyes,false);
-  ey.rotation.z=sx*.08;
-  const eyebrow=box(head,.19,.035,.056,sx*.18,.12,-.42,eyes,false);eyebrow.rotation.z=-sx*.18;
+  const flap=box(head,.17,.58,.38,sx*.42,-.02,-.02,cloth); flap.rotation.z=-sx*.12;
+  const eye=box(head,.16,.095,.055,sx*.16,.05,-.42,eyes,false); eye.rotation.z=sx*.06;
+  const brow=box(head,.21,.04,.055,sx*.16,.15,-.43,trim,false); brow.rotation.z=-sx*.12;
  }
+ const topKnot=cyl(head,.15,.11,.22,0,.62,.22,accent,16); topKnot.rotation.x=.2;
  const arms=[],legs=[];
  for(const sx of [-1,1]){
-  const shoulder=new THREE.Group();shoulder.position.set(sx*.74,2.02,0);body.add(shoulder);
-  const upper=cyl(shoulder,.24,.24,.54,0,-.28,0,cloth,12);
-  upper.rotation.z=sx*.06;
-  cyl(shoulder,.25,.23,.19,0,-.56,0,accent,12);
-  const elbow=new THREE.Group();elbow.position.set(0,-.56,-.02);shoulder.add(elbow);
-  cyl(elbow,.20,.21,.36,0,-.18,0,cloth,12);
-  const palm=cyl(elbow,.195,.195,.22,0,-.48,-.02,plasticSkin,14);
-  // Inset gap between curved clamp fingers preserves the distinctive claw-hand silhouette.
-  box(elbow,.15,.15,.21,sx*.17,-.55,-.10,plasticSkin);
-  box(elbow,.15,.15,.21,-sx*.17,-.55,-.10,plasticSkin);
-  shoulder.userData.elbow=elbow;arms.push(shoulder);
-  const hip=new THREE.Group();hip.position.set(sx*.29,.93,0);visual.add(hip);
-  box(hip,.52,.73,.59,0,-.39,0,pants);
-  box(hip,.53,.25,.67,0,-.70,-.065,strap);
-  box(hip,.42,.09,.09,0,-.20,-.31,accent);
+  const shoulder=new THREE.Group();shoulder.position.set(sx*.78,1.95,0);body.add(shoulder);
+  cyl(shoulder,.21,.23,.64,0,-.32,0,cloth,16).rotation.z=sx*.08;
+  const armCap=mesh(shoulder,new THREE.SphereGeometry(.24,14,10,0,Math.PI*2,0,Math.PI/2),accent,0,.02,.02); armCap.scale.set(1.15,.7,1.2); armCap.rotation.x=Math.PI;
+  const elbow=new THREE.Group();elbow.position.set(0,-.63,-.02);shoulder.add(elbow);
+  cyl(elbow,.20,.20,.44,0,-.22,0,cloth,14);
+  box(elbow,.36,.09,.34,0,-.43,0,accent);
+  cyl(elbow,.16,.16,.12,0,-.45,0,trim,12);
+  cyl(elbow,.15,.15,.16,0,-.56,.02,skin,16);
+  const claw=new THREE.Mesh(new THREE.TorusGeometry(.12,.045,8,18,Math.PI*1.6),skin); claw.position.set(0,-.68,.04); claw.rotation.set(Math.PI/2,0,Math.PI/5); claw.castShadow=true; claw.receiveShadow=true; elbow.add(claw);
+  shoulder.userData.elbow=elbow; arms.push(shoulder);
+  const hip=new THREE.Group();hip.position.set(sx*.31,.95,0);visual.add(hip);
+  box(hip,.56,.84,.62,0,-.42,0,pants);
+  box(hip,.58,.16,.64,0,-.02,0,trim);
+  box(hip,.4,.12,.1,0,-.22,-.31,accent);
+  box(hip,.5,.24,.66,0,-.74,0,boot);
+  box(hip,.58,.1,.68,0,-.93,0,accent);
   legs.push(hip);
  }
- // Katana is holstered on the back, leaving fists visible during hand-to-hand combo attacks.
- const sheath=new THREE.Group();body.add(sheath);sheath.position.set(.33,1.78,.48);sheath.rotation.z=-.4;
- cyl(sheath,.12,.12,1.42,0,.12,0,strap,10);
- box(sheath,.44,.12,.27,0,.79,0,accent);
- cyl(sheath,.095,.095,.55,0,1.07,0,armGold,10);
- cyl(sheath,.17,.17,.12,0,1.36,0,accent,10);
- visual.userData={arms,legs,body,head,cloth,pants,accent,baseColor:color};
+ // Crossed scabbards on the back read more like a pro-designed fighter silhouette.
+ const rig=new THREE.Group();body.add(rig);rig.position.set(.0,1.72,.46); rig.rotation.x=.08;
+ for(const sx of [-1,1]){
+  const sheath=new THREE.Group();rig.add(sheath); sheath.position.set(sx*.18,0,0); sheath.rotation.z=sx*.52;
+  cyl(sheath,.10,.10,1.36,0,.10,0,trim,10);
+  box(sheath,.34,.1,.22,0,.72,0,accent);
+  cyl(sheath,.08,.08,.45,0,.96,0,steel,10);
+  box(sheath,.18,.08,.18,0,1.24,0,accent);
+ }
+ visual.userData={arms,legs,body,head,cloth,pants,accent,trim,baseColor:color};
  return {root,visual,hp:150,guard:100,v:new THREE.Vector3(),onGround:true,yVel:0,face:0,attack:null,attackTime:0,attackCooldown:0,iframes:0,stun:0,dodge:0,block:false,specialCooldown:0,combo:0,comboWindow:0,queuedLight:false,score:0,moving:0,runTime:0,hitFlash:0,prevAction:{},name:'NINJA'};
 }
 const p=fighter(0x1186ca,-3.8,0),cpu=fighter(0xc83d39,3.8,0);
@@ -172,39 +176,46 @@ function dressFighter(f,c){
   ud.custom.parent.remove(ud.custom);
  }
  const g=new THREE.Group();ud.body.add(g);ud.custom=g;
- // Individually drawn costume crest, directly attached to the animated chest rig.
  const canvas=document.createElement('canvas');canvas.width=128;canvas.height=128;
  const ctx=canvas.getContext('2d');
  ctx.clearRect(0,0,128,128);
- ctx.strokeStyle='#171b21';ctx.lineWidth=6;
- ctx.beginPath();ctx.moveTo(16,21);ctx.lineTo(112,21);ctx.lineTo(101,112);ctx.lineTo(27,112);ctx.closePath();ctx.stroke();
- ctx.fillStyle='#edc676';ctx.textAlign='center';ctx.textBaseline='middle';
- ctx.font='bold 75px Georgia, serif';ctx.fillText(fighterSymbols[c[0]]||'✦',64,67);
+ ctx.strokeStyle='#1a1e24';ctx.lineWidth=6;
+ ctx.beginPath();ctx.moveTo(22,20);ctx.lineTo(106,20);ctx.lineTo(98,110);ctx.lineTo(30,110);ctx.closePath();ctx.stroke();
+ ctx.fillStyle='#f0ca79';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.font='bold 72px Georgia, serif';ctx.fillText(fighterSymbols[c[0]]||'✦',64,67);
  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
- const decal=new THREE.Mesh(new THREE.PlaneGeometry(.52,.55),new THREE.MeshBasicMaterial({map:texture,transparent:true,side:THREE.DoubleSide,depthWrite:false}));
- decal.position.set(0,1.62,-.49);decal.rotation.y=Math.PI;g.add(decal);
- // Nine distinctive helmet and armor details, deliberately lightweight for WebGL.
+ const decal=new THREE.Mesh(new THREE.PlaneGeometry(.46,.50),new THREE.MeshBasicMaterial({map:texture,transparent:true,side:THREE.DoubleSide,depthWrite:false}));
+ decal.position.set(0,1.58,-.43);decal.rotation.y=Math.PI;g.add(decal);
  const idx=Object.keys(fighterSymbols).indexOf(c[0]);
- const badgeMat=mat(idx===5?0xb9e7fa:idx===3?0x7485a0:0xe8b869,.4,.25);
- if(idx===4){ // champion: twin gold crown prongs
-  for(const dx of [-.26,.26])box(g,.14,.30,.13,dx,3.1,-.25,badgeMat);
- }else if(idx===3){ // shadow: dark angular side guards
-  for(const dx of [-.51,.51])box(g,.16,.47,.26,dx,2.8,0,badgeMat);
- }else if(idx===5){ // frost: crystalline forehead crest
-  const gem=box(g,.23,.33,.10,0,2.94,-.5,badgeMat);gem.rotation.z=Math.PI/4;
- }else if(idx===6){ // ember: high plume
-  const crest=cyl(g,.14,.10,.32,0,3.19,.16,badgeMat,9);crest.rotation.z=-.25;
- }else if(idx===7){ // arcane: floating twin side stud shapes
-  sphere(g,.14,-.47,2.9,.06,badgeMat);sphere(g,.14,.47,2.9,.06,badgeMat);
- }else if(idx===8){ // blossom: pale headpiece
-  const crest=sphere(g,.16,.20,3.12,-.02,badgeMat);crest.scale.set(1.4,.55,1);
- }else if(idx===2){ // verdant: side wrap
-  box(g,.13,.44,.44,-.46,2.65,.14,badgeMat);
- }else if(idx===1){ // crimson: V-shaped brow armor
-  for(const sign of [-1,1]){const crest=box(g,.34,.09,.12,sign*.15,2.99,-.43,badgeMat);crest.rotation.z=-sign*.37}
- }else{ // azure: angular forehead stripe
-  const crest=box(g,.17,.37,.12,0,3.06,-.42,badgeMat);crest.rotation.z=.25;
+ const badgeMat=mat(idx===5?0xb9e7fa:idx===3?0x73869f:idx===8?0xf2b9c5:0xe9bf70,.36,.3);
+ if(idx===4){
+  for(const dx of [-.22,.22]){const crest=box(g,.15,.34,.12,dx,3.06,-.31,badgeMat);crest.rotation.z=-dx}
+  box(g,.44,.08,.12,0,2.86,-.35,badgeMat);
+ }else if(idx===3){
+  for(const dx of [-.49,.49]){const fin=box(g,.14,.55,.22,dx,2.73,.05,badgeMat);fin.rotation.z=dx>0?-.18:.18;}
+ }else if(idx===5){
+  const gem=box(g,.22,.32,.10,0,2.93,-.40,badgeMat);gem.rotation.z=Math.PI/4;
+  for(const dx of [-.26,.26]) sphere(g,.08,dx,2.76,-.14,badgeMat);
+ }else if(idx===6){
+  const plume=cyl(g,.12,.08,.42,0,3.14,.16,badgeMat,10);plume.rotation.z=-.22;
+  box(g,.62,.10,.1,0,1.35,-.47,badgeMat);
+ }else if(idx===7){
+  for(const dx of [-.46,.46]) sphere(g,.14,dx,2.88,.05,badgeMat);
+  box(g,.5,.1,.1,0,1.75,-.47,badgeMat);
+ }else if(idx===8){
+  const crest=sphere(g,.15,.18,3.0,-.08,badgeMat);crest.scale.set(1.55,.55,1.0);
+  for(const dx of [-.35,.35]) sphere(g,.07,dx,2.92,-.16,badgeMat);
+ }else if(idx===2){
+  const wrap=box(g,.14,.54,.36,-.46,2.63,.14,badgeMat);wrap.rotation.z=.14;
+  box(g,.08,.58,.08,.36,1.62,-.47,badgeMat);
+ }else if(idx===1){
+  for(const sign of [-1,1]){const crest=box(g,.31,.08,.10,sign*.15,2.95,-.39,badgeMat);crest.rotation.z=-sign*.36}
+  box(g,.1,.5,.08,0,1.66,-.46,badgeMat);
+ }else if(idx===0){
+  const crest=box(g,.14,.42,.10,0,3.01,-.38,badgeMat);crest.rotation.z=.21;
+  for(const dx of [-.3,.3]) box(g,.08,.34,.08,dx,1.62,-.47,badgeMat);
  }
+ for(const sx of [-1,1]){const drape=box(g,.24,.52,.06,sx*.22,1.02,-.36,badgeMat);drape.rotation.z=sx*.06;}
 }
 export function setCharacters(local,opponent){
  dressFighter(p,local);dressFighter(cpu,opponent);
