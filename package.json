@@ -1,0 +1,1 @@
+{"name":"brick-battlegrounds","version":"0.2.0","private":true,"type":"module","scripts":{"start":"node server.js"},"dependencies":{"ws":"^8.18.3"},"engines":{"node":">=18"}}
