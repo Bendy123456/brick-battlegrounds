@@ -1,4 +1,4 @@
-# BRICK BATTLEGROUNDS — v0.8.2 KNOCKDOWN TEST
+# BRICK BATTLEGROUNDS — v0.8.3 ANIMATION POLISH
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
@@ -7,7 +7,7 @@ Online-ready browser fighting game prototype using original brick ninja fighters
 - Exactly **nine** ninja fighters displayed in a **3 × 3** clickable circular portrait roster.
 - Individual chest crests and helmet/armor touches across all nine original fighters.
 - A new procedural dojo courtyard: octagonal platform, engraved tile crest, lanterns, twin temple buildings, entrance gates, flags and lighting. The fighting space is unobstructed.
-- Keyframed, smoothly interpolated character rig poses for left jab, right cross, right kick, new fourth-hit left hook, and the existing heavy hook-and-roundhouse. Attack poses are configurable in `public/combat-poses.js` (degrees and seconds). Idle/walk/jump poses remain unchanged.
+- Keyframed, smoothly interpolated character rig poses for left jab, right cross, right kick, new fourth-hit left hook, and the existing heavy hook-and-roundhouse. Attack poses are configurable in `public/combat-poses.js` (degrees and seconds). Idle footwork and fighting guard now flow into strikes. Keyframed anticipation, follow-through, impact and guarded recovery have been re-staged; jumping and gameplay controls are unchanged.
 - **150 starting health** per fighter. Each unblocked light hit = **10** damage. Heavy is **one button press for two hits**, each hit = **20** damage if it lands (40 total maximum). Blocking mitigates damage; misses do no damage.
 - 60 FPS **target**, not guaranteed. On-screen FPS readout in combat. A fullscreen toggle stays available.
 - Preserves existing CPU match flow and **experimental** private online rooms (online combat is not yet server-authoritative).
@@ -27,7 +27,7 @@ Controller (standard Xbox/PS5 browser mapping): left stick move, right stick cam
 1. Extract this ZIP.
 2. Replace the existing repository's **root** `server.js` and `package.json` and the four files in **`public/`** (`app.js`, `arena.js`, `index.html`, `style.css`). You may also replace this README.
 3. Commit to `main`; your already-configured Render service should auto-deploy if its setting is enabled.
-4. After the new Render deployment becomes **Live**, hard-refresh your website (Ctrl+Shift+R) and verify the menu shows **v0.8.2 KNOCKDOWN TEST** at the top.
+4. After the new Render deployment becomes **Live**, hard-refresh your website (Ctrl+Shift+R) and verify the menu shows **v0.8.3 ANIMATION POLISH** at the top.
 5. Start Fight the Bot, select a fighter, test J/J/J and K, read 150 HP in the HUD, and verify fullscreen and FPS counter.
 
 Do not upload only the ZIP file to GitHub; unpack it first. Keep the `public` directory name and structure unchanged.
