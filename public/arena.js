@@ -309,7 +309,10 @@ function hit(att,def,attack){
   const edge=Math.hypot(def.root.position.x,def.root.position.z);
   if(edge>16.25){def.root.position.x*=16.25/edge;def.root.position.z*=16.25/edge}
  }
- fx(b.clone().add(new THREE.Vector3(0,1.55,0)),blocked?0xffde97:att===p?0x71dfff:0xff8970,blocked?8:13);
+ // CHANGED: Tornado hit sparks inherit the chosen fighter's elemental color.
+ fx(b.clone().add(new THREE.Vector3(0,1.55,0)),
+  blocked?0xffde97:attack.kind==='special'?att.visual.userData.baseColor:
+  att===p?0x71dfff:0xff8970,finisher?22:blocked?8:13);
 }
 // CHANGED: All LIGHT/HEAVY keyframes, angle tables and interpolation are in combat-poses.js.
 const SPECIAL_POSES=[[0,{}],[.19,{l:1.55,r:1.55,lift:.18,lean:-.12}],[.53,{l:2.25,r:2.25,bodyY:2.1,bodyZ:.24,lift:.35}],[.8,{l:1,r:1,bodyY:3.1}],[1,{}]];
@@ -500,7 +503,7 @@ function updateFighter(f,op,dt,controls){
 }
 function updateHUD(){
  $('hp1').style.width=(100*p.hp/MAX_HEALTH)+'%';$('hp2').style.width=(100*cpu.hp/MAX_HEALTH)+'%';
- $('st1').textContent=`HP ${Math.ceil(p.hp)}/150 · GUARD ${Math.round(p.guard)}% · SPECIAL ${p.specialCooldown>0?Math.ceil(p.specialCooldown)+'s':'READY'}`;
+ $('st1').textContent=`HP ${Math.ceil(p.hp)}/150 · GUARD ${Math.round(p.guard)}% · SPINJITZU ${p.specialCooldown>0?Math.ceil(p.specialCooldown)+'s':'READY'}`;
  $('st2').textContent=`HP ${Math.ceil(cpu.hp)}/150 · GUARD ${Math.round(cpu.guard)}%`;
  $('timer').textContent=String(Math.floor(time/60)).padStart(2,'0')+':'+String(Math.ceil(time%60)).padStart(2,'0');
  $('roundLabel').textContent='BEST OF 3 · ROUND '+round;
