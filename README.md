@@ -1,8 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.14 LEGO NECK CONNECTORS
+# BRICK BATTLEGROUNDS — v0.8.15 BLACK FOG FIGHTER SELECT
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.15:** Implemented the cinematic black-fog character selection screen directly in the playable menu. Added drifting charcoal fog and subtle embers, replaced the compact confirmation panel with a larger, beveled black-and-gold fighter card, and upgraded the ability badge and Back/Confirm buttons to premium gold-trimmed styling. The fighter title and brushed accent use each selected character's true color. This is live DOM/CSS, not a static menu image: all nine clickable head icons, abilities, character choices, controller selection, and solo/online Confirm flows remain active. Includes narrow-screen and reduced-motion adjustments.
 
 - **v0.8.14:** Add a small matching-color neck connector below each of the nine head-only character select icons. Head size, color, selected ring, 3×3 grid, menu buttons and all combat models remain unchanged.
 
