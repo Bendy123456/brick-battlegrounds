@@ -1,8 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.9 FULL-SCREEN DOJO
+# BRICK BATTLEGROUNDS — v0.8.10 TITLE-FLANKING FIGHTERS
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.10:** Removed the floating Crimson/Verdant names and VS label from the full-screen menu. Moved the live LEGO fighters to opposite sides of the centered title, turned both slightly inward, and kept their original model scale. Their podiums follow their responsive positions, while Fight → roster and online room flows are unchanged.
 
 - **v0.8.9:** Full-screen cinematic home menu. Crimson and Verdant remain the same-sized live 3D models in a now-wide dojo; the giant logo is centered near the top and premium Fight / Create / Join buttons are centered at the bottom. Removed the old blue split panel and kept the nine-fighter roster exclusively after selecting Fight, with all online room flows and combat rules unchanged. Responsive small-screen layout and reduced-motion behavior remain supported.
 
