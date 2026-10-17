@@ -1,4 +1,4 @@
-// BRICK BATTLEGROUNDS v0.8.24 — vivid show-inspired Spinjitzu.
+// BRICK BATTLEGROUNDS v0.8.25 — contained Spinjitzu silhouette.
 // Original procedural elemental vortex, not an image or imported copyrighted model.
 // CHANGED: Animated 3D energy shells, bright ribbons, spark sprites and base aura.
 // The effect is cosmetic; arena.js owns damage, root movement and networking.
@@ -176,7 +176,12 @@ export function setSpinjitzuColor(f,color){
 }
 export function stopSpinjitzu(f){
  const fx=f.spinjitzu;if(!fx)return;
- if(fx.active)f.visual.rotation.y=0; // CHANGED: Interrupts cannot leave a sideways-spun fighter.
+ if(fx.active){
+  // CHANGED: Restore visual scale/offset after Special or interruption.
+  f.visual.rotation.y=0;
+  f.visual.scale.setScalar(1);
+  f.visual.position.set(0,0,0);
+ }
  fx.active=false;fx.group.visible=false;fx.light.intensity=0;
  // The normal combat pose and knockdown pipelines own resetting visual rotation.
 }
@@ -193,11 +198,12 @@ export function poseSpinjitzu(f){
  // The minifig keeps arms tucked close, knees lifted alternately, and turns
  // inside the glowing vortex. Only visual yaw spins; movement root does not.
  const rad=Math.PI/180;
- const legWave=Math.sin(rotation*1.25)*27*glow;
- const action={LS:[77,-18,-24],LE:[120,0,0],RS:[78,18,24],RE:[121,0,0],
-  LH:[14+legWave,0,-8],RH:[14-legWave,0,8],
-  LK:[-32-14*Math.max(0,Math.sin(rotation))*glow,0,0],
-  RK:[-32-14*Math.max(0,-Math.sin(rotation))*glow,0,0],
+ // CHANGED: A tighter spinning pose prevents stray arms and feet poking out.
+ const legWave=Math.sin(rotation*1.25)*17*glow;
+ const action={LS:[88,-13,-12],LE:[132,0,0],RS:[89,13,12],RE:[133,0,0],
+  LH:[10+legWave,0,-5],RH:[10-legWave,0,5],
+  LK:[-36-9*Math.max(0,Math.sin(rotation))*glow,0,0],
+  RK:[-36-9*Math.max(0,-Math.sin(rotation))*glow,0,0],
   T:[-10*glow,Math.sin(rotation*.5)*9*glow,Math.sin(rotation)*7*glow],
   H:[0,0,0]};
  // CHANGED: Smooth guard windup and final release: no instant raised arms
@@ -208,8 +214,14 @@ export function poseSpinjitzu(f){
  applyCombatPose(f,stance);
  const progress=ease(t/.18);
  // No jump in visual orientation when attack starts; ease spin away on exit.
- f.visual.rotation.set(-.12*glow,rotation*progress,Math.sin(rotation)*.08*glow);
- f.visual.position.set(0,.06*glow+Math.abs(Math.sin(rotation*.85))*.11*glow,0);
+ f.visual.rotation.set(-.08*glow,rotation*progress,Math.sin(rotation)*.045*glow);
+ // CHANGED: Move and scale ONLY the visible LEGO rig into the funnel center.
+ // CHANGED: The fighter root, attack range, collision and hitbox stay unchanged.
+ // CHANGED: Ease into/out of the smaller silhouette to avoid visible snapping.
+ const contained=ease(t/.18)*(1-ease((t-1.70)/.30));
+ f.visual.scale.setScalar(1-.41*contained);
+ f.visual.position.set(0,.38*contained+.035*glow+
+   Math.abs(Math.sin(rotation*.85))*.025*glow,0);
  fx.active=true;fx.group.visible=glow>.015;
  fx.group.scale.setScalar(.13+.87*glow);
  // CHANGED: Tilt the *energy* with travel instead of spinning rigid hoops.
