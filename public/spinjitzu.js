@@ -87,7 +87,9 @@ export function poseSpinjitzu(f){
  const t=Math.min(SPIN_DURATION,Math.max(0,f.attackTime));
  const start=ease(t/.24),finish=1-ease((t-1.77)/.23);
  const glow=start*finish;
- const spinTime=Math.max(0,t-.10),rotation=spinTime*2*Math.PI*5.6;
+ // CHANGED: Ten complete rotations with eased acceleration/braking; the
+ // CHANGED: minifigure finishes facing forward instead of snapping on exit.
+ const rotation=2*Math.PI*10*ease(t/SPIN_DURATION);
  const swirl=rotation+Math.sin(t*14)*.12;
  // The minifig keeps arms tucked close, knees lifted alternately, and turns
  // inside the glowing vortex. Only visual yaw spins; movement root does not.
