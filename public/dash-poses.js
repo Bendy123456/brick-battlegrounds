@@ -1,51 +1,100 @@
-// CHANGED: Four independently keyed directional dash animations.
-// All rotations are degrees. Elapsed dash progress is normalized 0..1.
-// V: visual-only full-body XYZ rotation; L: visual-only upward offset.
-// Backflip rotates the visual about center mass, never the root/hitbox.
-// Each move ends in the current fighter's normal stance (classic relaxed or standard guard).
+// BRICK BATTLEGROUNDS — v0.8.18 cinematic directional dash choreography.
+// CHANGED: Animation-only pass: more leg push-off, midair silhouettes, arm recoil,
+// CHANGED: stronger direction-specific weight transfer, and an intentional backflip.
+// CHANGED: ALL durations and speed values stay identical to v0.8.17; dodge physics,
+// CHANGED: dash i-frames, controls, collision, travel, and networking are untouched.
+// Angles = XYZ Euler degrees. Normalized time 0..1, keys refer to actual rig joints.
+// V rotates only the cosmetic visual Group; lift never moves the gameplay root.
 import {fightingStance,applyCombatPose} from './combat-poses.js';
 
 const K=(t,e,j={},v=[0,0,0],lift=0)=>({t,e,j,v,lift});
 export const DASH_ANIMATIONS={
- forward:{duration:.36,speed:17.25,frames:[ // CHANGED: +25% dash travel, original animation timing
-  K(0,'sine',{},[0,0,0]),
-  K(.12,'sine',{LS:[-39,-15,-26],LE:[135,0,0],RS:[55,9,13],RE:[103,0,0],LH:[-35,0,-8],RH:[20,0,8],T:[-22,19,-7]},[-8,0,-1]),
-  K(.32,'outCubic',{LS:[34,-17,-13],LE:[102,0,0],RS:[65,7,12],RE:[108,0,0],LH:[-36,0,-10],RH:[22,0,7],T:[-25,-17,4]},[-11,0,0]),
-  // CHANGED: The fist rockets forward as the shoulders and waist follow.
-  K(.52,'outCubic',{LS:[133,-12,-8],LE:[1,0,0],RS:[76,8,14],RE:[111,0,0],LH:[-27,0,-6],RH:[13,0,8],T:[18,-38,11]},[-6,0,0]),
-  K(.68,'sine',{LS:[123,-10,-7],LE:[7,0,0],RS:[68,7,13],RE:[106,0,0],LH:[-17,0,-4],RH:[9,0,6],T:[13,-25,6]},[-4,0,0]),
-  K(.85,'sine',{LS:[57,-6,-11],LE:[50,0,0],RS:[41,5,12],RE:[61,0,0],T:[-3,-8,0]},[0,0,0]),
+ // CHANGED: Aggressive short punch-lunge — shoulder lifts to guard, elbow cocks
+ // CHANGED: behind cheek, supporting foot kicks backward, then front fist snaps
+ // CHANGED: forward at the peak of the dash while the other hand stays guarding.
+ forward:{duration:.36,speed:17.25,frames:[
+  K(0,'sine'),
+  K(.075,'outCubic',{LS:[72,-11,-15],LE:[110,0,0],RS:[78,9,15],RE:[112,0,0],
+    LH:[-16,0,-9],RH:[19,0,7],LK:[12,0,0],RK:[-9,0,0],T:[-14,19,-8]},[-9,0,-2],.015),
+  K(.20,'inOutCubic',{LS:[49,-21,-19],LE:[144,0,0],RS:[89,11,17],RE:[123,0,0],
+    LH:[-31,0,-12],RH:[38,0,11],LK:[17,0,0],RK:[-28,0,0],T:[-22,34,-13]},[-19,0,-3],.03),
+  K(.34,'outQuint',{LS:[69,-17,-16],LE:[102,0,0],RS:[93,12,17],RE:[128,0,0],
+    LH:[-45,0,-13],RH:[49,0,13],LK:[18,0,0],RK:[-30,0,0],T:[-25,8,-10]},[-21,0,-2],.065),
+  K(.49,'outQuint',{LS:[112,-16,-13],LE:[6,0,0],RS:[94,12,18],RE:[128,0,0],
+    LH:[-38,0,-11],RH:[41,0,12],LK:[16,0,0],RK:[-24,0,0],T:[13,-29,10]},[-12,0,0],.09),
+  K(.59,'outCubic',{LS:[118,-15,-12],LE:[3,0,0],RS:[92,11,17],RE:[124,0,0],
+    LH:[-32,0,-10],RH:[32,0,10],LK:[13,0,0],RK:[-17,0,0],T:[20,-37,12]},[-8,0,1],.08),
+  K(.70,'inOutCubic',{LS:[101,-12,-13],LE:[45,0,0],RS:[81,10,15],RE:[116,0,0],
+    LH:[-16,0,-8],RH:[16,0,8],LK:[8,0,0],RK:[-10,0,0],T:[6,-16,4]},[-5,0,0],.05),
+  K(.86,'sine',{LS:[53,-7,-12],LE:[71,0,0],RS:[51,7,12],RE:[79,0,0],
+    LH:[9,0,-5],RH:[-8,0,5],LK:[6,0,0],RK:[5,0,0],T:[-7,2,-2]},[3,0,0],.005),
   K(1,'sine')
  ]},
- left:{duration:.32,speed:15.75,frames:[ // CHANGED: +25% sidestep travel
+ // CHANGED: Left weave sidestep — push off right foot, lead left knee toward
+ // CHANGED: travel, low lateral torso angle, hands held near face, strong stop.
+ left:{duration:.32,speed:15.75,frames:[
   K(0,'sine'),
-  K(.13,'sine',{LS:[48,-7,-23],LE:[108,0,0],RS:[42,9,19],RE:[104,0,0],LH:[-22,0,-16],RH:[22,0,7],LK:[12,0,0],T:[-10,0,-19]},[0,-10,14]),
-  K(.38,'outCubic',{LS:[53,-6,-23],LE:[107,0,0],RS:[43,9,18],RE:[106,0,0],LH:[-31,0,-23],RH:[26,0,12],LK:[17,0,0],T:[-7,8,-26]},[0,-13,21]),
-  K(.67,'sine',{LS:[35,-6,-17],LE:[84,0,0],RS:[32,6,14],RE:[84,0,0],LH:[-13,0,-10],RH:[13,0,8],T:[-3,5,-14]},[0,-6,10]),
-  K(.86,'sine',{LS:[15,-5,-12],LE:[34,0,0],RS:[16,5,12],RE:[35,0,0],T:[1,-3,-4]},[0,0,0]),
+  K(.10,'outCubic',{LS:[77,-16,-22],LE:[119,0,0],RS:[77,9,20],RE:[114,0,0],
+    LH:[-16,0,-13],RH:[25,0,11],LK:[13,0,0],RK:[-11,0,0],T:[-16,-13,-12]},[-5,-7,9],.015),
+  K(.27,'outQuint',{LS:[92,-15,-27],LE:[130,0,0],RS:[85,10,23],RE:[125,0,0],
+    LH:[-41,0,-22],RH:[35,0,14],LK:[28,0,0],RK:[-25,0,0],T:[-15,-20,-26]},[-9,-17,23],.055),
+  K(.44,'outCubic',{LS:[89,-17,-30],LE:[123,0,0],RS:[79,11,24],RE:[120,0,0],
+    LH:[-47,0,-25],RH:[40,0,16],LK:[33,0,0],RK:[-28,0,0],T:[-14,-25,-29]},[-10,-20,27],.055),
+  K(.62,'inOutCubic',{LS:[71,-12,-24],LE:[113,0,0],RS:[69,8,19],RE:[106,0,0],
+    LH:[-25,0,-16],RH:[25,0,11],LK:[20,0,0],RK:[-18,0,0],T:[-8,-9,-18]},[-5,-12,16],.045),
+  K(.79,'sine',{LS:[49,-8,-17],LE:[91,0,0],RS:[47,7,14],RE:[87,0,0],
+    LH:[16,0,-5],RH:[-17,0,7],LK:[-3,0,0],RK:[14,0,0],T:[7,5,7]},[4,0,-6],.018),
+  K(.91,'sine',{LS:[20,-5,-12],LE:[39,0,0],RS:[23,5,11],RE:[39,0,0],
+    LH:[1,0,-3],RH:[0,0,4],T:[2,2,4]},[1,0,-2],.003),
   K(1,'sine')
  ]},
- right:{duration:.32,speed:15.75,frames:[ // CHANGED: +25% sidestep travel
+ // CHANGED: Right sidestep mirrors the left weave (lead foot, hip angle,
+ // CHANGED: shoulder counter-twist), so both have the same sense of momentum.
+ right:{duration:.32,speed:15.75,frames:[
   K(0,'sine'),
-  K(.13,'sine',{LS:[42,-9,-19],LE:[104,0,0],RS:[48,7,23],RE:[108,0,0],LH:[22,0,-7],RH:[-22,0,16],RK:[12,0,0],T:[-10,0,19]},[0,10,-14]),
-  K(.38,'outCubic',{LS:[43,-9,-18],LE:[106,0,0],RS:[53,6,23],RE:[107,0,0],LH:[26,0,-12],RH:[-31,0,23],RK:[17,0,0],T:[-7,-8,26]},[0,13,-21]),
-  K(.67,'sine',{LS:[32,-6,-14],LE:[84,0,0],RS:[35,6,17],RE:[84,0,0],LH:[13,0,-8],RH:[-13,0,10],T:[-3,-5,14]},[0,6,-10]),
-  K(.86,'sine',{LS:[16,-5,-12],LE:[35,0,0],RS:[15,5,12],RE:[34,0,0],T:[1,-3,4]},[0,0,0]),
+  K(.10,'outCubic',{LS:[77,-9,-20],LE:[114,0,0],RS:[77,16,22],RE:[119,0,0],
+    LH:[25,0,-11],RH:[-16,0,13],LK:[-11,0,0],RK:[13,0,0],T:[-16,13,12]},[-5,7,-9],.015),
+  K(.27,'outQuint',{LS:[85,-10,-23],LE:[125,0,0],RS:[92,15,27],RE:[130,0,0],
+    LH:[35,0,-14],RH:[-41,0,22],LK:[-25,0,0],RK:[28,0,0],T:[-15,20,26]},[-9,17,-23],.055),
+  K(.44,'outCubic',{LS:[79,-11,-24],LE:[120,0,0],RS:[89,17,30],RE:[123,0,0],
+    LH:[40,0,-16],RH:[-47,0,25],LK:[-28,0,0],RK:[33,0,0],T:[-14,25,29]},[-10,20,-27],.055),
+  K(.62,'inOutCubic',{LS:[69,-8,-19],LE:[106,0,0],RS:[71,12,24],RE:[113,0,0],
+    LH:[25,0,-11],RH:[-25,0,16],LK:[-18,0,0],RK:[20,0,0],T:[-8,9,18]},[-5,12,-16],.045),
+  K(.79,'sine',{LS:[47,-7,-14],LE:[87,0,0],RS:[49,8,17],RE:[91,0,0],
+    LH:[-17,0,-7],RH:[16,0,5],LK:[14,0,0],RK:[-3,0,0],T:[7,-5,-7]},[4,0,6],.018),
+  K(.91,'sine',{LS:[23,-5,-11],LE:[39,0,0],RS:[20,5,12],RE:[39,0,0],
+    LH:[0,0,-4],RH:[1,0,3],T:[2,-2,-4]},[1,0,2],.003),
   K(1,'sine')
  ]},
- back:{duration:.48,speed:14.5,frames:[ // CHANGED: +25% backflip retreat distance
+ // CHANGED: Backflip has clear crouch, powerful launch, tight double-knee
+ // CHANGED: tuck at inversion, deliberate untuck, and grounded landing/guard.
+ // CHANGED: Rotates only cosmetic visual about approximate center mass.
+ back:{duration:.48,speed:14.5,frames:[
   K(0,'sine'),
-  K(.12,'sine',{LS:[-30,-7,-23],LE:[102,0,0],RS:[-28,7,23],RE:[102,0,0],LH:[40,0,-11],RH:[41,0,11],LK:[-65,0,0],RK:[-65,0,0],T:[-32,0,0]},[-20,0,0],.10),
-  K(.26,'outCubic',{LS:[-42,-8,-27],LE:[76,0,0],RS:[-40,8,27],RE:[76,0,0],LH:[48,0,-13],RH:[51,0,13],LK:[-70,0,0],RK:[-70,0,0],T:[-17,0,0]},[106,0,0],.16),
-  K(.50,'sine',{LS:[21,-6,-17],LE:[72,0,0],RS:[23,6,17],RE:[72,0,0],LH:[55,0,-13],RH:[57,0,13],LK:[-96,0,0],RK:[-95,0,0],T:[-16,0,0]},[206,0,0],.22),
-  K(.75,'sine',{LS:[47,-6,-13],LE:[65,0,0],RS:[45,6,13],RE:[66,0,0],LH:[43,0,-10],RH:[40,0,10],LK:[-52,0,0],RK:[-52,0,0],T:[-12,0,0]},[301,0,0],.13),
-  K(.91,'sine',{LS:[22,-5,-11],LE:[34,0,0],RS:[21,5,11],RE:[34,0,0],LH:[10,0,-4],RH:[9,0,4],LK:[-14,0,0],RK:[-14,0,0],T:[3,0,0]},[354,0,0],.02),
+  K(.085,'outCubic',{LS:[58,-14,-20],LE:[95,0,0],RS:[58,14,20],RE:[95,0,0],
+    LH:[48,0,-13],RH:[48,0,13],LK:[-70,0,0],RK:[-70,0,0],T:[-36,0,0]},[-25,0,0],.014),
+  K(.17,'inOutCubic',{LS:[-25,-20,-31],LE:[120,0,0],RS:[-25,20,31],RE:[120,0,0],
+    LH:[57,0,-12],RH:[57,0,12],LK:[-95,0,0],RK:[-95,0,0],T:[-25,0,0]},[17,0,0],.15),
+  K(.32,'outCubic',{LS:[-42,-17,-29],LE:[119,0,0],RS:[-42,17,29],RE:[119,0,0],
+    LH:[102,0,-13],RH:[104,0,13],LK:[-127,0,0],RK:[-128,0,0],T:[-19,0,0]},[116,0,0],.20),
+  K(.51,'inOutCubic',{LS:[17,-12,-15],LE:[110,0,0],RS:[17,12,15],RE:[110,0,0],
+    LH:[112,0,-12],RH:[112,0,12],LK:[-138,0,0],RK:[-138,0,0],T:[-12,0,0]},[219,0,0],.25),
+  K(.69,'outCubic',{LS:[52,-8,-17],LE:[120,0,0],RS:[52,8,17],RE:[120,0,0],
+    LH:[91,0,-13],RH:[91,0,13],LK:[-115,0,0],RK:[-115,0,0],T:[-17,0,0]},[305,0,0],.16),
+  K(.82,'inOutCubic',{LS:[80,-8,-18],LE:[129,0,0],RS:[80,8,18],RE:[129,0,0],
+    LH:[52,0,-10],RH:[52,0,10],LK:[-66,0,0],RK:[-66,0,0],T:[-22,0,0]},[340,0,0],.085),
+  K(.94,'sine',{LS:[63,-6,-16],LE:[106,0,0],RS:[63,6,16],RE:[106,0,0],
+    LH:[14,0,-5],RH:[14,0,5],LK:[-11,0,0],RK:[-11,0,0],T:[7,0,0]},[356,0,0],.014),
   K(1,'sine',{},[360,0,0])
  ]}
 };
+// CHANGED: Directional curves — a punch should accelerate off the cocked elbow,
+ // CHANGED: sidesteps hit their traveling pose quickly but land smoothly.
 const ease={
  sine:t=>(1-Math.cos(Math.PI*t))/2,
- outCubic:t=>1-(1-t)**3
+ outCubic:t=>1-(1-t)**3,
+ outQuint:t=>1-(1-t)**5,
+ inOutCubic:t=>t<.5?4*t*t*t:1-(-2*t+2)**3/2
 };
 const clamp=t=>Math.max(0,Math.min(1,t));
 const KEYS=['LS','RS','LE','RE','LH','RH','LK','RK','T','H'];
