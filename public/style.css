@@ -400,3 +400,75 @@
 @media(prefers-reduced-motion:reduce){
   #selectScreen .roster-item{transition:none}
 }
+
+
+/* CHANGED: v0.8.13 HEAD-ONLY LEGO ROSTER.
+   These heads use each fighter's existing --cloth color. The empty circle
+   surrounding the head keeps the former 3x3 roster selection and glow. */
+#selectScreen .roster-item .lego-head-portrait {
+  position:relative;
+  display:block;
+  width:100%;
+  height:100%;
+  margin:0;
+  overflow:hidden;
+  border-radius:50%;
+  background:
+    radial-gradient(ellipse 61% 72% at 50% 48%,
+      color-mix(in srgb,var(--glow) 53%,#35423e) 0%,
+      color-mix(in srgb,var(--glow) 38%,#171e20) 49%,
+      #0a1014 100%);
+}
+#selectScreen .roster-item .lego-head-stud {
+  position:absolute;
+  z-index:1;
+  top:11%;
+  left:40%;
+  width:20%;
+  height:17%;
+  border-radius:24% 24% 16% 16%;
+  background:linear-gradient(90deg,
+    color-mix(in srgb,var(--cloth) 75%,#090909),
+    color-mix(in srgb,var(--cloth) 82%,#ffffff) 40%,
+    var(--cloth) 78%,
+    color-mix(in srgb,var(--cloth) 67%,#050505));
+  border:1px solid color-mix(in srgb,var(--cloth) 60%,#000000);
+  box-shadow:inset 2px 0 2px #ffffff20,0 -1px 2px #ffffff24;
+}
+#selectScreen .roster-item .lego-head-shell {
+  position:absolute;
+  z-index:2;
+  top:26%;
+  left:18%;
+  width:64%;
+  height:61%;
+  border-radius:22% 22% 18% 18% / 23% 23% 14% 14%;
+  background:linear-gradient(90deg,
+    color-mix(in srgb,var(--cloth) 54%,#000000) 0%,
+    color-mix(in srgb,var(--cloth) 83%,#ffffff) 23%,
+    var(--cloth) 49%,
+    color-mix(in srgb,var(--cloth) 92%,#000000) 76%,
+    color-mix(in srgb,var(--cloth) 62%,#000000) 100%);
+  border:1px solid color-mix(in srgb,var(--cloth) 58%,#131313);
+  box-shadow:inset 3px 2px 3px #ffffff20,
+             inset -4px 0 5px #0000002c,
+             0 7px 12px #0008;
+}
+#selectScreen .roster-item .lego-head-shell::before {
+  content:'';
+  position:absolute;
+  top:9%;
+  bottom:15%;
+  left:13%;
+  width:13%;
+  border-radius:80%;
+  background:linear-gradient(90deg,#ffffff00,#ffffff34,#ffffff06);
+}
+#selectScreen .roster-item .lego-head-shell::after {
+  content:'';
+  position:absolute;
+  inset:auto 5% 0;
+  height:8%;
+  border-radius:0 0 45% 45%;
+  background:linear-gradient(180deg,transparent,#00000026);
+}
