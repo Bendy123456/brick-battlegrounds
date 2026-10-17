@@ -1,8 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.10 TITLE-FLANKING FIGHTERS
+# BRICK BATTLEGROUNDS — v0.8.11 DOJO INTO DARKNESS
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.11:** Reworked the full-screen live 3D menu dojo so the shoji wall and roof dissolve into charcoal darkness instead of a blue enclosed room. Warm neutral fill and lantern lights, distance fog, subtle procedural floating haze, and a stronger edge vignette replace the cold backdrop. Fighter sizes/positions, title, main-menu buttons, roster-after-Fight and online matchmaking are unchanged.
 
 - **v0.8.10:** Removed the floating Crimson/Verdant names and VS label from the full-screen menu. Moved the live LEGO fighters to opposite sides of the centered title, turned both slightly inward, and kept their original model scale. Their podiums follow their responsive positions, while Fight → roster and online room flows are unchanged.
 
