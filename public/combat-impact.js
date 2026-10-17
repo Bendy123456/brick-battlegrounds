@@ -48,7 +48,12 @@ export function startImpact(def,knockdown){
  }
 }
 export function tickImpact(f,dt){
- f.ragdoll=Math.max(0,(f.ragdoll||0)-dt);
+ const old=f.ragdoll||0; // CHANGED: Track knockdown ending.
+ f.ragdoll=Math.max(0,old-dt);
+ if(old>0&&f.ragdoll===0){ // CHANGED: Clean up fall orientation upon recovery.
+  f.visual.rotation.x=0;
+  f.visual.rotation.z=0;
+ }
 }
 export function poseKnockdown(f){
  const total=f.ragdollTotal||KNOCKDOWN_SECONDS;
