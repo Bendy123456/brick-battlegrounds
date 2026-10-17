@@ -1,4 +1,4 @@
-// BRICK BATTLEGROUNDS v0.7.5 — Option B: plain classic minifigure prototype.
+// BRICK BATTLEGROUNDS v0.7.6 — Option B: plain classic minifigure prototype.
 // Replace public/classic-ninja.js with this file.
 // Only VERDANT and CRIMSON use this model; public/arena.js already restricts the swap.
 // Preserve the exact shoulder / elbow / hip / head rig interface for existing combat.
@@ -110,56 +110,60 @@ function makeCHand(parent, material) {
 }
 
 function makeArmShell(parent, material, sx) {
-  // Fuller shoulder, defined LEGO-like downward elbow bend, narrow wrist cuff.
-  // One smooth sleeve, with the bottom ending just above a tiny wrist tube.
+  // v0.7.6: a real minifigure-inspired elbow silhouette.
+  // The upper arm travels outward diagonally, reaches its widest point at the
+  // elbow, then the forearm slopes slightly back inwards towards the C-hand.
+  // It is one sealed, molded sleeve — no detached ball-shaped elbow joint.
   const rings = [
     // y, outward x offset, lateral radius, front/back radius, z offset
-    [ 0.09, 0.008,0.10,  0.10,  0.00],
-    [ 0.05, 0.015,0.15,  0.14,  0.00],
-    [-0.04,0.040,0.17,  0.16, -0.005],
-    [-0.16,0.052,0.16,  0.16, -0.01],
-    [-0.28,0.072,0.145, 0.145,-0.012],
-    [-0.40,0.087,0.125, 0.13, -0.015],
-    [-0.48,0.098,0.105, 0.115,-0.018],
-    [-0.54,0.108,0.095, 0.105,-0.02],
-    [-0.58,0.115,0.082, 0.092,-0.02]
+    [ 0.09, 0.008,0.098,0.103, 0.00],
+    [ 0.05, 0.015,0.141,0.144, 0.00],
+    [-0.04, 0.044,0.156,0.159,-0.004],
+    [-0.13, 0.089,0.157,0.156,-0.007],
+    [-0.21, 0.142,0.153,0.151,-0.012],
+    // Elbow knuckle: distinct turn, with a fuller outer radius.
+    [-0.265,0.176,0.149,0.146,-0.015],
+    [-0.318,0.179,0.145,0.145,-0.018],
+    [-0.362,0.171,0.138,0.137,-0.019],
+    // Lower forearm returns inward and tapers to the wrist cuff.
+    [-0.420,0.150,0.132,0.131,-0.020],
+    [-0.502,0.116,0.115,0.115,-0.020],
+    [-0.559,0.111,0.092,0.099,-0.020],
+    [-0.580,0.111,0.078,0.088,-0.020]
   ];
-  const sides = 24, vertices = [], indices = [];
-  for (const [y, offset, rx, rz, z] of rings) {
-    for (let i = 0; i < sides; i++) {
-      const t = (i / sides) * Math.PI * 2;
-      vertices.push(sx * (offset + rx * Math.cos(t)), y, z + rz * Math.sin(t));
+  const sides=32, vertices=[], indices=[];
+  for(const [y,offset,rx,rz,z] of rings){
+    for(let i=0;i<sides;i++){
+      const t=(i/sides)*Math.PI*2;
+      vertices.push(sx*(offset+rx*Math.cos(t)),y,z+rz*Math.sin(t));
     }
   }
-  for (let j = 0; j < rings.length - 1; j++) {
-    for (let i = 0; i < sides; i++) {
-      const n = (i + 1) % sides;
-      const a = j * sides + i, b = j * sides + n;
-      const c = (j + 1) * sides + i, d = (j + 1) * sides + n;
-      if (sx === 1) indices.push(a,b,c,b,d,c);
+  for(let row=0;row<rings.length-1;row++){
+    for(let i=0;i<sides;i++){
+      const next=(i+1)%sides;
+      const a=row*sides+i,b=row*sides+next;
+      const c=(row+1)*sides+i,d=(row+1)*sides+next;
+      if(sx===1)indices.push(a,b,c,b,d,c);
       else indices.push(a,c,b,b,c,d);
     }
   }
-  // Seal both ends for consistent shading during attacks.
-  const top = vertices.length / 3;
-  vertices.push(sx * rings[0][1], rings[0][0], rings[0][4]);
-  const bottom = vertices.length / 3;
-  const last = rings[rings.length - 1];
-  vertices.push(sx * last[1], last[0], last[4]);
-  for (let i = 0; i < sides; i++) {
-    const n = (i + 1) % sides, base = (rings.length - 1) * sides;
-    if (sx === 1) {
-      indices.push(top, i, n, bottom, base+n, base+i);
-    } else {
-      indices.push(top, n, i, bottom, base+i, base+n);
-    }
+  // Seal shoulder and wrist ends for clean plastic shading.
+  const top=vertices.length/3;
+  vertices.push(sx*rings[0][1],rings[0][0],rings[0][4]);
+  const bottom=vertices.length/3;
+  const last=rings[rings.length-1];
+  vertices.push(sx*last[1],last[0],last[4]);
+  for(let i=0;i<sides;i++){
+    const next=(i+1)%sides, base=(rings.length-1)*sides;
+    if(sx===1)indices.push(top,i,next,bottom,base+next,base+i);
+    else indices.push(top,next,i,bottom,base+i,base+next);
   }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
   geo.setIndex(indices);
   geo.computeVertexNormals();
-  const sleeve = put(parent, geo, material);
-  sleeve.name = 'ClassicBentArmShell';
+  const sleeve=put(parent,geo,material);
+  sleeve.name='BentElbowMinifigureArm';
   return sleeve;
 }
 
@@ -175,7 +179,7 @@ function makeArm(body, material, sx) {
   makeArmShell(shoulder, material, sx);
   // Keep exactly the elbow pivot the combat engine expects.
   const elbow = new THREE.Group();
-  elbow.position.set(sx * 0.115, -0.575, -0.02);
+  elbow.position.set(sx * 0.111, -0.575, -0.02);
   shoulder.add(elbow);
   const wrist = cylinder(elbow, material, 0.078,0.078,0.075, 0,-0.05,0, 20);
   wrist.name = 'WristTube';
@@ -186,7 +190,7 @@ function makeArm(body, material, sx) {
 
 export function buildClassicNinja(mainColor){
   const visual=new THREE.Group();
-  visual.name='PLAIN_CLASSIC_MINIFIG_V075';
+  visual.name='PLAIN_CLASSIC_MINIFIG_V076';
   const main=plastic(mainColor);
   const body=new THREE.Group();
   body.name='Torso';
