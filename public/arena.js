@@ -334,7 +334,14 @@ function poseFighter(f,dt=0){
    head.rotation.x+=.10*recoil;
   }
   // CHANGED: Lightweight grounded footstep bob, never translates fighter/hitbox.
-  f.visual.position.y=(f.onGround?Math.abs(stride)*.028*walk+idle:0);
+  // CHANGED: Plant the support foot through strikes. Normal walk/idle keeps
+  // CHANGED: its gentle bob, but committed hits settle the cosmetic rig.
+  const bob=Math.abs(stride)*.028*walk+idle;
+  const actionProgress=striking?THREE.MathUtils.clamp(f.attackTime/f.attack.len,0,1):0;
+  const weight=striking?Math.sin(actionProgress*Math.PI)**2:0;
+  const kicking=f.attack&&((f.attack.stage===3&&f.attack.kind==='light')||
+    (f.attack.kind==='heavy'&&actionProgress>.50));
+  f.visual.position.y=f.onGround?bob*(1-weight)-weight*(kicking?.09:.03):0;
   return;
  }
  // The existing special animation is deliberately kept as it was.
