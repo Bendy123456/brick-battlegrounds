@@ -1830,6 +1830,50 @@ function atTime(frames,time){
  }
  return withGuard(frames.at(-1).j);
 }
+// CHANGED: v0.8.21 -- per-joint animation curves for the nine classic fighters.
+// A joint omitted by an intermediate authored key no longer pops down to rest.
+// Cubic monotone tangents maintain velocity across keys without overshooting elbows.
+const classicTrackCache=new WeakMap();
+function trackSlope(a,b,c,axis){
+ const x=b.t-a.t,y=c.t-b.t;
+ const left=(b.v[axis]-a.v[axis])/x,right=(c.v[axis]-b.v[axis])/y;
+ if(left*right<=0)return 0;
+ return 3*(x+y)/((2*y+x)/left+(y+2*x)/right);
+}
+function classicTracks(frames){
+ let tracks=classicTrackCache.get(frames);
+ if(tracks)return tracks;
+ tracks={};
+ for(const name of NAMES){
+  const nodes=[{t:frames[0].t,v:CLASSIC_RELAXED[name]}];
+  for(let i=1;i<frames.length-1;i++){
+   if(Object.prototype.hasOwnProperty.call(frames[i].j,name))
+    nodes.push({t:frames[i].t,v:frames[i].j[name]});
+  }
+  nodes.push({t:frames.at(-1).t,v:CLASSIC_RELAXED[name]});
+  for(let i=0;i<nodes.length;i++)
+   nodes[i].m=[0,1,2].map(axis=>i===0||i===nodes.length-1?0:
+    trackSlope(nodes[i-1],nodes[i],nodes[i+1],axis));
+  tracks[name]=nodes;
+ }
+ classicTrackCache.set(frames,tracks);
+ return tracks;
+}
+function atTimeClassic(frames,time){
+ if(time<=0)return CLASSIC_RELAXED;
+ if(time>=frames.at(-1).t)return CLASSIC_RELAXED;
+ const tracks=classicTracks(frames),pose={};
+ for(const name of NAMES){
+  const nodes=tracks[name];
+  let i=1;while(i<nodes.length-1&&time>nodes[i].t)i++;
+  const a=nodes[i-1],b=nodes[i],dt=b.t-a.t,u=clamp((time-a.t)/dt);
+  const h00=2*u*u*u-3*u*u+1,h10=u*u*u-2*u*u+u;
+  const h01=-2*u*u*u+3*u*u,h11=u*u*u-u*u;
+  pose[name]=[0,1,2].map(axis=>
+   h00*a.v[axis]+h10*dt*a.m[axis]+h01*b.v[axis]+h11*dt*b.m[axis]);
+ }
+ return pose;
+}
 export function sampleCombatPose(f,dt){
  const attack=f.attack;
  if(attack?.kind==='special'){states.delete(f);return null;}
@@ -1844,7 +1888,9 @@ export function sampleCombatPose(f,dt){
  const guard=interpolate(normalGuard,highBlock,EASE.sine(st.blockBlend));
  if(data){
   if(st.attack!==attack){st.from=st.pose;st.attack=attack;}
-  const desired=atTime(data.frames,Math.min(data.len,f.attackTime));
+  // CHANGED: Classic rigs use continuous authored channels; legacy rigs retain their sampler.
+  const desired=isClassicFighter(f)?atTimeClassic(data.frames,Math.min(data.len,f.attackTime)):
+   atTime(data.frames,Math.min(data.len,f.attackTime));
   st.pose=interpolate(st.from,desired,EASE.sine(f.attackTime/data.blend));
   return st.pose;
  }
