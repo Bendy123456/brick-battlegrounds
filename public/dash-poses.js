@@ -1,6 +1,6 @@
 // BRICK BATTLEGROUNDS — v0.8.18 cinematic directional dash choreography.
-// CHANGED: Animation-only pass: more leg push-off, midair silhouettes, arm recoil,
-// CHANGED: stronger direction-specific weight transfer, and an intentional backflip.
+// CHANGED: Animation-only pass with eased first guard raise, stronger leg push-off,
+// CHANGED: arm recoil, weight transfer, and an intentional backflip with smooth landings.
 // CHANGED: ALL durations and speed values stay identical to v0.8.17; dodge physics,
 // CHANGED: dash i-frames, controls, collision, travel, and networking are untouched.
 // Angles = XYZ Euler degrees. Normalized time 0..1, keys refer to actual rig joints.
@@ -14,15 +14,15 @@ export const DASH_ANIMATIONS={
  // CHANGED: forward at the peak of the dash while the other hand stays guarding.
  forward:{duration:.36,speed:17.25,frames:[
   K(0,'sine'),
-  K(.075,'outCubic',{LS:[72,-11,-15],LE:[110,0,0],RS:[78,9,15],RE:[112,0,0],
+  K(.075,'sine',{LS:[54,-11,-15],LE:[64,0,0],RS:[56,9,15],RE:[65,0,0],
     LH:[-16,0,-9],RH:[19,0,7],LK:[12,0,0],RK:[-9,0,0],T:[-14,19,-8]},[-9,0,-2],.015),
   K(.20,'inOutCubic',{LS:[49,-21,-19],LE:[144,0,0],RS:[89,11,17],RE:[123,0,0],
     LH:[-31,0,-12],RH:[38,0,11],LK:[17,0,0],RK:[-28,0,0],T:[-22,34,-13]},[-19,0,-3],.03),
-  K(.34,'outQuint',{LS:[69,-17,-16],LE:[102,0,0],RS:[93,12,17],RE:[128,0,0],
+  K(.34,'sine',{LS:[69,-17,-16],LE:[102,0,0],RS:[93,12,17],RE:[128,0,0],
     LH:[-45,0,-13],RH:[49,0,13],LK:[18,0,0],RK:[-30,0,0],T:[-25,8,-10]},[-21,0,-2],.065),
-  K(.49,'outQuint',{LS:[112,-16,-13],LE:[6,0,0],RS:[94,12,18],RE:[128,0,0],
+  K(.49,'sine',{LS:[112,-16,-13],LE:[6,0,0],RS:[94,12,18],RE:[128,0,0],
     LH:[-38,0,-11],RH:[41,0,12],LK:[16,0,0],RK:[-24,0,0],T:[13,-29,10]},[-12,0,0],.09),
-  K(.59,'outCubic',{LS:[118,-15,-12],LE:[3,0,0],RS:[92,11,17],RE:[124,0,0],
+  K(.59,'sine',{LS:[118,-15,-12],LE:[3,0,0],RS:[92,11,17],RE:[124,0,0],
     LH:[-32,0,-10],RH:[32,0,10],LK:[13,0,0],RK:[-17,0,0],T:[20,-37,12]},[-8,0,1],.08),
   K(.70,'inOutCubic',{LS:[101,-12,-13],LE:[45,0,0],RS:[81,10,15],RE:[116,0,0],
     LH:[-16,0,-8],RH:[16,0,8],LK:[8,0,0],RK:[-10,0,0],T:[6,-16,4]},[-5,0,0],.05),
@@ -34,11 +34,11 @@ export const DASH_ANIMATIONS={
  // CHANGED: travel, low lateral torso angle, hands held near face, strong stop.
  left:{duration:.32,speed:15.75,frames:[
   K(0,'sine'),
-  K(.10,'outCubic',{LS:[77,-16,-22],LE:[119,0,0],RS:[77,9,20],RE:[114,0,0],
+  K(.10,'sine',{LS:[52,-16,-22],LE:[65,0,0],RS:[53,9,20],RE:[64,0,0],
     LH:[-16,0,-13],RH:[25,0,11],LK:[13,0,0],RK:[-11,0,0],T:[-16,-13,-12]},[-5,-7,9],.015),
-  K(.27,'outQuint',{LS:[92,-15,-27],LE:[130,0,0],RS:[85,10,23],RE:[125,0,0],
+  K(.27,'sine',{LS:[92,-15,-27],LE:[130,0,0],RS:[85,10,23],RE:[125,0,0],
     LH:[-41,0,-22],RH:[35,0,14],LK:[28,0,0],RK:[-25,0,0],T:[-15,-20,-26]},[-9,-17,23],.055),
-  K(.44,'outCubic',{LS:[89,-17,-30],LE:[123,0,0],RS:[79,11,24],RE:[120,0,0],
+  K(.44,'sine',{LS:[89,-17,-30],LE:[123,0,0],RS:[79,11,24],RE:[120,0,0],
     LH:[-47,0,-25],RH:[40,0,16],LK:[33,0,0],RK:[-28,0,0],T:[-14,-25,-29]},[-10,-20,27],.055),
   K(.62,'inOutCubic',{LS:[71,-12,-24],LE:[113,0,0],RS:[69,8,19],RE:[106,0,0],
     LH:[-25,0,-16],RH:[25,0,11],LK:[20,0,0],RK:[-18,0,0],T:[-8,-9,-18]},[-5,-12,16],.045),
@@ -52,11 +52,11 @@ export const DASH_ANIMATIONS={
  // CHANGED: shoulder counter-twist), so both have the same sense of momentum.
  right:{duration:.32,speed:15.75,frames:[
   K(0,'sine'),
-  K(.10,'outCubic',{LS:[77,-9,-20],LE:[114,0,0],RS:[77,16,22],RE:[119,0,0],
+  K(.10,'sine',{LS:[53,-9,-20],LE:[64,0,0],RS:[52,16,22],RE:[65,0,0],
     LH:[25,0,-11],RH:[-16,0,13],LK:[-11,0,0],RK:[13,0,0],T:[-16,13,12]},[-5,7,-9],.015),
-  K(.27,'outQuint',{LS:[85,-10,-23],LE:[125,0,0],RS:[92,15,27],RE:[130,0,0],
+  K(.27,'sine',{LS:[85,-10,-23],LE:[125,0,0],RS:[92,15,27],RE:[130,0,0],
     LH:[35,0,-14],RH:[-41,0,22],LK:[-25,0,0],RK:[28,0,0],T:[-15,20,26]},[-9,17,-23],.055),
-  K(.44,'outCubic',{LS:[79,-11,-24],LE:[120,0,0],RS:[89,17,30],RE:[123,0,0],
+  K(.44,'sine',{LS:[79,-11,-24],LE:[120,0,0],RS:[89,17,30],RE:[123,0,0],
     LH:[40,0,-16],RH:[-47,0,25],LK:[-28,0,0],RK:[33,0,0],T:[-14,25,29]},[-10,20,-27],.055),
   K(.62,'inOutCubic',{LS:[69,-8,-19],LE:[106,0,0],RS:[71,12,24],RE:[113,0,0],
     LH:[25,0,-11],RH:[-25,0,16],LK:[-18,0,0],RK:[20,0,0],T:[-8,9,18]},[-5,12,-16],.045),
@@ -71,19 +71,19 @@ export const DASH_ANIMATIONS={
  // CHANGED: Rotates only cosmetic visual about approximate center mass.
  back:{duration:.48,speed:14.5,frames:[
   K(0,'sine'),
-  K(.085,'outCubic',{LS:[58,-14,-20],LE:[95,0,0],RS:[58,14,20],RE:[95,0,0],
+  K(.085,'sine',{LS:[35,-14,-20],LE:[55,0,0],RS:[35,14,20],RE:[55,0,0],
     LH:[48,0,-13],RH:[48,0,13],LK:[-70,0,0],RK:[-70,0,0],T:[-36,0,0]},[-25,0,0],.014),
   K(.17,'inOutCubic',{LS:[-25,-20,-31],LE:[120,0,0],RS:[-25,20,31],RE:[120,0,0],
     LH:[57,0,-12],RH:[57,0,12],LK:[-95,0,0],RK:[-95,0,0],T:[-25,0,0]},[17,0,0],.15),
-  K(.32,'outCubic',{LS:[-42,-17,-29],LE:[119,0,0],RS:[-42,17,29],RE:[119,0,0],
+  K(.32,'sine',{LS:[-42,-17,-29],LE:[119,0,0],RS:[-42,17,29],RE:[119,0,0],
     LH:[102,0,-13],RH:[104,0,13],LK:[-127,0,0],RK:[-128,0,0],T:[-19,0,0]},[116,0,0],.20),
   K(.51,'inOutCubic',{LS:[17,-12,-15],LE:[110,0,0],RS:[17,12,15],RE:[110,0,0],
     LH:[112,0,-12],RH:[112,0,12],LK:[-138,0,0],RK:[-138,0,0],T:[-12,0,0]},[219,0,0],.25),
-  K(.69,'outCubic',{LS:[52,-8,-17],LE:[120,0,0],RS:[52,8,17],RE:[120,0,0],
+  K(.69,'sine',{LS:[52,-8,-17],LE:[120,0,0],RS:[52,8,17],RE:[120,0,0],
     LH:[91,0,-13],RH:[91,0,13],LK:[-115,0,0],RK:[-115,0,0],T:[-17,0,0]},[305,0,0],.16),
   K(.82,'inOutCubic',{LS:[80,-8,-18],LE:[129,0,0],RS:[80,8,18],RE:[129,0,0],
     LH:[52,0,-10],RH:[52,0,10],LK:[-66,0,0],RK:[-66,0,0],T:[-22,0,0]},[340,0,0],.085),
-  K(.94,'sine',{LS:[63,-6,-16],LE:[106,0,0],RS:[63,6,16],RE:[106,0,0],
+  K(.94,'sine',{LS:[38,-6,-16],LE:[49,0,0],RS:[38,6,16],RE:[49,0,0],
     LH:[14,0,-5],RH:[14,0,5],LK:[-11,0,0],RK:[-11,0,0],T:[7,0,0]},[356,0,0],.014),
   K(1,'sine',{},[360,0,0])
  ]}
