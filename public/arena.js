@@ -110,7 +110,7 @@ function fighter(color,x,z){
  const root=new THREE.Group();root.position.set(x,0,z);scene.add(root);
  const visual=buildClassicNinja(new THREE.Color(color));
  root.add(visual);
- return {root,visual,hp:150,guard:100,v:new THREE.Vector3(),onGround:true,yVel:0,face:0,attack:null,attackTime:0,attackCooldown:0,iframes:0,stun:0,dodge:0,dashKind:null,dashDuration:0,dashDirection:new THREE.Vector3(),block:false,specialCooldown:0,combo:0,comboWindow:0,queuedLight:false,score:0,moving:0,runTime:0,hitFlash:0,ragdoll:0,ragdollTotal:0,ragdollSide:1,hitChain:null,combatClock:0,prevAction:{},name:'NINJA'};
+ return {root,visual,hp:150,guard:100,v:new THREE.Vector3(),onGround:true,yVel:0,face:0,attack:null,attackTime:0,attackCooldown:0,iframes:0,stun:0,dodge:0,dashCooldown:0,dashKind:null,dashDuration:0,dashDirection:new THREE.Vector3(),block:false,specialCooldown:0,combo:0,comboWindow:0,queuedLight:false,score:0,moving:0,runTime:0,hitFlash:0,ragdoll:0,ragdollTotal:0,ragdollSide:1,hitChain:null,combatClock:0,prevAction:{},name:'NINJA'};
 }
 const p=fighter(0x1186ca,-3.8,0),cpu=fighter(0xc83d39,3.8,0);
 // CHANGED: Cache neutral joint rotations before the first animation frame.
@@ -197,7 +197,7 @@ function resetFighter(f,x){
  resetCombatPose(f);
  f.root.position.set(x,0,0);f.v.set(0,0,0);f.hp=MAX_HEALTH;f.guard=100;
  f.onGround=true;f.yVel=0;f.attack=null;f.attackTime=0;f.attackCooldown=0;
- f.combo=0;f.comboWindow=0;f.queuedLight=false;f.stun=0;f.dodge=0;f.iframes=0;
+ f.combo=0;f.comboWindow=0;f.queuedLight=false;f.stun=0;f.dodge=0;f.dashCooldown=0;f.iframes=0; // CHANGED: reset dash cooldown each round
  // CHANGED: No lingering spin, air offset or sideways vector between rounds.
  f.dashKind=null;f.dashDuration=0;f.dashDirection.set(0,0,0);clearDashVisual(f);
  // CHANGED: Reset knockdown state and landed-hit counters on a new round.
@@ -381,17 +381,19 @@ function cpuInput(dt){
 function updateFighter(f,op,dt,controls){
  // CHANGED: Elapsed time drives knockdowns and landed-combo expiration.
  f.combatClock=(f.combatClock||0)+dt;tickImpact(f,dt);
- for(const k of ['stun','attackCooldown','specialCooldown','iframes','dodge','comboWindow','hitFlash'])f[k]=Math.max(0,f[k]-dt);
+ for(const k of ['stun','attackCooldown','specialCooldown','iframes','dodge','dashCooldown','comboWindow','hitFlash'])f[k]=Math.max(0,f[k]-dt);
  f.guard=Math.min(100,f.guard+dt*(f.block?2:15));
  f.block=controls.block&&f.stun<=0&&f.guard>0&&f.dodge<=0&&!f.attack;
  if(controls.jump&&f.onGround&&f.stun<=0){f.yVel=8;f.onGround=false}
  // CHANGED: Four proper directional dashes, selected on Q / B / Circle press.
- if(controls.dodge&&f.dodge<=0&&f.stun<=0&&f.attackCooldown<=0&&!f.attack){
+ if(controls.dodge&&f.dodge<=0&&f.dashCooldown<=0&&f.stun<=0&&f.attackCooldown<=0&&!f.attack){ // CHANGED: shared dash cooldown gate
   const mx=controls.mx||0,my=controls.my||0;
   // CHANGED: W/stick-up (or no input) punches forward; A/D sidestep; S backflips.
   const type=f===cpu?'back':Math.abs(mx)>Math.abs(my)&&Math.abs(mx)>.18?(mx<0?'left':'right'):
    my>.18?'back':'forward';
   const settings=DASH_ANIMATIONS[type];f.dashKind=type;f.dashDuration=settings.duration;
+   // CHANGED: Cooldown starts on dash activation. Side dashes = 1s; forward/back = 2s.
+   f.dashCooldown=(type==='left'||type==='right')?1:2;
   f.dodge=settings.duration;f.iframes=.26; // CHANGED: Keep the existing dash i-frame window.
   // CHANGED: Character-local directions track the facing opponent, not screen pixels.
   const forward=new THREE.Vector3(-Math.sin(f.face),0,-Math.cos(f.face));
