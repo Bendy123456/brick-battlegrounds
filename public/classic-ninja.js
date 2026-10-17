@@ -1,4 +1,4 @@
-// BRICK BATTLEGROUNDS v0.7.3 — Option B: plain classic minifigure prototype.
+// BRICK BATTLEGROUNDS v0.7.4 — Option B: plain classic minifigure prototype.
 // Replace public/classic-ninja.js with this file.
 // Only VERDANT and CRIMSON use this model; public/arena.js already restricts the swap.
 // Preserve the exact shoulder / elbow / hip / head rig interface for existing combat.
@@ -88,87 +88,105 @@ function makeLeg(visual,material,sx){
   foot.name='FlatToyFoot';
   return hip;
 }
-function makeMoldedSleeve(parent,material,sx){
-  // Moulded single-piece arm based on classic toy proportions:
-  // short rounded shoulder, gently outward elbow, tapered straight cuff.
-  // This replaces the sharply bent tubing from earlier prototypes.
-  const rings=[
-    // Y, X-offset outward, lateral radius, depth radius, Z-offset
-    [.084,.010,.065,.067,.000],
-    [.042,.018,.103,.105,.000],
-    [-.037,.061,.135,.127,-.006],
-    [-.135,.105,.135,.132,-.010],
-    [-.245,.170,.126,.124,-.018],
-    [-.365,.217,.114,.113,-.024],
-    [-.455,.232,.107,.107,-.026],
-    [-.521,.222,.104,.103,-.025],
-    [-.550,.215,.080,.083,-.024]
+function makeCHand(parent, material) {
+  // Solid molded C-shaped grip: short and rounded, with a visible opening.
+  const grip = new THREE.Shape();
+  const outer = 0.148, inner = 0.082;
+  const start = -Math.PI / 2 + 0.48;
+  const end = start + (Math.PI * 2 - 0.96);
+  grip.moveTo(outer * Math.cos(start), outer * Math.sin(start));
+  grip.absarc(0, 0, outer, start, end, false);
+  grip.lineTo(inner * Math.cos(end), inner * Math.sin(end));
+  grip.absarc(0, 0, inner, end, start, true);
+  grip.closePath();
+  const geo = new THREE.ExtrudeGeometry(grip, {
+    depth: 0.10, steps: 1, bevelEnabled: true,
+    bevelThickness: 0.012, bevelSize: 0.012,
+    bevelSegments: 3, curveSegments: 28
+  });
+  const hand = put(parent, geo, material, 0, -0.165, -0.05);
+  hand.name = 'ClassicCHand';
+  return hand;
+}
+
+function makeArmShell(parent, material, sx) {
+  // Fuller shoulder, defined LEGO-like downward elbow bend, narrow wrist cuff.
+  // One smooth sleeve, with the bottom ending just above a tiny wrist tube.
+  const rings = [
+    // y, outward x offset, lateral radius, front/back radius, z offset
+    [ 0.09, 0.01, 0.10,  0.10,  0.00],
+    [ 0.05, 0.04, 0.15,  0.14,  0.00],
+    [-0.04, 0.10, 0.17,  0.16, -0.005],
+    [-0.16, 0.15, 0.16,  0.16, -0.01],
+    [-0.28, 0.18, 0.145, 0.145,-0.012],
+    [-0.40, 0.195,0.125, 0.13, -0.015],
+    [-0.48, 0.205,0.105, 0.115,-0.018],
+    [-0.54, 0.215,0.095, 0.105,-0.02],
+    [-0.58, 0.22, 0.082, 0.092,-0.02]
   ];
-  const n=24,vertices=[],indices=[];
-  for(const [y,offset,rx,rz,z] of rings){
-    for(let i=0;i<n;i++){
-      const t=2*Math.PI*i/n;
-      vertices.push(sx*(offset+rx*Math.cos(t)),y,z+rz*Math.sin(t));
+  const sides = 24, vertices = [], indices = [];
+  for (const [y, offset, rx, rz, z] of rings) {
+    for (let i = 0; i < sides; i++) {
+      const t = (i / sides) * Math.PI * 2;
+      vertices.push(sx * (offset + rx * Math.cos(t)), y, z + rz * Math.sin(t));
     }
   }
-  for(let j=0;j<rings.length-1;j++){
-    for(let i=0;i<n;i++){
-      const next=(i+1)%n;
-      const a=j*n+i,b=j*n+next,c=(j+1)*n+i,d=(j+1)*n+next;
-      if(sx===1)indices.push(a,b,c,b,d,c);
+  for (let j = 0; j < rings.length - 1; j++) {
+    for (let i = 0; i < sides; i++) {
+      const n = (i + 1) % sides;
+      const a = j * sides + i, b = j * sides + n;
+      const c = (j + 1) * sides + i, d = (j + 1) * sides + n;
+      if (sx === 1) indices.push(a,b,c,b,d,c);
       else indices.push(a,c,b,b,c,d);
     }
   }
-  const top=vertices.length/3;
-  vertices.push(sx*rings[0][1],rings[0][0],rings[0][4]);
-  const bottom=vertices.length/3;
-  const last=rings[rings.length-1];
-  vertices.push(sx*last[1],last[0],last[4]);
-  for(let i=0;i<n;i++){
-    const j=(i+1)%n,base=(rings.length-1)*n;
-    if(sx===1)indices.push(top,i,j,bottom,base+j,base+i);
-    else indices.push(top,j,i,bottom,base+i,base+j);
+  // Seal both ends for consistent shading during attacks.
+  const top = vertices.length / 3;
+  vertices.push(sx * rings[0][1], rings[0][0], rings[0][4]);
+  const bottom = vertices.length / 3;
+  const last = rings[rings.length - 1];
+  vertices.push(sx * last[1], last[0], last[4]);
+  for (let i = 0; i < sides; i++) {
+    const n = (i + 1) % sides, base = (rings.length - 1) * sides;
+    if (sx === 1) {
+      indices.push(top, i, n, bottom, base+n, base+i);
+    } else {
+      indices.push(top, n, i, bottom, base+i, base+n);
+    }
   }
-  const geo=new THREE.BufferGeometry();
-  geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
   geo.setIndex(indices);
   geo.computeVertexNormals();
-  const mesh=put(parent,geo,material);
-  mesh.name='GentlyBentSinglePieceArm';
-  return mesh;
+  const sleeve = put(parent, geo, material);
+  sleeve.name = 'ClassicBentArmShell';
+  return sleeve;
 }
-function makeArm(body,material,sx){
-  const shoulder=new THREE.Group();
-  shoulder.name=sx<0?'LeftArm':'RightArm';
-  shoulder.position.set(sx*.633,2.015,0);
+
+function makeArm(body, material, sx) {
+  const shoulder = new THREE.Group();
+  shoulder.name = sx < 0 ? 'LeftArm' : 'RightArm';
+  shoulder.position.set(sx * 0.64, 2.01, 0);
   body.add(shoulder);
-  makeMoldedSleeve(shoulder,material,sx);
-  // Preserve the elbow pivot used by every combat animation.
-  const elbow=new THREE.Group();
-  elbow.position.set(sx*.215,-.550,-.024);
+  // Compact shoulder socket integrated into the fuller molded sleeve.
+  const ball = put(shoulder, new THREE.SphereGeometry(0.12,16,12), material, 0,0.02,0);
+  ball.scale.set(1,0.95,1);
+  ball.name = 'ShoulderSocket';
+  makeArmShell(shoulder, material, sx);
+  // Keep exactly the elbow pivot the combat engine expects.
+  const elbow = new THREE.Group();
+  elbow.position.set(sx * 0.225, -0.575, -0.02);
   shoulder.add(elbow);
-  // Flush short wrist connection and a true open C, not a donut ring.
-  cylinder(elbow,material,.076,.076,.072,0,-.054,0,20);
-  const outer=.144,inner=.079,halfGap=.47;
-  const first=-Math.PI/2+halfGap;
-  const last=first+2*Math.PI-2*halfGap;
-  const grip=new THREE.Shape();
-  grip.moveTo(outer*Math.cos(first),outer*Math.sin(first));
-  grip.absarc(0,0,outer,first,last,false);
-  grip.lineTo(inner*Math.cos(last),inner*Math.sin(last));
-  grip.absarc(0,0,inner,last,first,true);
-  grip.closePath();
-  const cup=put(elbow,new THREE.ExtrudeGeometry(grip,{
-    depth:.097,steps:1,bevelEnabled:true,
-    bevelThickness:.012,bevelSize:.011,bevelSegments:3,curveSegments:30
-  }),material,0,-.164,-.049);
-  cup.name='TrueOpenCHand';
-  shoulder.userData.elbow=elbow;
+  const wrist = cylinder(elbow, material, 0.078,0.078,0.075, 0,-0.05,0, 20);
+  wrist.name = 'WristTube';
+  makeCHand(elbow, material);
+  shoulder.userData.elbow = elbow;
   return shoulder;
 }
+
 export function buildClassicNinja(mainColor){
   const visual=new THREE.Group();
-  visual.name='PLAIN_CLASSIC_MINIFIG_V073';
+  visual.name='PLAIN_CLASSIC_MINIFIG_V074';
   const main=plastic(mainColor);
   const body=new THREE.Group();
   body.name='Torso';
