@@ -1,8 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.15 BLACK FOG FIGHTER SELECT
+# BRICK BATTLEGROUNDS — v0.8.16 ANIME COMBAT POLISH
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.16:** Animation-only upgrade to all nine classic fighters' four-hit light combo and two-impact heavy hook/roundhouse. Stronger anticipation, longer readable extensions, opposite-hand guard during punches, greater hip-to-shoulder torque, more expressive knee lift, full kick re-chamber and controlled recoil back to relaxed idle. Existing 0.2304/0.3795/0.240 and 0.375/0.900 second hit moments, move durations, combo/ragdoll/stun logic, input bindings and networking are unchanged. All five pose clips and idle transitions were numerically checked.
 
 - **v0.8.15:** Implemented the cinematic black-fog character selection screen directly in the playable menu. Added drifting charcoal fog and subtle embers, replaced the compact confirmation panel with a larger, beveled black-and-gold fighter card, and upgraded the ability badge and Back/Confirm buttons to premium gold-trimmed styling. The fighter title and brushed accent use each selected character's true color. This is live DOM/CSS, not a static menu image: all nine clickable head icons, abilities, character choices, controller selection, and solo/online Confirm flows remain active. Includes narrow-screen and reduced-motion adjustments.
 
