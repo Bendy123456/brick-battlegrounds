@@ -153,24 +153,6 @@
   color:#fff5df;text-shadow:0 4px 14px #000e;
 }
 #lobby.centered-dojo .menu-tagline strong{color:#ffd99a}
-/* Side labels celebrate the two 3D models without covering the central action buttons. */
-#lobby.centered-dojo .menu-stage-labels{position:absolute;inset:0;z-index:2;pointer-events:none}
-#lobby.centered-dojo .menu-stage-label{
-  position:absolute;top:58%;display:flex;flex-direction:column;align-items:center;
-  gap:3px;text-shadow:0 3px 15px #000e;
-}
-#lobby.centered-dojo .menu-stage-label.crimson{left:clamp(16px,17vw,330px)}
-#lobby.centered-dojo .menu-stage-label.verdant{right:clamp(16px,17vw,330px)}
-#lobby.centered-dojo .menu-stage-label strong{font:900 clamp(19px,1.6vw,31px) 'Barlow Condensed',Impact,sans-serif;letter-spacing:2px}
-#lobby.centered-dojo .menu-stage-label small{font:800 clamp(7px,.6vw,10px) Inter,Arial,sans-serif;letter-spacing:2px;color:#c9bfa8}
-#lobby.centered-dojo .menu-fighter-dot{width:40px;height:3px;border-radius:2px;margin-bottom:4px}
-#lobby.centered-dojo .menu-fighter-dot.crimson{background:#fc747b;box-shadow:0 0 20px #ff5d71}
-#lobby.centered-dojo .menu-fighter-dot.verdant{background:#7deac3;box-shadow:0 0 20px #59e7b2}
-#lobby.centered-dojo .menu-versus{
-  position:absolute;left:50%;top:63%;transform:translate(-50%,-50%);
-  font:900 27px 'Barlow Condensed',Impact,sans-serif;letter-spacing:3px;
-  color:#eac07c;text-shadow:0 3px 20px #000;
-}
 /* No card: only the buttons float above the animated dojo. */
 #lobby.centered-dojo .menu-bottom{
   position:absolute;left:50%;bottom:clamp(12px,2.8vh,29px);
@@ -246,13 +228,10 @@
   #lobby.centered-dojo .menu-title-underline{margin:6px 0}
   #lobby.centered-dojo .menu-play,#lobby.centered-dojo .menu-online{min-height:55px;padding:8px 12px}
   #lobby.centered-dojo .menu-bottom{bottom:12px}
-  #lobby.centered-dojo .menu-stage-label{top:55%}
 }
 @media(max-width:1000px){
   #lobby.centered-dojo .menu-title span{font-size:clamp(56px,7vw,82px)}
   #lobby.centered-dojo .menu-title em{font-size:clamp(60px,8.8vw,105px)}
-  #lobby.centered-dojo .menu-stage-label.crimson{left:4%}
-  #lobby.centered-dojo .menu-stage-label.verdant{right:4%}
 }
 @media(max-width:780px){
   #lobby.centered-dojo .menu-header{top:22px}
@@ -260,7 +239,6 @@
   #lobby.centered-dojo .menu-title span{font-size:clamp(52px,9vw,68px)}
   #lobby.centered-dojo .menu-title em{font-size:clamp(50px,10vw,77px)}
   #lobby.centered-dojo .menu-tagline{font-size:13px}
-  #lobby.centered-dojo .menu-stage-labels{display:none}
   #lobby.centered-dojo .menu-bottom{bottom:16px;width:min(530px,91vw)}
   #lobby.centered-dojo .menu-actions{gap:8px}
   #lobby.centered-dojo .menu-play,#lobby.centered-dojo .menu-online{min-height:60px;padding:9px 10px}
