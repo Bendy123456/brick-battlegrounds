@@ -245,16 +245,25 @@ export function receiveDamage(damage){if(gameMode==='online'&&running){p.hp=Math
 cpu.root.rotation.y=Math.PI/2;p.root.rotation.y=-Math.PI/2;
 let running=false,finished=false,time=120,round=1,roundWait=0,lock=true,camYaw=-Math.PI/2,camPitch=.16;
 const keys=new Set(),mouse={drag:false,px:0,py:0};
+let mouseLightQueued=false;
 const mobileTouch=setupTouchControls();
 if(mobileTouch.enabled)renderer.domElement.style.touchAction='none';
-addEventListener('keydown',e=>{if(['Space','Tab','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.code==='KeyR'&&finished)startGame()});
+addEventListener('keydown',e=>{if(['Space','Tab','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();keys.add(e.code)});
 addEventListener('keyup',e=>keys.delete(e.code));
-addEventListener('blur',()=>keys.clear());
-renderer.domElement.addEventListener('pointerdown',e=>{mouse.drag=true;mouse.px=e.clientX;mouse.py=e.clientY});
-addEventListener('pointerup',()=>mouse.drag=false);
-addEventListener('pointermove',e=>{if(!mouse.drag)return;camYaw-=(e.clientX-mouse.px)*.005;camPitch=THREE.MathUtils.clamp(camPitch+(e.clientY-mouse.py)*.004,-.28,.75);mouse.px=e.clientX;mouse.py=e.clientY});
+addEventListener('blur',()=>{keys.clear();mouse.drag=false;mouseLightQueued=false});
+// M1 clicks trigger one light combo hit; M2 drag rotates the camera.
+renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
+renderer.domElement.addEventListener('pointerdown',e=>{
+ if(e.pointerType!=='mouse')return; // Mobile gestures use setupTouchControls.
+ if(e.button===0){if(running&&!finished)mouseLightQueued=true;return}
+ if(e.button===2){mouse.drag=true;mouse.px=e.clientX;mouse.py=e.clientY;e.preventDefault()}
+});
+addEventListener('pointerup',e=>{if(e.button===2)mouse.drag=false});
+addEventListener('pointercancel',()=>mouse.drag=false);
+addEventListener('pointermove',e=>{if(!mouse.drag||e.pointerType!=='mouse')return;camYaw-=(e.clientX-mouse.px)*.005;camPitch=THREE.MathUtils.clamp(camPitch+(e.clientY-mouse.py)*.004,-.28,.75);mouse.px=e.clientX;mouse.py=e.clientY});
 const gpPrev=[];
 function pollInput(){
+ const mouseLight=mouseLightQueued;mouseLightQueued=false;
  const touch=mobileTouch.sample();
  if(mobileTouch.enabled){camYaw-=touch.lookX*.005;camPitch=THREE.MathUtils.clamp(camPitch+touch.lookY*.004,-.28,.75)}
  const pad=Array.from(navigator.getGamepads?.()||[]).find(Boolean);
@@ -268,11 +277,11 @@ function pollInput(){
   camYaw-=rx*.041;camPitch=THREE.MathUtils.clamp(camPitch+ry*.024,-.28,.75);
  }
  const press=(name,keyboard,button)=>({edge:(keys.has(keyboard)&&!p.prevAction[name])||trigger(button)});
- const light=press('light','KeyJ',2),heavy=press('heavy','KeyK',3),dodge=press('dodge','ShiftLeft',1),jump=press('jump','Space',0),special=press('special','KeyQ',5),target=press('target','Tab',7);
+ const light=trigger(2),heavy=press('heavy','KeyR',3),dodge=press('dodge','ShiftLeft',1),jump=press('jump','Space',0),special=press('special','KeyQ',5),target=press('target','Tab',7);
  let mx=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+lx+touch.mx,my=(keys.has('KeyS')?1:0)-(keys.has('KeyW')?1:0)+ly+touch.my;
  const m=Math.hypot(mx,my);if(m>1){mx/=m;my/=m}
- for(const [name,key] of [['light','KeyJ'],['heavy','KeyK'],['dodge','ShiftLeft'],['jump','Space'],['special','KeyQ'],['target','Tab']])p.prevAction[name]=keys.has(key);
- return {mx,my,light:light.edge||touch.light,heavy:heavy.edge||touch.heavy,dodge:dodge.edge||touch.dodge,jump:jump.edge||touch.jump,special:special.edge||touch.special,block:keys.has('KeyL')||down(4)||touch.block,target:target.edge||touch.target};
+ for(const [name,key] of [['heavy','KeyR'],['dodge','ShiftLeft'],['jump','Space'],['special','KeyQ'],['target','Tab']])p.prevAction[name]=keys.has(key);
+ return {mx,my,light:mouseLight||light||touch.light,heavy:heavy.edge||touch.heavy,dodge:dodge.edge||touch.dodge,jump:jump.edge||touch.jump,special:special.edge||touch.special,block:keys.has('KeyL')||down(4)||touch.block,target:target.edge||touch.target};
 }
 const MAX_HEALTH=150,LIGHT_DAMAGE=10,HEAVY_DAMAGE=20;
 function resetFighter(f,x){
