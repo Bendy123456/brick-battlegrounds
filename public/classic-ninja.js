@@ -1,4 +1,4 @@
-// BRICK BATTLEGROUNDS v0.7.8 — Option B: plain classic minifigure prototype.
+// BRICK BATTLEGROUNDS v0.7.9 — Option B: plain classic minifigure prototype.
 // Replace public/classic-ninja.js with this file.
 // Only VERDANT and CRIMSON use this model; public/arena.js already restricts the swap.
 // Preserve the exact shoulder / elbow / hip / head rig interface for existing combat.
@@ -110,51 +110,46 @@ function makeCHand(parent, material) {
 }
 
 function makeArmShell(parent, material, sx) {
-  // v0.7.8: shoulder comes forward, elbow angles backward in depth like a classic minifigure arm.
-  // The sleeve hangs slightly clear of the torso, then bends in profile;
-  // its small C hand angles naturally at the wrist.
-  // It is one sealed, molded sleeve — no detached ball-shaped elbow joint.
+  // v0.7.9: single molded classic minifigure arm, without a detached shoulder ball.
+  // The shoulder rounds out as part of the sleeve, then slopes into a subtle elbow bend.
   const rings = [
     // y, outward x offset, lateral radius, front/back radius, z offset
-    [ 0.09, 0.005,0.098,0.103,-0.052],
-    [ 0.05, 0.012,0.141,0.144,-0.054],
-    [-0.04, 0.023,0.156,0.159,-0.044],
-    [-0.13, 0.036,0.157,0.156,-0.022],
-    [-0.21, 0.050,0.153,0.151, 0.002],
-    // Subtle elbow kink: nearly aligned with the torso, not sticking out.
-    [-0.265,0.062,0.149,0.146, 0.020],
-    [-0.318,0.066,0.145,0.145, 0.030],
-    [-0.362,0.062,0.138,0.137, 0.033],
-    // Forearm returns toward the same vertical line as the shoulder.
-    [-0.420,0.055,0.132,0.131, 0.026],
-    [-0.502,0.048,0.115,0.115, 0.018],
-    [-0.559,0.046,0.092,0.099, 0.012],
-    [-0.580,0.046,0.078,0.088, 0.012]
+    [ 0.13, 0.000,0.132,0.128,-0.020],
+    [ 0.10, 0.010,0.150,0.144,-0.018],
+    [ 0.06, 0.022,0.156,0.149,-0.015],
+    [ 0.00, 0.032,0.152,0.146,-0.008],
+    [-0.08, 0.040,0.148,0.142, 0.000],
+    [-0.16, 0.047,0.144,0.138, 0.010],
+    [-0.24, 0.056,0.139,0.133, 0.020],
+    [-0.30, 0.060,0.133,0.128, 0.028],
+    [-0.35, 0.058,0.126,0.123, 0.030],
+    [-0.42, 0.053,0.118,0.116, 0.026],
+    [-0.50, 0.048,0.104,0.104, 0.020],
+    [-0.56, 0.046,0.088,0.094, 0.014],
+    [-0.585,0.046,0.074,0.084, 0.014]
   ];
-  const sides=32, vertices=[], indices=[];
+  const sides=32,vertices=[],indices=[];
   for(const [y,offset,rx,rz,z] of rings){
     for(let i=0;i<sides;i++){
-      const t=(i/sides)*Math.PI*2;
+      const t=i/sides*Math.PI*2;
       vertices.push(sx*(offset+rx*Math.cos(t)),y,z+rz*Math.sin(t));
     }
   }
   for(let row=0;row<rings.length-1;row++){
     for(let i=0;i<sides;i++){
       const next=(i+1)%sides;
-      const a=row*sides+i,b=row*sides+next;
-      const c=(row+1)*sides+i,d=(row+1)*sides+next;
+      const a=row*sides+i,b=row*sides+next,c=(row+1)*sides+i,d=(row+1)*sides+next;
       if(sx===1)indices.push(a,b,c,b,d,c);
       else indices.push(a,c,b,b,c,d);
     }
   }
-  // Seal shoulder and wrist ends for clean plastic shading.
   const top=vertices.length/3;
   vertices.push(sx*rings[0][1],rings[0][0],rings[0][4]);
   const bottom=vertices.length/3;
   const last=rings[rings.length-1];
   vertices.push(sx*last[1],last[0],last[4]);
   for(let i=0;i<sides;i++){
-    const next=(i+1)%sides, base=(rings.length-1)*sides;
+    const next=(i+1)%sides,base=(rings.length-1)*sides;
     if(sx===1)indices.push(top,i,next,bottom,base+next,base+i);
     else indices.push(top,next,i,bottom,base+i,base+next);
   }
@@ -163,37 +158,35 @@ function makeArmShell(parent, material, sx) {
   geo.setIndex(indices);
   geo.computeVertexNormals();
   const sleeve=put(parent,geo,material);
-  sleeve.name='BentElbowMinifigureArm';
+  sleeve.name='OnePieceClassicArm';
   return sleeve;
 }
 
 function makeArm(body, material, sx) {
-  const shoulder = new THREE.Group();
-  shoulder.name = sx < 0 ? 'LeftArm' : 'RightArm';
-  shoulder.position.set(sx * 0.582, 2.01, -0.008);
+  const shoulder=new THREE.Group();
+  shoulder.name=sx<0?'LeftArm':'RightArm';
+  // Slight clearance from torso, with the rounded shoulder built into the sleeve.
+  shoulder.position.set(sx*0.545,2.01,-0.006);
   body.add(shoulder);
-  // Compact shoulder socket integrated into the fuller molded sleeve.
-  const ball = put(shoulder, new THREE.SphereGeometry(0.12,16,12), material, 0,0.02,0);
-  ball.scale.set(1,0.95,1);
-  ball.name = 'ShoulderSocket';
-  makeArmShell(shoulder, material, sx);
-  // Keep exactly the elbow pivot the combat engine expects.
-  const elbow = new THREE.Group();
-  elbow.position.set(sx * 0.046, -0.575, 0.012);
+  makeArmShell(shoulder,material,sx);
+
+  // Preserve the articulated pivot used by combat animations and blocking.
+  const elbow=new THREE.Group();
+  elbow.position.set(sx*0.046,-0.585,0.014);
   shoulder.add(elbow);
-  const wrist = cylinder(elbow, material, 0.078,0.078,0.075, 0,-0.05,0, 20);
-  wrist.name = 'WristTube';
-  const hand=makeCHand(elbow, material);
+  const wrist=cylinder(elbow,material,0.078,0.078,0.075,0,-0.05,0,20);
+  wrist.name='WristTube';
+  const hand=makeCHand(elbow,material);
   hand.rotation.z=sx<0?-0.17:0.17;
   hand.rotation.x=-0.08;
   hand.rotation.y=sx<0?0.06:-0.06;
-  shoulder.userData.elbow = elbow;
+  shoulder.userData.elbow=elbow;
   return shoulder;
 }
 
 export function buildClassicNinja(mainColor){
   const visual=new THREE.Group();
-  visual.name='PLAIN_CLASSIC_MINIFIG_V078';
+  visual.name='PLAIN_CLASSIC_MINIFIG_V079';
   const main=plastic(mainColor);
   const body=new THREE.Group();
   body.name='Torso';
