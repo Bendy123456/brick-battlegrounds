@@ -1,79 +1,92 @@
-// CHANGED: CRIMSON / VERDANT exclusively. Stylized anime battlegrounds poses.
-// Seconds are real elapsed time, XYZ Euler rotations are DEGREES.
-// Existing hit contacts are left untouched in arena.js. Keys:
-// LS/RS shoulders, LE/RE elbows, LH/RH hips, LK/RK knees, T waist, H head.
-// Full body keys are present at every frame, so absent keys never inherit the
-// other seven fighters' raised-guard stance.
+// BRICK BATTLEGROUNDS — v0.8.16 exaggerated anime-battleground combat animations.
+// CHANGED: All nine classic fighters share this articulated rig animation table.
+// CHANGED: Animation only. No modifications to attack durations, damage, collision,
+// CHANGED: input, hit timestamps, stun, ragdoll, physics, or network sync.
+// Angles are XYZ Euler DEGREES; combat-poses.js converts to radians at render.
 export const CLASSIC_RELAXED={
  LS:[8,-4,-9],LE:[9,0,0],RS:[10,4,9],RE:[9,0,0],
  LH:[-6,0,-3],RH:[7,0,3],LK:[3,0,0],RK:[3,0,0],
  T:[1,-4,0],H:[0,0,0]
 };
 const frame=(t,e,j={})=>({t,e,j:{...CLASSIC_RELAXED,...j}});
+
 export const CLASSIC_COMBAT_POSES={
  light:[
-  // 1: lead jab. Wind back, torso turns, fast near-horizontal extension.
-  {name:'LEFT JAB',len:.48,blend:.050,frames:[
+  // CHANGED: 1 / LEFT JAB — compressed crouch, shoulder-loaded coil, sharp snap,
+  // CHANGED: tiny impact overshoot, tight right-hand face guard throughout the hit.
+  {name:'LEFT JAB',len:.48,blend:.045,frames:[
    frame(0,'sine'),
-   frame(.092,'sine',{LS:[-33,-19,-23],LE:[125,0,0],RS:[72,9,13],RE:[105,0,0],T:[-8,32,-10],LH:[-16,0,-5],RH:[10,0,3]}),
-   frame(.155,'sine',{LS:[38,-14,-14],LE:[105,0,0],RS:[76,9,14],RE:[105,0,0],T:[5,-15,5],LH:[-20,0,-5],RH:[11,0,4]}),
-   frame(.205,'outCubic',{LS:[109,-16,-9],LE:[17,0,0],RS:[80,10,15],RE:[111,0,0],T:[14,-35,9],LH:[-20,0,-6],RH:[12,0,4],RK:[-9,0,0]}),
-   frame(.2304,'outCubic',{LS:[125,-20,-8],LE:[1,0,0],RS:[81,10,15],RE:[112,0,0],T:[18,-41,12],LH:[-22,0,-7],RH:[13,0,4],RK:[-10,0,0]}),
-   frame(.277,'sine',{LS:[103,-12,-10],LE:[22,0,0],RS:[75,9,13],RE:[107,0,0],T:[11,-24,7],LH:[-16,0,-5]}),
-   frame(.356,'sine',{LS:[43,-6,-12],LE:[65,0,0],RS:[37,5,12],RE:[66,0,0],T:[3,-9,1]}),
+   frame(.070,'sine',{LS:[-45,-27,-20],LE:[139,0,0],RS:[88,11,15],RE:[120,0,0],T:[-13,27,-13],LH:[-22,0,-8],RH:[14,0,5],LK:[13,0,0],RK:[-12,0,0]}),
+   frame(.130,'sine',{LS:[38,-22,-18],LE:[112,0,0],RS:[91,12,15],RE:[127,0,0],T:[3,-10,3],LH:[-25,0,-9],RH:[17,0,5],RK:[-14,0,0]}),
+   frame(.190,'outCubic',{LS:[120,-21,-14],LE:[15,0,0],RS:[94,12,16],RE:[131,0,0],T:[19,-42,13],LH:[-27,0,-10],RH:[20,0,5],LK:[16,0,0],RK:[-16,0,0]}),
+   frame(.2304,'outCubic',{LS:[137,-24,-13],LE:[2,0,0],RS:[97,14,17],RE:[132,0,0],T:[25,-51,16],LH:[-28,0,-11],RH:[21,0,6],LK:[17,0,0],RK:[-17,0,0]}),
+   frame(.254,'outCubic',{LS:[143,-22,-12],LE:[6,0,0],RS:[97,14,17],RE:[131,0,0],T:[26,-55,16],LH:[-25,0,-10],RH:[20,0,5]}),
+   frame(.315,'sine',{LS:[91,-13,-12],LE:[50,0,0],RS:[88,12,15],RE:[122,0,0],T:[12,-28,8],LH:[-20,0,-7],RH:[14,0,4]}),
+   frame(.399,'sine',{LS:[49,-5,-12],LE:[85,0,0],RS:[53,7,12],RE:[91,0,0],T:[2,-10,0],LH:[-8,0,-3],RH:[8,0,3]}),
    frame(.48,'sine')
   ]},
-  // 2: rear straight. Opposite torso twist and meaningful foot plant.
-  {name:'RIGHT CROSS',len:.48,blend:.05,frames:[
+  // CHANGED: 2 / RIGHT CROSS — deeper rear-side twist and more decisive heel-to-
+  // CHANGED: shoulder transfer, left hand stays tight to the cheek until recoil.
+  {name:'RIGHT CROSS',len:.48,blend:.045,frames:[
    frame(0,'sine'),
-   frame(.100,'sine',{RS:[-39,21,24],RE:[126,0,0],LS:[75,-8,-14],LE:[107,0,0],T:[-10,-34,12],RH:[-20,0,6],LH:[10,0,-5]}),
-   frame(.160,'sine',{RS:[42,14,14],RE:[102,0,0],LS:[77,-8,-16],LE:[110,0,0],T:[7,16,-6],RH:[-23,0,7],LH:[13,0,-5]}),
-   frame(.208,'outCubic',{RS:[109,15,11],RE:[16,0,0],LS:[82,-9,-17],LE:[111,0,0],T:[16,37,-10],RH:[-23,0,7],LH:[14,0,-6],LK:[-11,0,0]}),
-   frame(.2304,'outCubic',{RS:[127,20,9],RE:[1,0,0],LS:[83,-10,-17],LE:[111,0,0],T:[20,45,-13],RH:[-25,0,9],LH:[14,0,-6],LK:[-14,0,0]}),
-   frame(.282,'sine',{RS:[102,12,10],RE:[28,0,0],LS:[74,-8,-15],LE:[110,0,0],T:[11,27,-6]}),
-   frame(.37,'sine',{RS:[40,5,12],RE:[65,0,0],LS:[40,-5,-12],LE:[67,0,0],T:[3,8,-2]}),
+   frame(.077,'sine',{RS:[-49,30,25],RE:[141,0,0],LS:[87,-12,-17],LE:[121,0,0],T:[-16,-38,17],RH:[-28,0,9],LH:[15,0,-6],RK:[16,0,0],LK:[-12,0,0]}),
+   frame(.139,'sine',{RS:[50,23,18],RE:[109,0,0],LS:[93,-12,-16],LE:[126,0,0],T:[5,15,-3],RH:[-29,0,10],LH:[17,0,-6],RK:[17,0,0],LK:[-13,0,0]}),
+   frame(.196,'outCubic',{RS:[120,20,14],RE:[15,0,0],LS:[96,-13,-18],LE:[132,0,0],T:[21,45,-14],RH:[-33,0,12],LH:[19,0,-8],RK:[19,0,0],LK:[-18,0,0]}),
+   frame(.2304,'outCubic',{RS:[143,23,13],RE:[3,0,0],LS:[97,-14,-18],LE:[133,0,0],T:[28,57,-18],RH:[-36,0,13],LH:[21,0,-9],RK:[20,0,0],LK:[-20,0,0]}),
+   frame(.254,'outCubic',{RS:[148,21,12],RE:[7,0,0],LS:[97,-14,-18],LE:[131,0,0],T:[28,60,-18],RH:[-34,0,12],LH:[20,0,-9]}),
+   frame(.324,'sine',{RS:[92,12,12],RE:[54,0,0],LS:[87,-11,-17],LE:[123,0,0],T:[13,29,-8],RH:[-19,0,8],LH:[13,0,-5]}),
+   frame(.398,'sine',{RS:[46,5,12],RE:[84,0,0],LS:[50,-6,-13],LE:[94,0,0],T:[3,7,-2],RH:[0,0,4]}),
    frame(.48,'sine')
   ]},
-  // 3: front kick. Knee shoots HIGH, shin folds, then snaps fully straight.
-  {name:'RIGHT KICK',len:.69,blend:.065,frames:[
+  // CHANGED: 3 / RIGHT KICK — preserve familiar front snapkick silhouette,
+  // CHANGED: but push knee higher, support-leg compression, full extension and
+  // CHANGED: obvious rechamber; both hands continue guarding the head.
+  {name:'RIGHT KICK',len:.69,blend:.057,frames:[
    frame(0,'sine'),
-   frame(.14,'sine',{RH:[111,-4,12],RK:[-112,0,0],LH:[11,0,-13],LK:[-22,0,0],LS:[74,-6,-14],LE:[110,0,0],RS:[75,7,14],RE:[111,0,0],T:[-20,9,-14]}),
-   frame(.228,'sine',{RH:[122,-3,15],RK:[-119,0,0],LH:[12,0,-14],LK:[-24,0,0],LS:[76,-7,-15],LE:[113,0,0],RS:[78,8,15],RE:[113,0,0],T:[-24,12,-17]}),
-   frame(.332,'outCubic',{RH:[113,-2,15],RK:[-23,0,0],LH:[13,0,-15],LK:[-24,0,0],LS:[78,-8,-15],LE:[113,0,0],RS:[79,9,15],RE:[113,0,0],T:[-23,15,-17]}),
-   frame(.3795,'outCubic',{RH:[132,-2,17],RK:[-2,0,0],LH:[14,0,-15],LK:[-24,0,0],LS:[80,-9,-16],LE:[114,0,0],RS:[80,10,16],RE:[114,0,0],T:[-26,19,-19]}),
-   frame(.440,'sine',{RH:[108,-2,15],RK:[-108,0,0],LH:[12,0,-14],LK:[-23,0,0],LS:[74,-7,-13],LE:[108,0,0],RS:[75,8,14],RE:[108,0,0],T:[-19,12,-13]}),
-   frame(.56,'sine',{RH:[52,-1,7],RK:[-71,0,0],LH:[6,0,-8],LK:[-11,0,0],LS:[38,-5,-11],LE:[64,0,0],RS:[37,5,11],RE:[65,0,0],T:[-7,3,-5]}),
-   frame(.625,'sine',{RH:[13,0,4],RK:[-20,0,0],LH:[-3,0,-4],LK:[5,0,0],T:[0,-3,0]}),
+   frame(.124,'sine',{RH:[118,-5,13],RK:[-127,0,0],LH:[13,0,-17],LK:[-27,0,0],LS:[86,-12,-18],LE:[121,0,0],RS:[88,13,18],RE:[125,0,0],T:[-25,10,-17]}),
+   frame(.225,'sine',{RH:[130,-5,18],RK:[-132,0,0],LH:[15,0,-18],LK:[-30,0,0],LS:[89,-14,-19],LE:[125,0,0],RS:[92,14,19],RE:[128,0,0],T:[-28,16,-20]}),
+   frame(.314,'outCubic',{RH:[125,-4,20],RK:[-24,0,0],LH:[16,0,-18],LK:[-31,0,0],LS:[90,-14,-18],LE:[126,0,0],RS:[92,15,19],RE:[129,0,0],T:[-28,20,-21]}),
+   frame(.3795,'outCubic',{RH:[142,-4,23],RK:[-3,0,0],LH:[18,0,-20],LK:[-32,0,0],LS:[93,-15,-19],LE:[129,0,0],RS:[95,16,20],RE:[132,0,0],T:[-32,28,-24]}),
+   frame(.405,'outCubic',{RH:[145,-4,24],RK:[-7,0,0],LH:[18,0,-19],LK:[-31,0,0],LS:[93,-15,-19],LE:[127,0,0],RS:[95,16,20],RE:[130,0,0],T:[-33,30,-25]}),
+   frame(.466,'sine',{RH:[113,-3,18],RK:[-119,0,0],LH:[13,0,-17],LK:[-27,0,0],LS:[83,-11,-17],LE:[118,0,0],RS:[86,12,18],RE:[119,0,0],T:[-22,15,-17]}),
+   frame(.563,'sine',{RH:[52,-2,9],RK:[-80,0,0],LH:[7,0,-9],LK:[-15,0,0],LS:[52,-7,-13],LE:[73,0,0],RS:[53,7,13],RE:[75,0,0],T:[-9,6,-9]}),
+   frame(.634,'sine',{RH:[16,0,4],RK:[-21,0,0],LH:[-3,0,-4],LK:[6,0,0],LS:[21,-5,-9],LE:[30,0,0],RS:[23,5,10],RE:[32,0,0],T:[-1,-3,-3]}),
    frame(.69,'sine')
   ]},
-  // 4: sweeping left hook. BENT forearm at contact, wide silhouette, not straight jab.
-  {name:'LEFT HOOK',len:.50,blend:.05,frames:[
+  // CHANGED: 4 / LEFT HOOK — distinct wide bent-arm silhouette, strongly coiled
+  // CHANGED: waist swing, and retained right-hand guard on the final combo hit.
+  {name:'LEFT HOOK',len:.50,blend:.045,frames:[
    frame(0,'sine'),
-   frame(.112,'sine',{LS:[-38,-32,-34],LE:[122,0,0],RS:[75,9,14],RE:[110,0,0],T:[-12,42,-17],LH:[-20,0,-9],RH:[12,0,5]}),
-   frame(.173,'sine',{LS:[46,-57,-42],LE:[106,0,0],RS:[77,8,14],RE:[112,0,0],T:[-1,20,-10],LH:[-20,0,-9],RH:[14,0,5]}),
-   frame(.219,'outCubic',{LS:[100,-70,-42],LE:[78,0,0],RS:[79,9,15],RE:[112,0,0],T:[18,-33,15],LH:[-22,0,-10],RH:[15,0,5]}),
-   frame(.240,'outCubic',{LS:[120,-83,-41],LE:[66,0,0],RS:[81,9,15],RE:[113,0,0],T:[24,-54,22],LH:[-25,0,-10],RH:[17,0,6]}),
-   frame(.293,'sine',{LS:[98,-58,-36],LE:[78,0,0],RS:[75,8,15],RE:[108,0,0],T:[15,-32,13]}),
-   frame(.408,'sine',{LS:[35,-12,-17],LE:[57,0,0],RS:[35,5,11],RE:[65,0,0],T:[3,-11,2]}),
+   frame(.096,'sine',{LS:[-52,-45,-40],LE:[132,0,0],RS:[91,12,17],RE:[125,0,0],T:[-19,49,-22],LH:[-28,0,-12],RH:[16,0,7],LK:[15,0,0],RK:[-17,0,0]}),
+   frame(.159,'sine',{LS:[37,-67,-48],LE:[117,0,0],RS:[96,13,17],RE:[132,0,0],T:[-2,21,-10],LH:[-30,0,-13],RH:[18,0,8]}),
+   frame(.214,'outCubic',{LS:[113,-90,-48],LE:[78,0,0],RS:[98,14,18],RE:[133,0,0],T:[23,-49,21],LH:[-34,0,-13],RH:[20,0,8],LK:[19,0,0],RK:[-22,0,0]}),
+   frame(.240,'outCubic',{LS:[139,-101,-45],LE:[71,0,0],RS:[99,15,19],RE:[136,0,0],T:[33,-64,29],LH:[-36,0,-15],RH:[24,0,9],LK:[20,0,0],RK:[-23,0,0]}),
+   frame(.263,'outCubic',{LS:[141,-109,-46],LE:[77,0,0],RS:[99,14,19],RE:[134,0,0],T:[34,-68,30],LH:[-34,0,-14],RH:[23,0,8]}),
+   frame(.331,'sine',{LS:[96,-61,-33],LE:[96,0,0],RS:[90,12,17],RE:[124,0,0],T:[17,-32,15],LH:[-18,0,-8],RH:[14,0,6]}),
+   frame(.418,'sine',{LS:[38,-11,-15],LE:[63,0,0],RS:[49,6,12],RE:[83,0,0],T:[3,-10,2]}),
    frame(.50,'sine')
   ]}
  ],
- // Heavy is one animation with TWO existing damaging contact frames.
- heavy:{name:'HOOK + ROUNDHOUSE',len:1.25,blend:.065,frames:[
+ // CHANGED: Heavy = one forceful hook then a second, spinning roundhouse kick.
+ // CHANGED: Contacts remain EXACTLY at .375s and .900s (hits [.30,.72]).
+ heavy:{name:'HOOK + ROUNDHOUSE',len:1.25,blend:.052,frames:[
   frame(0,'sine'),
-  frame(.245,'sine',{LS:[-47,-41,-44],LE:[133,0,0],RS:[77,10,17],RE:[118,0,0],T:[-14,52,-22],LH:[-22,0,-12],RH:[13,0,7]}),
-  frame(.317,'sine',{LS:[54,-58,-48],LE:[102,0,0],RS:[80,10,17],RE:[115,0,0],T:[6,11,-4],LH:[-23,0,-12],RH:[14,0,7]}),
-  frame(.350,'outCubic',{LS:[116,-74,-43],LE:[68,0,0],RS:[82,10,17],RE:[117,0,0],T:[22,-45,19],LH:[-25,0,-13],RH:[15,0,7]}),
-  frame(.375,'outCubic',{LS:[134,-89,-41],LE:[56,0,0],RS:[84,12,18],RE:[118,0,0],T:[28,-63,25],LH:[-27,0,-14],RH:[17,0,8]}),
-  frame(.460,'sine',{LS:[95,-52,-34],LE:[87,0,0],RS:[77,10,17],RE:[112,0,0],T:[17,-24,14]}),
-  frame(.557,'sine',{LS:[33,-13,-16],LE:[68,0,0],RS:[38,7,13],RE:[67,0,0],T:[-4,16,-7]}),
-  frame(.686,'sine',{RH:[111,22,21],RK:[-120,0,0],LH:[13,0,-19],LK:[-27,0,0],LS:[84,-10,-18],LE:[117,0,0],RS:[82,10,18],RE:[114,0,0],T:[-24,42,-23]}),
-  frame(.792,'sine',{RH:[126,28,25],RK:[-117,0,0],LH:[14,0,-22],LK:[-29,0,0],LS:[88,-12,-18],LE:[121,0,0],RS:[83,12,18],RE:[117,0,0],T:[-30,50,-27]}),
-  frame(.854,'outCubic',{RH:[116,30,26],RK:[-21,0,0],LH:[16,0,-22],LK:[-30,0,0],LS:[85,-11,-18],LE:[118,0,0],RS:[86,11,18],RE:[118,0,0],T:[-29,57,-28]}),
-  frame(.900,'outCubic',{RH:[135,32,26],RK:[-2,0,0],LH:[16,0,-23],LK:[-30,0,0],LS:[88,-12,-18],LE:[118,0,0],RS:[88,12,18],RE:[118,0,0],T:[-32,65,-29]}),
-  frame(.988,'sine',{RH:[112,22,22],RK:[-112,0,0],LH:[14,0,-20],LK:[-26,0,0],LS:[75,-9,-16],LE:[110,0,0],RS:[75,10,16],RE:[111,0,0],T:[-24,38,-21]}),
-  frame(1.105,'sine',{RH:[53,7,10],RK:[-77,0,0],LH:[6,0,-11],LK:[-13,0,0],LS:[37,-5,-12],LE:[72,0,0],RS:[38,6,12],RE:[73,0,0],T:[-9,11,-8]}),
-  frame(1.188,'sine',{RH:[15,2,5],RK:[-23,0,0],LH:[-3,0,-3],LS:[17,-3,-10],LE:[26,0,0],RS:[18,4,10],RE:[27,0,0],T:[-2,-2,-2]}),
+  frame(.214,'sine',{LS:[-62,-54,-49],LE:[141,0,0],RS:[91,13,19],RE:[130,0,0],T:[-22,61,-25],LH:[-36,0,-17],RH:[20,0,10],LK:[20,0,0],RK:[-19,0,0]}),
+  frame(.300,'sine',{LS:[46,-76,-50],LE:[118,0,0],RS:[96,15,21],RE:[136,0,0],T:[3,19,-8],LH:[-39,0,-17],RH:[22,0,10]}),
+  frame(.350,'outCubic',{LS:[132,-96,-46],LE:[79,0,0],RS:[99,17,21],RE:[137,0,0],T:[27,-58,25],LH:[-40,0,-18],RH:[26,0,11],LK:[22,0,0],RK:[-24,0,0]}),
+  frame(.375,'outCubic',{LS:[150,-107,-45],LE:[68,0,0],RS:[101,18,22],RE:[138,0,0],T:[36,-73,32],LH:[-42,0,-18],RH:[28,0,12],LK:[24,0,0],RK:[-25,0,0]}),
+  frame(.405,'outCubic',{LS:[152,-111,-45],LE:[77,0,0],RS:[101,17,22],RE:[137,0,0],T:[37,-76,32],LH:[-36,0,-16],RH:[26,0,11]}),
+  frame(.510,'sine',{LS:[86,-44,-31],LE:[108,0,0],RS:[93,13,19],RE:[128,0,0],T:[13,-19,9],LH:[-19,0,-11],RH:[15,0,8]}),
+  // CHANGED: Clearly recompose into a guarded roundhouse, not a kick teleport.
+  frame(.608,'sine',{LS:[84,-14,-18],LE:[120,0,0],RS:[83,13,20],RE:[121,0,0],T:[-16,31,-14],RH:[60,19,17],RK:[-95,0,0],LH:[11,0,-14],LK:[-19,0,0]}),
+  frame(.728,'sine',{RH:[123,28,23],RK:[-131,0,0],LH:[17,0,-26],LK:[-33,0,0],LS:[100,-19,-20],LE:[129,0,0],RS:[102,18,21],RE:[129,0,0],T:[-33,54,-29]}),
+  frame(.818,'sine',{RH:[136,32,27],RK:[-122,0,0],LH:[19,0,-28],LK:[-35,0,0],LS:[103,-20,-20],LE:[129,0,0],RS:[106,19,22],RE:[130,0,0],T:[-38,62,-31]}),
+  frame(.862,'outCubic',{RH:[131,34,30],RK:[-20,0,0],LH:[21,0,-29],LK:[-35,0,0],LS:[106,-21,-20],LE:[131,0,0],RS:[107,20,22],RE:[131,0,0],T:[-40,68,-33]}),
+  frame(.900,'outCubic',{RH:[148,36,30],RK:[-3,0,0],LH:[22,0,-30],LK:[-36,0,0],LS:[109,-22,-20],LE:[132,0,0],RS:[111,21,22],RE:[132,0,0],T:[-43,76,-35]}),
+  frame(.927,'outCubic',{RH:[150,37,30],RK:[-8,0,0],LH:[22,0,-30],LK:[-35,0,0],LS:[110,-22,-20],LE:[130,0,0],RS:[111,21,22],RE:[130,0,0],T:[-43,79,-36]}),
+  frame(1.023,'sine',{RH:[118,24,23],RK:[-122,0,0],LH:[17,0,-24],LK:[-30,0,0],LS:[89,-14,-18],LE:[116,0,0],RS:[91,15,19],RE:[118,0,0],T:[-32,48,-25]}),
+  frame(1.132,'sine',{RH:[52,7,10],RK:[-84,0,0],LH:[7,0,-12],LK:[-14,0,0],LS:[43,-7,-13],LE:[70,0,0],RS:[44,8,13],RE:[72,0,0],T:[-11,14,-10]}),
+  frame(1.213,'sine',{RH:[14,2,5],RK:[-21,0,0],LH:[-3,0,-4],LS:[20,-4,-10],LE:[26,0,0],RS:[21,4,10],RE:[27,0,0],T:[-1,-3,-3]}),
   frame(1.25,'sine')
  ]}
 };
