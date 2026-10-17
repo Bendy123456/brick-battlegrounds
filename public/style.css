@@ -274,3 +274,129 @@
   #lobby.centered-dojo .menu-play,#lobby.centered-dojo .menu-online,
   #lobby.centered-dojo .menu-join button{transition:none}
 }
+
+
+/* CHANGED: v0.8.12 CENTERED CHARACTER SELECT — nine icons with a concise ability panel below.
+   Scope all layout changes to character select so the dojo and fighting HUD stay untouched. */
+#selectScreen{
+  background:
+    radial-gradient(ellipse 46% 43% at 50% 44%,rgba(157,119,64,.11),transparent 76%),
+    linear-gradient(155deg,#080d11 0%,#101512 52%,#080d11 100%);
+}
+#selectScreen.page.show{display:block;overflow-y:auto}
+#selectScreen .select-layout.centered-select{
+  width:100%;max-width:none;min-height:100%;margin:0 auto;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:clamp(32px,5vh,60px) 18px clamp(22px,4vh,45px);
+  gap:0;
+}
+#selectScreen .select-center{
+  width:min(660px,100%);margin:0 auto;text-align:center;
+}
+#selectScreen .eyebrow{margin:0;font-size:10px;letter-spacing:3px;color:#dcb76f}
+#selectScreen h2{
+  font:900 clamp(43px,5vw,72px)/.95 'Barlow Condensed',Impact,sans-serif;
+  margin:17px auto 10px;white-space:normal;
+}
+#selectScreen .dim{color:#aebbb5;font-size:12px;margin:0}
+#selectScreen .roster-grid{
+  width:min(374px,100%)!important;
+  max-width:374px!important;
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,112px))!important;
+  gap:16px!important;
+  justify-content:center;align-items:center;
+  margin:27px auto 0!important;
+}
+#selectScreen .roster-item{
+  width:100%!important;
+  max-width:112px!important;
+  aspect-ratio:1!important;
+  border-color:#8e7047!important;
+  background:radial-gradient(circle at 50% 30%,#364039,#0b1014 82%)!important;
+  box-shadow:0 8px 21px #0007!important;
+}
+#selectScreen .roster-item:hover,#selectScreen .roster-item.active{
+  border-color:#f3c577!important;
+  transform:translateY(-2px) scale(1.055);
+  box-shadow:0 0 0 3px #e8ba6042,0 0 24px #eac27465!important;
+}
+#selectScreen .roster-item:focus-visible{
+  outline:3px solid #f6d28b;outline-offset:4px;
+}
+#selectScreen .roster-item.active::after{
+  content:'✓';height:22px;width:22px;line-height:22px;right:3px;bottom:3px;
+  font-size:13px;font-weight:900;color:#121b1b;background:#f8ca76;
+}
+#selectScreen .selected-ability-panel{
+  width:min(480px,100%);
+  display:flex;flex-direction:column;align-items:center;
+  margin:23px auto 0;padding:16px 24px 14px;
+  border:1px solid #a7854c66;border-radius:9px;
+  background:linear-gradient(130deg,rgba(29,29,25,.88),rgba(10,16,18,.90));
+  box-shadow:0 18px 42px #0006,inset 0 1px #ffffff12;
+}
+#selectScreen .selected-label{
+  margin:0 0 4px;color:#c1a77e;
+  font:800 9px Inter,Arial,sans-serif;letter-spacing:2.2px;
+}
+#selectScreen #fighterName{
+  margin:0 0 12px;
+  font:900 clamp(27px,3vw,37px) 'Barlow Condensed',Impact,sans-serif;
+  letter-spacing:1.7px;text-transform:uppercase;
+  text-shadow:0 2px 15px #000b;
+}
+#selectScreen .selected-ability-line{
+  display:flex;justify-content:center;align-items:center;gap:12px;
+  padding:8px 16px;min-width:220px;border-radius:6px;
+  border:1px solid #8b785459;background:rgba(8,12,12,.56);
+  text-align:left;
+}
+#selectScreen .ability-icon{
+  color:#eac078;font-size:26px;text-shadow:0 0 14px #eab8654d;
+}
+#selectScreen .ability-heading{
+  display:block;color:#c2b7a2;font:800 9px Inter,Arial,sans-serif;letter-spacing:1.7px;
+}
+#selectScreen #fighterAbility{
+  color:#fff1d2;margin:4px 0 0;
+  font:900 14px Inter,Arial,sans-serif;letter-spacing:.5px;
+}
+#selectScreen .ability-note{
+  color:#aeb8b2;font:600 10px/1.5 Inter,Arial,sans-serif;
+  letter-spacing:.15px;margin:10px 0 0;
+}
+#selectScreen #roomStatus{margin:7px 0 0;color:#e0bd7e;font-size:10px}
+#selectScreen .buttonrow{
+  width:min(480px,100%);max-width:none;
+  margin:17px auto 0;display:flex;gap:12px;
+}
+#selectScreen .buttonrow button{
+  flex:1;min-width:0;min-height:52px;
+  text-align:center;font-weight:900;letter-spacing:1px;
+}
+@media(max-width:550px){
+  #selectScreen .select-layout.centered-select{justify-content:flex-start;padding:27px 14px 28px}
+  #selectScreen h2{font-size:clamp(37px,10vw,55px);margin:12px auto 8px}
+  #selectScreen .roster-grid{
+    grid-template-columns:repeat(3,minmax(0,98px))!important;
+    width:min(322px,100%)!important;
+    gap:10px!important;margin:20px auto 0!important;
+  }
+  #selectScreen .roster-item{max-width:98px!important}
+  #selectScreen .selected-ability-panel{margin-top:20px;padding:13px 13px 12px}
+  #selectScreen .ability-note{font-size:9px}
+  #selectScreen .buttonrow{gap:8px;margin-top:15px}
+  #selectScreen .buttonrow button{padding:12px 9px;font-size:10px}
+}
+@media(max-height:700px) and (min-width:551px){
+  #selectScreen .select-layout.centered-select{justify-content:flex-start;padding-top:25px}
+  #selectScreen h2{margin:10px 0}
+  #selectScreen .roster-grid{margin-top:14px!important;gap:11px!important}
+  #selectScreen .roster-item{max-width:99px!important}
+  #selectScreen .selected-ability-panel{margin-top:13px;padding:10px 20px}
+  #selectScreen .buttonrow{margin-top:13px}
+}
+@media(prefers-reduced-motion:reduce){
+  #selectScreen .roster-item{transition:none}
+}
