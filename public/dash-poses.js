@@ -71,7 +71,8 @@ export const DASH_ANIMATIONS={
  // CHANGED: Backflip has clear crouch, powerful launch, tight double-knee
  // CHANGED: tuck at inversion, deliberate untuck, and grounded landing/guard.
  // CHANGED: Rotates only cosmetic visual about approximate center mass.
- back:{duration:.48,speed:14.5,frames:[
+ // CHANGED: Increase retreat distance ~34.5% without changing backflip timing.
+ back:{duration:.48,speed:19.5,frames:[
   K(0,'sine'),
   K(.085,'sine',{LS:[35,-14,-20],LE:[55,0,0],RS:[35,14,20],RE:[55,0,0],
     LH:[48,0,-13],RH:[48,0,13],LK:[-70,0,0],RK:[-70,0,0],T:[-32,0,0]},[-19,0,0],.014),
