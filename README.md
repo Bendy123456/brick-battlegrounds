@@ -1,8 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.12 CENTERED CHARACTER SELECT
+# BRICK BATTLEGROUNDS — v0.8.13 HEAD-ONLY ROSTER ICONS
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.13:** Updated all nine centered character-selection portraits to show only the actual classic LEGO-style colored head and top stud, without torso, arms, or legs. Preserves each original roster color, selected highlight, fighter ability panel, controller selection and Confirm/online flows. In-game character models are unchanged.
 
 - **v0.8.12:** Character select now centers all nine classic minifigure icons in a 3×3 grid. The large right-side card and decorative speed/power/guard stats are removed; selecting an icon reveals a compact fighter-name and ability panel directly below. The game currently provides the same 8-second-cooldown Special Attack to every fighter, rather than distinct character powers. All roster colors, solo Confirm, controller menu navigation and multiplayer room/ready flow are preserved.
 
