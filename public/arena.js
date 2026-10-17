@@ -7,6 +7,8 @@ import {captureCombatRest,sampleCombatPose,applyCombatPose,resetCombatPose} from
 import {HIT_STUN_SECONDS,KNOCKDOWN_SECONDS,clearHitChain,recordHitForKnockdown,startImpact,tickImpact,poseKnockdown} from './combat-impact.js';
 // CHANGED: Custom forward-punch, left/right sidestep and backflip dash animations.
 import {DASH_ANIMATIONS,sampleDashPose,applyDashPose,clearDashVisual} from './dash-poses.js';
+// CHANGED: Procedural fighter-colored Spinjitzu: moving tornado, 5 hits, final ragdoll.
+import {createSpinjitzu,setSpinjitzuColor,poseSpinjitzu,stopSpinjitzu,SPIN_DURATION,SPIN_COOLDOWN,SPIN_HITS,SPIN_DAMAGE,SPIN_SPEED,SPIN_RANGE} from './spinjitzu.js';
 
 const $ = id => document.getElementById(id);
 const scene = new THREE.Scene();
@@ -110,7 +112,9 @@ function fighter(color,x,z){
  const root=new THREE.Group();root.position.set(x,0,z);scene.add(root);
  const visual=buildClassicNinja(new THREE.Color(color));
  root.add(visual);
- return {root,visual,hp:150,guard:100,v:new THREE.Vector3(),onGround:true,yVel:0,face:0,attack:null,attackTime:0,attackCooldown:0,iframes:0,stun:0,dodge:0,dashCooldown:0,dashKind:null,dashDuration:0,dashDirection:new THREE.Vector3(),block:false,specialCooldown:0,combo:0,comboWindow:0,queuedLight:false,score:0,moving:0,runTime:0,hitFlash:0,ragdoll:0,ragdollTotal:0,ragdollSide:1,hitChain:null,combatClock:0,prevAction:{},name:'NINJA'};
+ // CHANGED: Allocate the tornado once per fighter, not during each attack.
+ const unit={root,visual};createSpinjitzu(unit);
+ return {root,visual,spinjitzu:unit.spinjitzu,hp:150,guard:100,v:new THREE.Vector3(),onGround:true,yVel:0,face:0,attack:null,attackTime:0,attackCooldown:0,iframes:0,stun:0,dodge:0,dashCooldown:0,dashKind:null,dashDuration:0,dashDirection:new THREE.Vector3(),block:false,specialCooldown:0,combo:0,comboWindow:0,queuedLight:false,score:0,moving:0,runTime:0,hitFlash:0,ragdoll:0,ragdollTotal:0,ragdollSide:1,hitChain:null,combatClock:0,prevAction:{},name:'NINJA'};
 }
 const p=fighter(0x1186ca,-3.8,0),cpu=fighter(0xc83d39,3.8,0);
 // CHANGED: Cache neutral joint rotations before the first animation frame.
@@ -122,10 +126,11 @@ export function setMode(m,slot=0){gameMode=m;playerSlot=slot;remoteState=null;ne
 // CHANGED: color changes are isolated to this fighter (no shared materials).
 function dressFighter(f,c){
  resetCombatPose(f);
- clearDashVisual(f);
+ clearDashVisual(f);stopSpinjitzu(f);
  const color=new THREE.Color(c[1]);
  f.visual.userData.cloth.color.copy(color);
  f.visual.userData.baseColor=color;
+ setSpinjitzuColor(f,color); // CHANGED: Match elemental tornado to fighter color.
  f.name=c[0];
  // CHANGED: Snapshot neutral joints after choosing a fighter; no model swaps.
  captureCombatRest(f);
@@ -135,11 +140,11 @@ export function setCharacters(local,opponent){
  $('p1name').textContent=local[0];$('p2name').textContent=opponent[0];
 }
 export function startFight(){startGame()}
-export function stopFight(){running=false;finished=false;roundWait=0;mobileTouch.reset()}
+export function stopFight(){running=false;finished=false;roundWait=0;stopSpinjitzu(p);stopSpinjitzu(cpu);mobileTouch.reset()}
 export function receivePeerState(state){remoteState=state}
 export function receivePeerAttack(kind){if(gameMode==='online')tryAttack(cpu,kind)}
 // CHANGED: Multiplayer reuses the original damage event with stun/knockdown flags.
-export function receiveDamage(damage,knockdown=false,stun=true){
+export function receiveDamage(damage,knockdown=false,stun=true,spinjitzuFinisher=false){
  if(gameMode!=='online'||!running)return;
  p.hp=Math.max(0,p.hp-damage);
  if(stun){ // CHANGED: Interrupt incoming victim's attack, just like local combat.
@@ -147,6 +152,15 @@ export function receiveDamage(damage,knockdown=false,stun=true){
   clearHitChain(p);
   if(knockdown)resetCombatPose(p);
  }else p.hitFlash=.12;
+ // CHANGED: Apply confirmed finishing knockback on the remote victim's own client.
+ if(knockdown&&spinjitzuFinisher){
+  const away=new THREE.Vector3().subVectors(p.root.position,cpu.root.position).setY(0);
+  if(away.lengthSq()>.001){
+   away.normalize();p.root.position.addScaledVector(away,1.10);
+   const edge=Math.hypot(p.root.position.x,p.root.position.z);
+   if(edge>16.25){p.root.position.x*=16.25/edge;p.root.position.z*=16.25/edge}
+  }
+ }
  fx(p.root.position.clone().add(new THREE.Vector3(0,1.75,0)),0xff9977,11);
 }
 cpu.root.rotation.y=Math.PI/2;p.root.rotation.y=-Math.PI/2;
@@ -199,7 +213,7 @@ function resetFighter(f,x){
  f.onGround=true;f.yVel=0;f.attack=null;f.attackTime=0;f.attackCooldown=0;
  f.combo=0;f.comboWindow=0;f.queuedLight=false;f.stun=0;f.dodge=0;f.dashCooldown=0;f.iframes=0; // CHANGED: reset dash cooldown each round
  // CHANGED: No lingering spin, air offset or sideways vector between rounds.
- f.dashKind=null;f.dashDuration=0;f.dashDirection.set(0,0,0);clearDashVisual(f);
+ f.dashKind=null;f.dashDuration=0;f.dashDirection.set(0,0,0);clearDashVisual(f);stopSpinjitzu(f);
  // CHANGED: Reset knockdown state and landed-hit counters on a new round.
  f.ragdoll=0;f.ragdollTotal=0;f.ragdollSide=1;f.combatClock=0;clearHitChain(f);
  f.specialCooldown=0;f.hitFlash=0;f.block=false;f.visual.position.set(0,0,0);
@@ -219,7 +233,9 @@ const ATTACKS={
   {name:'LEFT HOOK',len:.50,dmg:LIGHT_DAMAGE,range:2.85,arc:1.9,hits:[.48]}
  ],
  heavy:{name:'HOOK + ROUNDHOUSE',len:1.25,dmg:HEAVY_DAMAGE,range:3.5,arc:1.85,hits:[.30,.72]},
- special:{name:'SPECIAL',len:1.02,dmg:24,range:4.5,arc:2.4,hits:[.49]}
+ // CHANGED: Five timed hits over an advancing 2-second elemental vortex.
+ special:{name:'SPINJITZU',len:SPIN_DURATION,dmg:SPIN_DAMAGE[0],range:SPIN_RANGE,
+  arc:Math.PI*2,hits:SPIN_HITS}
 };
 function tryAttack(f,kind){
  if(f.stun>0||f.dodge>0)return;
@@ -238,7 +254,7 @@ function tryAttack(f,kind){
  if(!base)return;
  f.attack={kind,stage:kind==='light'?f.combo:0,...base,hitIndex:0};
  f.attackTime=0;f.attackCooldown=base.len+.065;
- if(kind==='special')f.specialCooldown=8;
+ if(kind==='special')f.specialCooldown=SPIN_COOLDOWN;
  if(f===p&&gameMode==='online')gameEvents.onAttack?.(kind);
 }
 // Low-cost pooled-ish particle bursts: only spawned on confirmed contact.
@@ -269,7 +285,10 @@ function hit(att,def,attack){
    showToast('GUARD BREAK',.35);
   }else showToast('BLOCKED',.21);
  }else{
-  knockdown=recordHitForKnockdown(att,attack,false); // CHANGED: 4L / 2R / 2L+R.
+  // CHANGED: Normal combo rules remain. Spinjitzu only knocks down on its
+  // CHANGED: final confirmed, unblocked strike.
+  knockdown=recordHitForKnockdown(att,attack,false)||
+   (attack.kind==='special'&&attack.finisher===true);
   startImpact(def,knockdown); // CHANGED: 1s stun and attack interruption.
   clearHitChain(def); // CHANGED: Getting hit breaks your own combo.
   if(knockdown)resetCombatPose(def); // CHANGED: Hand control to knockdown pose.
@@ -278,9 +297,18 @@ function hit(att,def,attack){
    attack.kind==='light'?attack.name+' · 10':attack.kind==='heavy'?'HEAVY · 20':'SPECIAL HIT!',knockdown?.8:.29);
  }
  // CHANGED: Same multiplayer damage event; synchronize hitstun and knockdown.
- if(gameMode==='online'&&att===p)gameEvents.onHit?.(damage,{knockdown,stun:stunApplied});
+ if(gameMode==='online'&&att===p)gameEvents.onHit?.(damage,{
+  knockdown,stun:stunApplied,
+  spinjitzuFinisher:knockdown&&attack.kind==='special'&&attack.finisher===true
+ });
  const knock=new THREE.Vector3().subVectors(b,a).setY(0).normalize();
- def.v.addScaledVector(knock,blocked?1.0:attack.kind==='heavy'?4.4:2.6);
+ const finisher=knockdown&&attack.kind==='special'&&attack.finisher===true;
+ def.v.addScaledVector(knock,blocked?1.0:finisher?9.5:attack.kind==='heavy'?4.4:2.6);
+ if(finisher){
+  def.root.position.addScaledVector(knock,1.10);
+  const edge=Math.hypot(def.root.position.x,def.root.position.z);
+  if(edge>16.25){def.root.position.x*=16.25/edge;def.root.position.z*=16.25/edge}
+ }
  fx(b.clone().add(new THREE.Vector3(0,1.55,0)),blocked?0xffde97:att===p?0x71dfff:0xff8970,blocked?8:13);
 }
 // CHANGED: All LIGHT/HEAVY keyframes, angle tables and interpolation are in combat-poses.js.
@@ -298,6 +326,8 @@ function keyPose(frames,t){
 function poseFighter(f,dt=0){
  const {arms,legs,body,head}=f.visual.userData;
  const stride=Math.sin(f.runTime),walk=Math.min(1,f.moving),idle=Math.sin(performance.now()*.0028)*.026;
+ // CHANGED: Hide the tornado instantly if interrupted, knocked down or finished.
+ if(f.attack?.kind!=='special'||f.ragdoll>0)stopSpinjitzu(f);
  // CHANGED: Procedural limp-body fall takes priority over attack and idle poses.
  if(f.ragdoll>0){poseKnockdown(f);return;}
   // CHANGED: Dash animation overrides ordinary walking/attacking poses for its short duration.
@@ -307,6 +337,10 @@ function poseFighter(f,dt=0){
   }
   // CHANGED: Clear the previous backflip visual offset when dash ends/is interrupted.
   if(f.dashKind&&f.dodge<=0){clearDashVisual(f);f.dashKind=null;}
+ if(f.attack?.kind==='special'){
+  poseSpinjitzu(f); // CHANGED: Spinning classic minifigure and colored 3D vortex.
+  return;
+ }
  const combatPose=sampleCombatPose(f,dt);
  if(combatPose){
   // CHANGED: A small full-figure lean reinforces the already animated hip-height
@@ -425,6 +459,14 @@ function updateFighter(f,op,dt,controls){
   const decel=progress>.77?Math.max(.10,(1-progress)/.23):1;
   const speed=DASH_ANIMATIONS[f.dashKind].speed*decel;
   f.v.x=f.dashDirection.x*speed;f.v.z=f.dashDirection.z*speed;
+ }else if(f.attack?.kind==='special'){
+  // CHANGED: Advance toward the opponent instead of staying in the old fixed Special pose.
+  const toTarget=new THREE.Vector3().subVectors(op.root.position,f.root.position).setY(0);
+  const dist=toTarget.length();
+  const finish=1-THREE.MathUtils.smoothstep(f.attackTime,1.58,SPIN_DURATION);
+  const velocity=dist>1.75?Math.min(SPIN_SPEED,(dist-1.75)*6)*finish:0;
+  if(dist>.001)toTarget.multiplyScalar(1/dist);
+  f.v.x=toTarget.x*velocity;f.v.z=toTarget.z*velocity;
  }else{
   f.v.x=THREE.MathUtils.damp(f.v.x,dir.x*sp,8,dt);
   f.v.z=THREE.MathUtils.damp(f.v.z,dir.z*sp,8,dt);
@@ -435,13 +477,17 @@ function updateFighter(f,op,dt,controls){
  f.yVel-=21*dt;f.root.position.y+=f.yVel*dt;
  if(f.root.position.y<=0){f.root.position.y=0;f.yVel=0;f.onGround=true}
  f.moving=Math.min(1,dir.length());f.runTime+=dt*f.moving*12;
- if(lock||f===cpu)aimAt(f,op);
+ if(lock||f===cpu||f.attack?.kind==='special')aimAt(f,op);
  else if(f.moving>.12){f.face=Math.atan2(-dir.x,-dir.z);f.root.rotation.y=f.face}
  if(f.attack){
   f.attackTime+=dt;
   const t=Math.min(1,f.attackTime/f.attack.len);
   while(f.attack.hitIndex<f.attack.hits.length&&t>=f.attack.hits[f.attack.hitIndex]){
-   f.attack.hitIndex++;
+   const index=f.attack.hitIndex++;
+   if(f.attack.kind==='special'){
+    f.attack.dmg=SPIN_DAMAGE[index];
+    f.attack.finisher=index===SPIN_HITS.length-1;
+   }
    if(f===p||gameMode==='solo')hit(f,op,f.attack);
   }
   if(t>=1){
