@@ -39,3 +39,36 @@
 #portraitLarge .ninja-portrait .sigil{font-size:40px;top:10%}
 .version-tag{font:800 10px Inter,Arial,sans-serif;color:#f1c071;letter-spacing:2px;margin-left:10px}
 @media(max-width:700px){.roster-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;max-width:350px!important;gap:10px!important}}
+
+
+/* CHANGED: v0.8.7 ALL CLASSIC roster portraits. Match the playable plain
+   minifigure body instead of the retired hood/mask outfits; use each roster
+   entry's original --cloth color without introducing any new color mapping. */
+.ninja-portrait .hood{
+  top:10%;left:32%;width:36%;height:37%;border:2px solid #ffffff35;
+  border-radius:22% 22% 17% 17%;background:linear-gradient(90deg,#0003,var(--cloth) 32%,var(--cloth) 70%,#fff2);
+  box-shadow:inset 3px 0 #fff2,inset -3px 0 #0002;
+}
+.ninja-portrait .hood::before{
+  content:"";position:absolute;left:36%;top:-11%;width:28%;height:13%;
+  background:var(--cloth);border-radius:30% 30% 15% 15%;border:1px solid #ffffff33;
+}
+.ninja-portrait .face,.ninja-portrait .eyes,.ninja-portrait .brow{display:none}
+.ninja-portrait .chest{
+  top:48%;left:24%;width:52%;height:35%;border:1px solid #ffffff33;
+  clip-path:polygon(3% 0,97% 0,88% 100%,12% 100%);
+  background:linear-gradient(90deg,#0003,var(--cloth) 36%,var(--cloth) 68%,#fff2);
+}
+.ninja-portrait .sigil{display:none}
+.ninja-portrait::before,.ninja-portrait::after{
+  content:"";position:absolute;top:50%;width:14%;height:33%;
+  background:var(--cloth);border:1px solid #ffffff30;
+  border-radius:34% 34% 16% 16%;box-shadow:inset -3px 0 #0003;
+}
+.ninja-portrait::before{left:8%;transform:rotate(8deg)}
+.ninja-portrait::after{right:8%;transform:rotate(-8deg)}
+.ninja-portrait .mask{
+  display:block;top:82%;left:29%;width:42%;height:18%;
+  border:0;border-radius:0;box-shadow:none;
+  background:linear-gradient(90deg,var(--cloth) 0 46%,transparent 46% 54%,var(--cloth) 54% 100%);
+}
