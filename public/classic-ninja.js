@@ -1,4 +1,4 @@
-// Brick Battlegrounds / classic ninja prototype rig, v0.6.8.
+// Brick Battlegrounds / classic ninja prototype rig, v0.6.9.
 // Original simplified minifigure-inspired character geometry.
 // Only applied to VERDANT and CRIMSON, not the rest of the roster.
 import * as THREE from '/vendor/three.module.js';
@@ -17,12 +17,19 @@ function box(parent,w,h,d,mat,x,y,z){return add(parent,new THREE.BoxGeometry(w,h
 function cyl(parent,rt,rb,h,mat,x,y,z,segments=24){return add(parent,new THREE.CylinderGeometry(rt,rb,h,segments),mat,[x,y,z]);}
 function ball(parent,x,y,z,r,mat){return add(parent,new THREE.SphereGeometry(r,16,10),mat,[x,y,z]);}
 function slopedTorso(parent,mat){
+ // v0.6.9: clean classic toy-minifigure torso — tapered, slim and smooth.
  const shape=new THREE.Shape();
- shape.moveTo(-.47,1.10);shape.lineTo(.47,1.10);
- shape.lineTo(.59,2.02);shape.lineTo(.51,2.12);
- shape.lineTo(-.51,2.12);shape.lineTo(-.59,2.02);shape.closePath();
- const geo=new THREE.ExtrudeGeometry(shape,{depth:.46,steps:1,bevelEnabled:true,bevelThickness:.022,bevelSize:.02,bevelSegments:2,curveSegments:3});
- return add(parent,geo,mat,[0,0,-.23]);
+ shape.moveTo(-.435,1.10);shape.lineTo(.435,1.10);
+ shape.lineTo(.54,2.06);
+ shape.quadraticCurveTo(.535,2.11,.485,2.11);
+ shape.lineTo(-.485,2.11);
+ shape.quadraticCurveTo(-.535,2.11,-.54,2.06);
+ shape.closePath();
+ const geo=new THREE.ExtrudeGeometry(shape,{
+  depth:.425,steps:1,bevelEnabled:true,
+  bevelThickness:.017,bevelSize:.014,bevelSegments:3,curveSegments:6
+ });
+ return add(parent,geo,mat,[0,0,-.2125]);
 }
 function simpleLeg(parent,mat,x){
  const leg=new THREE.Group();leg.position.set(x,.99,0);parent.add(leg);
@@ -32,48 +39,64 @@ function simpleLeg(parent,mat,x){
 }
 function simpleArm(parent,main,hand,sx){
  const shoulder=new THREE.Group();
- // A tighter shoulder, matching the narrower classic minifigure silhouette.
- shoulder.position.set(sx*.705,2.03,0);
+ shoulder.position.set(sx*.65,2.025,0);
  parent.add(shoulder);
 
- // ONE gently curved plastic sleeve. Compared to v0.6.7 it is shorter,
- // narrower, and shallower, with a rounded shoulder and slim cuff.
- const outline=new THREE.Shape();
- outline.moveTo(-.12,.07);
- outline.quadraticCurveTo(.115,.11,.15,-.035);
- outline.quadraticCurveTo(.176,-.14,.155,-.26);
- outline.quadraticCurveTo(.144,-.40,.103,-.51);
- outline.quadraticCurveTo(.09,-.55,.045,-.55);
- outline.lineTo(-.09,-.55);
- outline.quadraticCurveTo(-.123,-.54,-.134,-.48);
- outline.quadraticCurveTo(-.163,-.36,-.151,-.22);
- outline.quadraticCurveTo(-.17,-.075,-.12,.07);
- const sleeveGeo=new THREE.ExtrudeGeometry(outline,{
-  depth:.225,steps:1,bevelEnabled:true,bevelThickness:.028,
-  bevelSize:.024,bevelSegments:3,curveSegments:10
- });
- const sleeve=add(shoulder,sleeveGeo,main,[0,0,-.1125]);
- sleeve.name='SlimBentMinifigureArm';
+ // Sculpted smooth minifigure arm: thin shoulder, small elbow bend,
+ // tapered cuff. Rounded in 3D, not a flat box or a giant oval capsule.
+ const rings=[
+  // height, outward curve, sideways radius, front-to-back radius
+  [.110,-.016,.068,.070],
+  [.074,.005,.111,.120],
+  [-.016,.014,.121,.125],
+  [-.125,.035,.114,.119],
+  [-.235,.074,.106,.113],
+  [-.327,.104,.099,.108],
+  [-.405,.105,.090,.104],
+  [-.472,.086,.080,.099],
+  [-.505,.078,.064,.080],
+  [-.514,.077,.025,.037]
+ ];
+ const sides=20,verts=[],faces=[];
+ for(let r=0;r<rings.length;r++){
+  const [y,bend,rx,rz]=rings[r];
+  for(let k=0;k<sides;k++){
+   const t=2*Math.PI*k/sides;
+   verts.push(bend+rx*Math.cos(t),y,rz*Math.sin(t));
+  }
+ }
+ for(let r=0;r<rings.length-1;r++){
+  for(let k=0;k<sides;k++){
+   const nk=(k+1)%sides;
+   const a=r*sides+k,an=r*sides+nk,b=(r+1)*sides+k,bn=(r+1)*sides+nk;
+   faces.push(a,an,b,an,bn,b);
+  }
+ }
+ const geo=new THREE.BufferGeometry();
+ geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+ geo.setIndex(faces);
+ geo.computeVertexNormals();
+ const sleeve=add(shoulder,geo,main);
+ sleeve.name='MoldedClassicSlimArm';
  sleeve.scale.x=sx;
 
- // Keep the elbow pivot expected by the existing fight animations.
- // The small C-shaped hand sits RIGHT underneath the sleeve—not on a long stem.
+ // Preserve existing punch/block elbow rotations and put a small grip
+ // immediately under the molded sleeve, not on a long hanging extension.
  const elbow=new THREE.Group();
- elbow.position.set(0,-.49,-.015);
+ elbow.position.set(sx*.077,-.46,-.008);
  shoulder.add(elbow);
- cyl(elbow,.082,.082,.09,hand,0,-.112,0,18);
+ cyl(elbow,.076,.076,.075,hand,0,-.104,0,18);
  const gap=.78;
  const cup=new THREE.Mesh(
-  new THREE.TorusGeometry(.128,.048,10,32,Math.PI*2-gap),hand
+  new THREE.TorusGeometry(.124,.047,10,32,Math.PI*2-gap),hand
  );
  cup.rotation.z=-Math.PI/2+gap/2;
- cup.position.set(0,-.237,-.008);
+ cup.position.set(0,-.22,-.009);
  cup.castShadow=true;cup.receiveShadow=true;
- cup.name='ShortClassicCCup';
+ cup.name='CompactClassicCGrip';
  elbow.add(cup);
-
  shoulder.userData.elbow=elbow;
- shoulder.rotation.z=sx*.09;
+ shoulder.rotation.z=sx*.055;
  return shoulder;
 }
 function buildSimpleHead(body,main,skin,ink){
@@ -100,9 +123,9 @@ export function buildClassicNinja(mainColor){
  slopedTorso(body,main);
  const head=buildSimpleHead(body,main,skin,ink);
  // One simple black belt with a small center knot and hanging strap.
- box(body,1.06,.16,.63,belt,0,1.06,0);
- ball(body,0,1.055,-.345,.095,belt);
- box(body,.10,.30,.06,belt,.05,.87,-.35);
+ box(body,.91,.14,.53,belt,0,1.065,0);
+ ball(body,0,1.055,-.292,.087,belt);
+ box(body,.10,.28,.06,belt,.05,.875,-.298);
  const arms=[simpleArm(body,main,belt,-1),simpleArm(body,main,belt,1)];
  const legs=[simpleLeg(visual,main,-.275),simpleLeg(visual,main,.275)];
  // Single plain katana sheathed diagonally across the back; no crossed oversized swords.
