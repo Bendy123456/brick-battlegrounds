@@ -33,7 +33,34 @@
     <div class="menu-modes"><span><b>01</b> NINE FIGHTERS</span><span><b>02</b> 1V1 DUELS</span><span><b>03</b> CONTROLLER READY</span></div>
   </div>
 </main>
-<section id="selectScreen" class="page"><div class="select-layout"><div class="roster"><p class="eyebrow">01 / CHARACTER SELECT</p><h2>CHOOSE YOUR <em>CHAMPION</em></h2><p class="dim">9 original ninja fighters · 3×3 roster</p><div id="rosterGrid" class="roster-grid"></div><div class="buttonrow"><button id="backHome" class="secondary">← BACK</button><button id="confirm" class="primary">CONFIRM FIGHTER →</button></div></div><div class="character-card"><p class="eyebrow" id="fighterClass">ELEMENTAL BLADE</p><div id="portraitLarge"></div><h2 id="fighterName">TEMPEST</h2><p id="fighterDescription">The storm never misses.</p><div class="stats"><span>SPEED <b>● ● ● ● ○</b></span><span>POWER <b>● ● ● ○ ○</b></span><span>GUARD <b>● ● ● ● ○</b></span></div><div id="roomStatus" class="room-status"></div></div></div></section>
+<section id="selectScreen" class="page">
+  <!-- CHANGED: v0.8.12 centered roster, with ability information directly below the selected icon grid. -->
+  <div class="select-layout centered-select">
+    <div class="roster select-center">
+      <p class="eyebrow">01 / CHARACTER SELECT</p>
+      <h2>CHOOSE YOUR <em>CHAMPION</em></h2>
+      <p class="dim">Choose one of nine brick fighters</p>
+      <div id="rosterGrid" class="roster-grid" role="group" aria-label="Choose a fighter"></div>
+      <div class="selected-ability-panel" aria-live="polite" aria-atomic="true">
+        <p class="selected-label">YOUR FIGHTER</p>
+        <h3 id="fighterName">AZURE</h3>
+        <div class="selected-ability-line">
+          <span class="ability-icon" aria-hidden="true">✦</span>
+          <div>
+            <span class="ability-heading">ABILITY</span>
+            <p id="fighterAbility">Special Attack</p>
+          </div>
+        </div>
+        <p class="ability-note">Shared by all fighters · E / R1 / RB · 8s cooldown</p>
+        <div id="roomStatus" class="room-status"></div>
+      </div>
+      <div class="buttonrow">
+        <button id="backHome" class="secondary" type="button">← BACK</button>
+        <button id="confirm" class="primary" type="button">CONFIRM FIGHTER →</button>
+      </div>
+    </div>
+  </div>
+</section>
 <section id="waiting" class="page"><div class="wait-box"><p class="eyebrow">PRIVATE MULTIPLAYER ROOM</p><h2>CHALLENGE <em>A FRIEND</em></h2><p>Send this code to your opponent. Both players need to open the same website.</p><button id="copyCode" class="room-code">------ <span>⧉ COPY</span></button><p id="waitStatus">Waiting for another player...</p><button id="waitingSelect" class="primary">SELECT MY FIGHTER →</button><button id="cancelRoom" class="ghost">LEAVE ROOM</button></div></section>
 <div id="hud" class="hidden"><div class="hud-side"><div class="player-name" id="p1name">TEMPEST</div><div class="hp-track"><div class="hp-fill" id="hp1"></div></div><small id="st1">GUARD 100 · SPECIAL READY</small><strong id="sc1">○ ○</strong></div><div class="hud-center"><div id="roundLabel">BEST OF 3 · ROUND 1</div><div id="timer">02:00</div></div><div class="hud-side right"><div class="player-name" id="p2name">INFERNO</div><div class="hp-track"><div class="hp-fill danger" id="hp2"></div></div><small id="st2">GUARD 100</small><strong id="sc2">○ ○</strong></div></div><div id="toast"></div><div id="reticle">⌾</div><div id="gameHelp" class="hidden">WASD MOVE · M1 LIGHT ×4 · R HEAVY · Q+W PUNCH DASH · Q+A/D SIDESTEP · Q+S BACKFLIP · PAD B/○ DASH · E SPECIAL · L BLOCK · SPACE JUMP · M2 CAMERA · TAB LOCK <span id="controller"></span></div><button id="quit" class="hidden">✕ EXIT MATCH</button>
 <div id="result" class="modal hidden"><h2 id="resultTitle">VICTORY</h2><p id="resultText">The arena has a new champion.</p><button id="again" class="primary">PLAY AGAIN</button><button id="resultExit" class="secondary">MAIN MENU</button></div>
