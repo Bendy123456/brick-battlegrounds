@@ -1,8 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.20 DIRECTIONAL DASH COOLDOWNS
+# BRICK BATTLEGROUNDS — v0.8.21 ANIMATION DIRECTOR PASS
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.21 — Animation director pass:** Reworked all four light-combo poses, both heavy impacts, and all four directional dash clips to use continuous, per-joint monotone cubic motion rather than coming to a halt at every intermediate keyframe. The classic animation table now specifies each joint only at intentional key times, removing automatic rest-angle resets that produced hand and knee popping. Retimed guard raising, punch extension, front-kick recoil and heavy roundhouse unfolding. Reviewed approximate articulated 3D pose silhouettes and corrected overly low punching fists by balancing torso pitch/rotation against the shoulder drive; the forward punch-dash shares the same correction. Strike-phase visual bob settles into the support foot. The existing nine classic models, all original attack contact frames/durations, four-hit sequence, stuns/ragdolls, damage/hitboxes, dash travel, 2s/1s dash cooldowns, inputs and online state format are unchanged. Kinematic tests at 60 FPS passed for every attack and dash, including guarded off-hand, reset to idle, and stable clip endpoints.
 
 - **v0.8.20:** Backward backflip dash speed increased from 14.5 to 19.5 (~34.5% more travel) with the same .48s animation. Added a per-fighter shared dash cooldown, starting on dash activation: 2.0 seconds for forward and backward, 1.0 second for left/right. Dash input is blocked until the cooldown expires, and the timer clears on every new round. Original controller/keyboard/touch controls, directional animations, dash i-frames, collision, damage, other dash speeds and multiplayer message formats are unchanged. Simulated game-tick tests passed for each direction and confirmed the new backward travel distance.
 
