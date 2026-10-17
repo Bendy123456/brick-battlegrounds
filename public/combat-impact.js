@@ -1,4 +1,4 @@
-// CHANGED: Crimson/Verdant rise to their relaxed stance, not permanent high guard.
+// CHANGED: All nine classic fighters rise to relaxed stance, not permanent high guard.
 import {CLASSIC_RELAXED} from './classic-combat.js';
 // CHANGED: Clear backflip offsets if an enemy interrupts a dash.
 import {clearDashVisual} from './dash-poses.js';
@@ -73,7 +73,7 @@ export function poseKnockdown(f){
  const {arms,legs,body,head}=f.visual.userData;
  const mix=(down,guard)=>down*collapsed+guard*wake;
  const rad=Math.PI/180;
- // CHANGED: Classic minifigures end their fall arms-down; other rigs unchanged.
+ // CHANGED: Classic minifigures finish their get-up with their arms down.
  const classic=f.visual.name.startsWith('PLAIN_CLASSIC_MINIFIG_');
  const stance=classic?CLASSIC_RELAXED:null;
  const joint=(key,axis,fallback)=>classic?stance[key][axis]*rad:fallback;
