@@ -1,4 +1,4 @@
-// CHANGED: v0.8.9 FULL-SCREEN CINEMATIC DOJO MAIN MENU.
+// CHANGED: v0.8.11 DOJO FADES INTO DARKNESS — no boxed-in blue room.
 // Uses the actual arena minifigure geometry, actual roster colors, and actual
 // anime animation evaluator. This menu scene is visual-only: no combat state.
 import * as THREE from '/vendor/three.module.js';
@@ -16,9 +16,10 @@ const addMesh=(parent,geometry,material,x=0,y=0,z=0)=>{
 const block=(parent,w,h,d,x,y,z,material)=>addMesh(parent,new THREE.BoxGeometry(w,h,d),material,x,y,z);
 const glow=(color,intensity=2)=>new THREE.MeshBasicMaterial({color,transparent:true,opacity:.95,depthWrite:false,blending:THREE.AdditiveBlending});
 function makeDojo(scene){
- const wood=mat(0x1d2025,.76),woodLight=mat(0x353037,.64),lacquer=mat(0x451f23,.45),
-  black=mat(0x090e15,.88),gold=mat(0xc89a53,.34,.48),tile=mat(0x30343d,.69),
-  ember=mat(0xffb65c,.31,.1,0xff8b31,1.25),jade=mat(0x72e1bc,.35,.12,0x21b986,.8);
+ // CHANGED: Warm, neutral charcoal materials replace the flat navy/blue room.
+ const wood=mat(0x1c1817,.85),woodLight=mat(0x302725,.82),lacquer=mat(0x361d1b,.56),
+  black=mat(0x0d0b0b,.91),gold=mat(0xb89158,.47,.27),tile=mat(0x292625,.81),
+  ember=mat(0xffbe75,.42,.06,0xff8b36,1.55),jade=mat(0xd3b582,.55,.05,0x947548,.30);
  // Raised ceremonial dueling floor, a geometric octagon with inset trim.
  addMesh(scene,new THREE.CylinderGeometry(6.03,6.28,.38,8),wood,0,-.31,-.65);
  addMesh(scene,new THREE.CylinderGeometry(5.83,5.98,.08,8),tile,0,-.10,-.65);
@@ -33,34 +34,44 @@ function makeDojo(scene){
   if(Math.hypot(x*.88,(z+.4)*.82)>5.50)continue;
   block(scene,.82,.022,.77,x*.88,-.032,z*.82-.65,(x+z)%2?woodLight:wood);
  }
- // Actual modeled ceremonial dojo / gate, kept behind the fighter silhouettes.
+
+ // CHANGED: A partial dojo emerges from darkness, rather than a wall-sized room.
+ // The outer shoji panels become translucent and dissolve toward the scene fog.
  const back=-4.8;
- block(scene,17.1,.28,.42,0,4.12,back,lacquer); // CHANGED: wide full-screen dojo façade
- block(scene,17.8,.14,.61,0,4.38,back,black); // CHANGED: extend roof framing
- block(scene,18.2,.13,.5,0,4.58,back,gold); // CHANGED: full-width gold trim
- for(const x of [-8.40,-4.55,4.55,8.40]){ // CHANGED: additional exterior columns
-  block(scene,.34,4.9,.43,x,2.02,back,lacquer);
-  block(scene,.42,.12,.5,x,3.87,back,gold);
-  block(scene,.47,.12,.5,x,.40,back,gold);
+ block(scene,12.8,.24,.42,0,4.12,back,lacquer);
+ block(scene,13.4,.12,.61,0,4.38,back,black);
+ block(scene,13.8,.075,.5,0,4.58,back,gold);
+ for(const x of [-4.55,4.55]){
+  block(scene,.29,4.35,.38,x,2.02,back,lacquer);
+  block(scene,.38,.09,.5,x,3.87,back,gold);
+  block(scene,.40,.09,.5,x,.40,back,gold);
  }
- // Giant segmented shoji panels plus layered roof silhouette.
- for(let i=-7;i<=7;i++){ // CHANGED: seamless wall across ultra-wide displays
+ // CHANGED: Fade structural panels out at both sides, avoiding a hard backdrop edge.
+ for(let i=-7;i<=7;i++){
+  const fade=Math.max(0,1-Math.pow(Math.abs(i)/7,1.9));
+  if(fade<.025)continue;
   const x=i*1.13;
-  block(scene,1.05,2.78,.13,x,2.03,back-.28,mat(0x283239,.85));
-  block(scene,.98,2.69,.03,x,2.03,back-.17,mat(0x6b6657,.7,0,0x987848,.16));
-  for(const h of [1.38,2.03,2.69])block(scene,.98,.038,.05,x,h,back-.12,black);
-  block(scene,.046,2.73,.045,x,2.03,back-.10,wood);
+  const backing=mat(0x131110,.95);
+  backing.transparent=true;backing.opacity=.50*fade;backing.depthWrite=false;
+  block(scene,1.05,2.78,.13,x,2.03,back-.28,backing);
+  const paper=mat(0x766348,.95,0,0x67451c,.10);
+  paper.transparent=true;paper.opacity=.59*fade;paper.depthWrite=false;
+  block(scene,.98,2.69,.03,x,2.03,back-.17,paper);
+  const ink=mat(0x13100f,.94);
+  ink.transparent=true;ink.opacity=.88*fade;ink.depthWrite=false;
+  for(const h of [1.38,2.03,2.69])block(scene,.98,.038,.05,x,h,back-.12,ink);
+  block(scene,.046,2.73,.045,x,2.03,back-.10,ink);
  }
- // Architectural roof cap / dramatic dark outline.
- block(scene,18.5,.28,1.07,0,4.82,back-.26,wood); // CHANGED: fill the entire hero backdrop
- block(scene,19,.12,.92,0,5.03,back-.25,lacquer); // CHANGED: widescreen roof cap
+ // A shorter roof silhouette gets lost in the shadow at the edges.
+ block(scene,13.9,.23,1.07,0,4.82,back-.26,wood);
+ block(scene,14.4,.10,.92,0,5.03,back-.25,lacquer);
  for(const side of [-1,1]){
   block(scene,.33,3.3,.38,side*3.87,1.65,-3.84,wood);
-  const metal=side<0?ember:jade;
-  const lantern=addMesh(scene,new THREE.BoxGeometry(.47,.74,.46),metal,side*3.87,2.57,-3.56);
+  const lantern=addMesh(scene,new THREE.BoxGeometry(.47,.74,.46),side<0?ember:jade,side*3.87,2.57,-3.56);
   block(scene,.63,.12,.60,side*3.87,3.02,-3.56,gold);
   block(scene,.63,.12,.60,side*3.87,2.12,-3.56,gold);
-  const lamp=new THREE.PointLight(side<0?0xff895f:0x4adcb1,19,6,2);
+  // CHANGED: Both lanterns emit warm light; green stays a subtle fighter accent.
+  const lamp=new THREE.PointLight(side<0?0xffb36a:0xf4cc91,side<0?24:17,8,2);
   lamp.position.set(side*3.87,2.56,-3.15);scene.add(lamp);
  }
  // CHANGED: Each fighter's podium follows its screen-responsive position.
@@ -107,10 +118,12 @@ export function mountMenuShowcase(host){
   host.classList.add('menu-3d-unavailable');return ()=>{};
  }
  const scene=new THREE.Scene();
- scene.fog=new THREE.FogExp2(0x0b1018,.044);
+ // CHANGED: Charcoal distance fog absorbs the open edges of the dojo.
+ scene.background=new THREE.Color(0x0b0a0a);
+ scene.fog=new THREE.FogExp2(0x0b0a0a,.067);
  const camera=new THREE.PerspectiveCamera(35,1,.1,80);
  camera.position.set(0,3.35,11.8);camera.lookAt(0,1.75,-.50);
- renderer.setClearColor(0x000000,0);
+ renderer.setClearColor(0x0b0a0a,1); // CHANGED: no blue/translucent room behind the scene
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.55));
  renderer.outputColorSpace=THREE.SRGBColorSpace;
  renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -120,16 +133,40 @@ export function mountMenuShowcase(host){
  renderer.domElement.className='menu-3d-canvas';
  renderer.domElement.setAttribute('aria-hidden','true');
  host.appendChild(renderer.domElement);
- scene.add(new THREE.HemisphereLight(0xb2c9d8,0x201a1b,2.25));
- const warm=new THREE.SpotLight(0xffbf83,62,24,Math.PI/4,.78);
+ scene.add(new THREE.HemisphereLight(0xc9b8a2,0x17100d,1.85)); // CHANGED: warm neutral fill
+ const warm=new THREE.SpotLight(0xffc68e,69,24,Math.PI/4,.78);
  warm.position.set(-4.9,7.2,5.5);warm.target.position.set(-1.5,1,-.5);
  warm.castShadow=true;warm.shadow.mapSize.set(512,512);
  scene.add(warm,warm.target);
- const cold=new THREE.SpotLight(0x86f5d4,58,24,Math.PI/4,.7);
+ const cold=new THREE.SpotLight(0xd9c7a7,41,24,Math.PI/4,.7); // CHANGED: remove cyan room wash
  cold.position.set(4.5,7,4.5);cold.target.position.set(1.5,1,-.7);
  scene.add(cold,cold.target);
- const rim=new THREE.DirectionalLight(0xb8b2fa,2);
+ const rim=new THREE.DirectionalLight(0xe9c6a3,1.55); // CHANGED: warm backlight, no blue glow
  rim.position.set(0,4,-5);scene.add(rim);
+
+ // CHANGED: Soft atmospheric haze, not a visible background box or plane.
+ const haze=[];let hazeTexture=null;
+ try{
+  const cv=document.createElement('canvas');cv.width=cv.height=128;
+  const ctx=cv.getContext('2d');
+  if(ctx){
+   const grad=ctx.createRadialGradient(64,64,0,64,64,64);
+   grad.addColorStop(0,'rgba(247,196,130,0.40)');
+   grad.addColorStop(.42,'rgba(165,130,105,0.15)');
+   grad.addColorStop(1,'rgba(0,0,0,0)');
+   ctx.fillStyle=grad;ctx.fillRect(0,0,128,128);
+   hazeTexture=new THREE.CanvasTexture(cv);
+   for(const [x,y,z,w,h,opacity] of [
+    [-5.9,2.1,-4.25,6.3,3.4,.46],
+    [5.9,2.2,-4.30,6.3,3.6,.40],
+    [0,1.0,-4.40,9.4,2.3,.21]]){
+    const sprite=new THREE.Sprite(new THREE.SpriteMaterial({
+     map:hazeTexture,transparent:true,opacity,depthWrite:false,
+     blending:THREE.AdditiveBlending}));
+    sprite.position.set(x,y,z);sprite.scale.set(w,h,1);scene.add(sprite);haze.push(sprite);
+   }
+  }
+ }catch(err){console.warn('Menu haze disabled:',err);}
  const {particles,platforms}=makeDojo(scene);
  // CHANGED: Place fighters outside the huge centered title, without resizing their meshes.
  const crimson=prepareFighter(CRIMSON,-4.55,.33),verdant=prepareFighter(VERDANT,4.55,-.33);
@@ -179,6 +216,7 @@ export function mountMenuShowcase(host){
   if(!reduceMotion){
    particles.rotation.y=Math.sin(elapsed*.12)*.05;
    particles.position.y=Math.sin(elapsed*.40)*.05;
+   for(let i=0;i<haze.length;i++)haze[i].position.y+=(Math.sin(elapsed*.31+i)-Math.sin((elapsed-dt)*.31+i))*.18;
    camera.position.x=Math.sin(elapsed*.21)*.18;
    camera.lookAt(0,1.72,-.45);
   }
@@ -193,6 +231,7 @@ export function mountMenuShowcase(host){
    if(object.geometry)object.geometry.dispose();
    if(object.material){const mats=Array.isArray(object.material)?object.material:[object.material];for(const m of mats)m.dispose();}
   });
+  hazeTexture?.dispose(); // CHANGED: release procedural haze texture.
   renderer.dispose();renderer.domElement.remove();
  };
 }
