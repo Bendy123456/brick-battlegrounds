@@ -55,25 +55,30 @@ export function tickImpact(f,dt){
   f.visual.rotation.z=0;
  }
 }
+// CHANGED: The body falls in overlapping beats, then rolls back to the same
+// CHANGED: guarded fighting stance used by combat-poses.js, never a T-pose.
 export function poseKnockdown(f){
  const total=f.ragdollTotal||KNOCKDOWN_SECONDS;
  const t=1-Math.max(0,f.ragdoll)/total;
- const collapsed=ease(t/.20)*(1-ease((t-.77)/.23));
+ const collapsed=ease(t/.20)*(1-ease((t-.76)/.24));
+ const wake=ease((t-.77)/.23);
  const sway=Math.sin(t*17)*Math.exp(-t*5)*collapsed;
- const side=(f.ragdollSide||1);
+ const side=f.ragdollSide||1;
  const {arms,legs,body,head}=f.visual.userData;
- // Visual-only pose: root, hitboxes, camera and physics are unchanged.
+ const mix=(down,guard)=>down*collapsed+guard*wake;
+ const rad=Math.PI/180;
+ // Rotate the fighter's VISUAL only, not root, physics or hurtboxes.
  f.visual.rotation.x=-1.37*collapsed;
  f.visual.rotation.z=side*.16*collapsed;
  f.visual.position.y=.12*collapsed;
- body.rotation.set(-.15*collapsed,side*.13*collapsed,side*.18*collapsed);
- head.rotation.set(-.16*collapsed,0,side*.11*collapsed);
- arms[0].rotation.set((.67+sway*.35)*collapsed,0,-(1.04+sway*.2)*collapsed);
- arms[1].rotation.set((1.05-sway*.25)*collapsed,0,(.8-sway*.2)*collapsed);
- arms[0].userData.elbow.rotation.set(-.95*collapsed,0,0);
- arms[1].userData.elbow.rotation.set(-.7*collapsed,0,0);
- legs[0].rotation.set((.3+sway*.2)*collapsed,0,-.12*collapsed);
- legs[1].rotation.set((-.35-sway*.3)*collapsed,0,.17*collapsed);
- legs[0].userData.knee.rotation.set(-.45*collapsed,0,0);
- legs[1].userData.knee.rotation.set(-.65*collapsed,0,0);
+ body.rotation.set(mix(-.15,-3*rad),mix(side*.13,-7*rad),mix(side*.18,-2*rad));
+ head.rotation.set(mix(-.16,1.7*rad),mix(0,5.25*rad),mix(side*.11,1.3*rad));
+ arms[0].rotation.set(mix(.67+sway*.35,57*rad),mix(0,-4*rad),mix(-1.04-sway*.2,16*rad));
+ arms[1].rotation.set(mix(1.05-sway*.25,66*rad),mix(0,4*rad),mix(.80-sway*.2,-16*rad));
+ arms[0].userData.elbow.rotation.set(mix(-.95,104*rad),0,0);
+ arms[1].userData.elbow.rotation.set(mix(-.70,101*rad),0,0);
+ legs[0].rotation.set(mix(.30+sway*.2,-7*rad),0,mix(-.12,0));
+ legs[1].rotation.set(mix(-.35-sway*.3,8*rad),0,mix(.17,0));
+ legs[0].userData.knee.rotation.set(mix(-.45,6*rad),0,0);
+ legs[1].userData.knee.rotation.set(mix(-.65,-6*rad),0,0);
 }
