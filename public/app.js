@@ -50,6 +50,20 @@ $('roomInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('join').click
 let menuPadCooldown=0,oldButtons=[];function menus(){requestAnimationFrame(menus);const p=Array.from(navigator.getGamepads?.()||[]).find(Boolean);if(!p)return;const now=performance.now();const buttons=p.buttons.map(b=>b.pressed);const edge=n=>buttons[n]&&!oldButtons[n];if(screen==='selectScreen'){const horizontal=(p.axes[0]>.55?1:p.axes[0]<-.55?-1:0);const vertical=(p.axes[1]>.55?3:p.axes[1]<-.55?-3:0);if(now>menuPadCooldown&&(horizontal||vertical||edge(14)||edge(15)||edge(12)||edge(13))){const step=(edge(14)?-1:0)+(edge(15)?1:0)+(edge(12)?-3:0)+(edge(13)?3:0)+horizontal+vertical;select(chosen+step);menuPadCooldown=now+180}if(edge(0))$('confirm').click();if(edge(1))$('backHome').click()}if(screen==='lobby'&&edge(0))$('solo').click();if(screen==='waiting'&&edge(0))$('waitingSelect').click();oldButtons=buttons}menus();
 gameEvents.onState=data=>send({type:'state',data});gameEvents.onAttack=kind=>send({type:'attack',kind});gameEvents.onHit=(damage,effects={})=>send({type:'hit',damage,knockdown:effects.knockdown===true,stun:effects.stun===true});gameEvents.onEnd=win=>{inFight=false;$('resultTitle').textContent=win?'VICTORY':'DEFEAT';$('resultText').textContent=win?'You conquered the battleground.':'Your opponent took the round.';$('result').classList.remove('hidden')};gameEvents.onDisconnect=()=>{};
 show('lobby');select(0);
+// CHANGED: Lazy-load the interactive cinematic dojo. An unsupported WebGL
+// browser retains the styled fallback; menu buttons and the separate fighter
+// roster always work regardless of the 3D scene loading successfully.
+async function startMenuShowcase(){
+ try{
+  const {mountMenuShowcase}=await import('./menu-showcase.js');
+  mountMenuShowcase(document.getElementById('menuScene'));
+ }catch(error){
+  console.warn('Cinematic dojo preview unavailable; main menu remains playable.',error);
+  document.getElementById('menuScene')?.classList.add('menu-3d-unavailable');
+ }
+}
+if('requestIdleCallback' in window)window.requestIdleCallback(startMenuShowcase,{timeout:900});
+else window.setTimeout(startMenuShowcase,250);
 
 window.addEventListener('error',e=>console.error('Game error:',e.message));
 
