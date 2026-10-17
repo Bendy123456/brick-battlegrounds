@@ -592,12 +592,23 @@ function animate(){
   if(gameMode==='solo')updateFighter(cpu,p,dt,cpuInput(dt));
   else{
    netTick+=dt;
-   if(netTick>.05){netTick=0;gameEvents.onState?.({x:p.root.position.x,y:p.root.position.y,z:p.root.position.z,rot:p.root.rotation.y,hp:p.hp,guard:p.guard})}
+   if(netTick>.05){netTick=0;gameEvents.onState?.({x:p.root.position.x,y:p.root.position.y,z:p.root.position.z,rot:p.root.rotation.y,hp:p.hp,guard:p.guard,
+    // CHANGED: Dash animation piggybacks on existing synchronized state.
+    dashKind:p.dodge>0?p.dashKind:null,dashProgress:p.dodge>0?1-p.dodge/p.dashDuration:1})}
    if(remoteState){
     cpu.root.position.lerp(new THREE.Vector3(remoteState.x,remoteState.y,remoteState.z),Math.min(1,dt*14));
     cpu.root.rotation.y=remoteState.rot;cpu.hp=remoteState.hp;cpu.guard=remoteState.guard;
+    // CHANGED: The peer sees the same animation direction and spin.
+    const kind=remoteState.dashKind;
+    if(['forward','back','left','right'].includes(kind)&&Number.isFinite(remoteState.dashProgress)){
+     const d=DASH_ANIMATIONS[kind];
+     cpu.dashKind=kind;cpu.dashDuration=d.duration;
+     cpu.dodge=Math.max(0,d.duration*(1-THREE.MathUtils.clamp(remoteState.dashProgress,0,1)));
+    }else if(!kind){cpu.dashKind=null;cpu.dodge=0;}
    }
    cpu.attackCooldown=Math.max(0,cpu.attackCooldown-dt);
+   // CHANGED: Advance remote dash between sync packets.
+   cpu.dodge=Math.max(0,cpu.dodge-dt);
    // CHANGED: Animate the remote fighter's visual knockdown at local frame rate.
    tickImpact(cpu,dt);
    if(cpu.attack){cpu.attackTime+=dt;if(cpu.attackTime>=cpu.attack.len)cpu.attack=null}
