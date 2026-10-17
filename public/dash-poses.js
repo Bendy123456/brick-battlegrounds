@@ -8,6 +8,7 @@
 // Angles = XYZ Euler degrees. Normalized time 0..1, keys refer to actual rig joints.
 // V rotates only the cosmetic visual Group; lift never moves the gameplay root.
 import {fightingStance,applyCombatPose} from './combat-poses.js';
+import {CLASSIC_RELAXED} from './classic-combat.js';
 
 const K=(t,e,j={},v=[0,0,0],lift=0)=>({t,e,j,v,lift});
 export const DASH_ANIMATIONS={
@@ -102,6 +103,52 @@ const ease={
 const clamp=t=>Math.max(0,Math.min(1,t));
 const KEYS=['LS','RS','LE','RE','LH','RH','LK','RK','T','H'];
 const lerp=(a,b,t)=>a+(b-a)*t;
+// CHANGED: v0.8.21 -- classic dash rigs use continuous joint tracks, not
+// CHANGED: per-keyframe sine stops or implicit knee/elbow resets.
+const dashSmoothCache=new WeakMap();
+function dashSlope(a,b,c,axis){
+ const l=b.t-a.t,r=c.t-b.t,p=(b.v[axis]-a.v[axis])/l,q=(c.v[axis]-b.v[axis])/r;
+ if(p*q<=0)return 0;
+ return 3*(l+r)/((2*r+l)/p+(r+2*l)/q);
+}
+function dashNodes(nodes){
+ for(let i=0;i<nodes.length;i++)
+  nodes[i].m=nodes[i].v.map((_,axis)=>
+   i===0||i===nodes.length-1?0:dashSlope(nodes[i-1],nodes[i],nodes[i+1],axis));
+ return nodes;
+}
+function dashTracks(frames){
+ let tracks=dashSmoothCache.get(frames);
+ if(tracks)return tracks;
+ tracks={joints:{},visual:dashNodes(frames.map(f=>({t:f.t,v:f.v}))),
+  lift:dashNodes(frames.map(f=>({t:f.t,v:[f.lift]})))};
+ for(const key of KEYS){
+  const nodes=[{t:0,v:CLASSIC_RELAXED[key]}];
+  for(let i=1;i<frames.length-1;i++)
+   if(Object.prototype.hasOwnProperty.call(frames[i].j,key))
+    nodes.push({t:frames[i].t,v:frames[i].j[key]});
+  nodes.push({t:1,v:CLASSIC_RELAXED[key]});
+  tracks.joints[key]=dashNodes(nodes);
+ }
+ dashSmoothCache.set(frames,tracks);
+ return tracks;
+}
+function dashCurve(nodes,t){
+ if(t<=nodes[0].t)return nodes[0].v;
+ if(t>=nodes.at(-1).t)return nodes.at(-1).v;
+ let i=1;while(i<nodes.length-1&&t>nodes[i].t)i++;
+ const a=nodes[i-1],b=nodes[i],dt=b.t-a.t,u=clamp((t-a.t)/dt);
+ const h00=2*u*u*u-3*u*u+1,h10=u*u*u-2*u*u+u;
+ const h01=-2*u*u*u+3*u*u,h11=u*u*u-u*u;
+ return a.v.map((v,axis)=>h00*v+h10*dt*a.m[axis]+h01*b.v[axis]+h11*dt*b.m[axis]);
+}
+function sampleClassicDash(frames,progress){
+ const t=clamp(progress),tracks=dashTracks(frames),joints={};
+ for(const key of KEYS)joints[key]=dashCurve(tracks.joints[key],t);
+ return {joints,visual:dashCurve(tracks.visual,t),
+  lift:dashCurve(tracks.lift,t)[0]};
+}
+// Existing sampler remains for non-classic fighters.
 function sample(frames,progress,stance){
  const u=clamp(progress);
  const result=(frame)=>{
@@ -125,7 +172,10 @@ function sample(frames,progress,stance){
 export function sampleDashPose(f){
  const type=f.dashKind||'forward',animation=DASH_ANIMATIONS[type]||DASH_ANIMATIONS.forward;
  const progress=clamp(1-(f.dodge||0)/animation.duration);
- return {...sample(animation.frames,progress,fightingStance(f,false)),progress,type};
+ // CHANGED: All nine playable classic fighters get authored continuous motion.
+ const classic=f.visual?.name?.startsWith('PLAIN_CLASSIC_MINIFIG_');
+ return {...(classic?sampleClassicDash(animation.frames,progress):
+  sample(animation.frames,progress,fightingStance(f,false))),progress,type};
 }
 export function applyDashPose(f,pose){
  applyCombatPose(f,pose.joints);
