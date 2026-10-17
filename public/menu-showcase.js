@@ -20,17 +20,17 @@ function makeDojo(scene){
   black=mat(0x090e15,.88),gold=mat(0xc89a53,.34,.48),tile=mat(0x30343d,.69),
   ember=mat(0xffb65c,.31,.1,0xff8b31,1.25),jade=mat(0x72e1bc,.35,.12,0x21b986,.8);
  // Raised ceremonial dueling floor, a geometric octagon with inset trim.
- addMesh(scene,new THREE.CylinderGeometry(3.95,4.22,.38,8),wood,0,-.31,-.65);
- addMesh(scene,new THREE.CylinderGeometry(3.76,3.92,.08,8),tile,0,-.10,-.65);
- const ring=addMesh(scene,new THREE.TorusGeometry(3.43,.028,6,96),gold,0,-.038,-.65);
+ addMesh(scene,new THREE.CylinderGeometry(6.03,6.28,.38,8),wood,0,-.31,-.65);
+ addMesh(scene,new THREE.CylinderGeometry(5.83,5.98,.08,8),tile,0,-.10,-.65);
+ const ring=addMesh(scene,new THREE.TorusGeometry(5.55,.028,6,96),gold,0,-.038,-.65);
  ring.rotation.x=Math.PI/2;
  for(let i=0;i<8;i++){
   const a=(i+.5)*Math.PI/4;
-  const plate=block(scene,.36,.032,.12,Math.sin(a)*3.3,-.048,Math.cos(a)*3.3-.65,gold);
+  const plate=block(scene,.36,.032,.12,Math.sin(a)*5.38,-.048,Math.cos(a)*5.38-.65,gold);
   plate.rotation.y=a;
  }
- for(let x=-3;x<=3;x++)for(let z=-3;z<=2;z++){
-  if(Math.hypot(x*.88,(z+.4)*.82)>3.25)continue;
+ for(let x=-6;x<=6;x++)for(let z=-4;z<=4;z++){ // CHANGED: extended dojo platform
+  if(Math.hypot(x*.88,(z+.4)*.82)>5.50)continue;
   block(scene,.82,.022,.77,x*.88,-.032,z*.82-.65,(x+z)%2?woodLight:wood);
  }
  // Actual modeled ceremonial dojo / gate, kept behind the fighter silhouettes.
@@ -63,10 +63,16 @@ function makeDojo(scene){
   const lamp=new THREE.PointLight(side<0?0xff895f:0x4adcb1,19,6,2);
   lamp.position.set(side*3.87,2.56,-3.15);scene.add(lamp);
  }
- for(const [x,z] of [[-1.36,.90],[1.36,.90]]){
-  addMesh(scene,new THREE.CylinderGeometry(.81,.9,.18,32),woodLight,x,-.008,z);
+ // CHANGED: Each fighter's podium follows its screen-responsive position.
+ const platforms=[];
+ for(const x of [-4.55,4.55]){
+  const platform=new THREE.Group();
+  platform.position.set(x,0,.90);
+  scene.add(platform);
+  addMesh(platform,new THREE.CylinderGeometry(.81,.9,.18,32),woodLight,0,-.008,0);
   const metal=x<0?mat(0x982f37,.4,.25,0x8f202b,.22):mat(0x246e57,.4,.25,0x198b67,.2);
-  addMesh(scene,new THREE.TorusGeometry(.70,.026,6,64),metal,x,.097,z).rotation.x=Math.PI/2;
+  addMesh(platform,new THREE.TorusGeometry(.70,.026,6,64),metal,0,.097,0).rotation.x=Math.PI/2;
+  platforms.push(platform);
  }
  // Light airborne motes establish movement even when models are idle.
  const count=105,positions=new Float32Array(count*3),colors=new Float32Array(count*3);
@@ -80,7 +86,7 @@ function makeDojo(scene){
  dotsGeo.setAttribute('position',new THREE.BufferAttribute(positions,3));
  dotsGeo.setAttribute('color',new THREE.BufferAttribute(colors,3));
  const particles=new THREE.Points(dotsGeo,new THREE.PointsMaterial({size:.042,transparent:true,opacity:.75,vertexColors:true,depthWrite:false,sizeAttenuation:true}));
- scene.add(particles);return {particles};
+ scene.add(particles);return {particles,platforms};
 }
 function prepareFighter(color,x,twist){
  const root=new THREE.Group();root.position.set(x,.13,.82);root.rotation.y=twist;
@@ -124,8 +130,9 @@ export function mountMenuShowcase(host){
  scene.add(cold,cold.target);
  const rim=new THREE.DirectionalLight(0xb8b2fa,2);
  rim.position.set(0,4,-5);scene.add(rim);
- const {particles}=makeDojo(scene);
- const crimson=prepareFighter(CRIMSON,-1.36,.13),verdant=prepareFighter(VERDANT,1.36,-.18);
+ const {particles,platforms}=makeDojo(scene);
+ // CHANGED: Place fighters outside the huge centered title, without resizing their meshes.
+ const crimson=prepareFighter(CRIMSON,-4.55,.33),verdant=prepareFighter(VERDANT,4.55,-.33);
  scene.add(crimson.root,verdant.root);
  host.classList.add('menu-3d-ready');
  let raf=0,last=0,elapsed=0,wasVisible=true;
@@ -134,6 +141,11 @@ export function mountMenuShowcase(host){
   if(!w||!h)return;
   renderer.setSize(w,h,false);camera.aspect=w/h;
   camera.fov=(w/h)<.86?45:(w/h)<1.14?39:35;
+  // CHANGED: Keep both figures visible on tablets/phones; desktop uses title-flanking spacing.
+  const ratio=w/h;
+  const spacing=ratio<.85?1.65:ratio<1.25?2.65:ratio<1.6?3.52:4.55;
+  crimson.root.position.x=-spacing;verdant.root.position.x=spacing;
+  platforms[0].position.x=-spacing;platforms[1].position.x=spacing;
   camera.updateProjectionMatrix();
  };
  const resizer=typeof ResizeObserver!=='undefined'?new ResizeObserver(resize):null;
@@ -161,7 +173,8 @@ export function mountMenuShowcase(host){
    if(pose)applyCombatPose(fighter,pose);
    const bob=reduceMotion?0:Math.sin(phase*1.65)*.036;
    fighter.root.position.y=.13+bob;
-   fighter.root.rotation.y=(i===0?.13:-.18)+(reduceMotion?0:Math.sin(phase*.38)*.10);
+   // CHANGED: Both fighters face slightly inward during their idle and showcase strikes.
+   fighter.root.rotation.y=(i===0?.33:-.33)+(reduceMotion?0:Math.sin(phase*.38)*.07);
   }
   if(!reduceMotion){
    particles.rotation.y=Math.sin(elapsed*.12)*.05;
