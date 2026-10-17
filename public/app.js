@@ -31,7 +31,20 @@ const toast=t=>{$('lobbyMsg').textContent=t;};
 const emblems=['✦','🔥','❖','☽','♛','❄','▲','✧','✿'];
 function avatar(i){const c=chars[i];return `<div class="avatar ninja-portrait fighter-${i}" style="--cloth:${c[1]};--glow:${c[2]}"><div class="hood"></div><div class="face"><i class="brow"></i><i class="eyes"></i></div><div class="mask"></div><div class="chest"><span class="sigil">${emblems[i]}</span></div></div>`}
 $('rosterGrid').innerHTML=chars.map((c,i)=>`<button type="button" title="${c[0]}" aria-label="Select ${c[0]}" class="roster-item" data-index="${i}">${avatar(i)}</button>`).join('');
-function select(i){chosen=(i+chars.length)%chars.length;for(const b of $('rosterGrid').children)b.classList.toggle('active',Number(b.dataset.index)===chosen);$('portraitLarge').innerHTML=avatar(chosen);$('fighterName').textContent=chars[chosen][0];$('fighterClass').textContent=chars[chosen][3];$('fighterDescription').textContent=chars[chosen][4];$('roomStatus').textContent=mode==='online'?`ROOM ${room} · ${peerCount}/2 CONNECTED${myReady?' · READY':''}`:'SOLO TRAINING · CPU OPPONENT';send({type:'select',character:chosen})}
+function select(i){
+  chosen=(i+chars.length)%chars.length;
+  // CHANGED: Selected fighter name and real (shared) ability appear below the centered roster.
+  for(const b of $('rosterGrid').children){
+    const active=Number(b.dataset.index)===chosen;
+    b.classList.toggle('active',active);
+    b.setAttribute('aria-pressed',String(active));
+  }
+  $('fighterName').textContent=chars[chosen][0];
+  $('fighterName').style.color=chars[chosen][1];
+  $('fighterAbility').textContent='Special Attack';
+  $('roomStatus').textContent=mode==='online'?`ROOM ${room} · ${peerCount}/2 CONNECTED${myReady?' · READY':''}`:'SOLO TRAINING · CPU OPPONENT';
+  send({type:'select',character:chosen});
+}
 $('rosterGrid').addEventListener('click',e=>{let b=e.target.closest('.roster-item');if(b)select(Number(b.dataset.index))});
 function connect(){return new Promise((resolve,reject)=>{const url=(location.protocol==='https:'?'wss':'ws')+'://'+location.host;let sock=new WebSocket(url);let settled=false;sock.onopen=()=>{ws=sock;settled=true;resolve(sock)};sock.onerror=()=>{if(!settled)reject(new Error('Online server unavailable. This preview needs the Node server.'))};sock.onclose=()=>{if(ws===sock){ws=null;if(mode==='online'){peerCount=0;$('waitStatus').textContent='Connection lost. Return to menu and try again.';if(inFight)gameEvents.onDisconnect?.();}}};sock.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}onMessage(m)}})}
 
