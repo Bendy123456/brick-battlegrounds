@@ -1,4 +1,4 @@
-// Brick Battlegrounds / classic ninja prototype rig, v0.6.5.
+// Brick Battlegrounds / classic ninja prototype rig, v0.6.6.
 // Original simplified minifigure-inspired character geometry.
 // Only applied to VERDANT and CRIMSON, not the rest of the roster.
 import * as THREE from '/vendor/three.module.js';
@@ -31,21 +31,47 @@ function simpleLeg(parent,mat,x){
  return leg;
 }
 function simpleArm(parent,main,hand,sx){
- const shoulder=new THREE.Group();shoulder.position.set(sx*.72,2.03,0);parent.add(shoulder);
- add(shoulder,new THREE.CapsuleGeometry(.185,.40,4,12),main,[0,-.28,0],[0,0,sx*.02]);
- const elbow=new THREE.Group();elbow.position.set(0,-.55,0);shoulder.add(elbow);
- const shape=new THREE.Shape();
- shape.moveTo(-.14,.02);shape.quadraticCurveTo(.14,.02,.15,-.10);
- shape.lineTo(.15,-.42);shape.quadraticCurveTo(.14,-.52,.08,-.56);
- shape.lineTo(-.08,-.56);shape.quadraticCurveTo(-.14,-.52,-.15,-.42);
- shape.lineTo(-.15,-.10);shape.quadraticCurveTo(-.14,.02,-.14,.02);
- const geo=new THREE.ExtrudeGeometry(shape,{depth:.16,steps:1,bevelEnabled:true,bevelThickness:.018,bevelSize:.016,bevelSegments:2,curveSegments:6});
- add(elbow,geo,main,[0,0,-.08]);
- const handGrp=new THREE.Group();handGrp.position.set(0,-.50,0);elbow.add(handGrp);
- const ring=new THREE.Mesh(new THREE.TorusGeometry(.075,.028,8,18,Math.PI*1.58),hand);
- ring.rotation.set(Math.PI/2,0,-.78);ring.position.set(0,0,.02);ring.castShadow=true;ring.receiveShadow=true;handGrp.add(ring);
- box(handGrp,.085,.07,.10,hand,0,.01,-.02);
- shoulder.userData.elbow=elbow;shoulder.rotation.z=sx*.11;
+ const shoulder=new THREE.Group();
+ shoulder.position.set(sx*.72,2.03,0);
+ parent.add(shoulder);
+ // One continuous curved sleeve, sized like a classic minifigure arm.
+ // No long hanging finger/forearm extension.
+ const outline=new THREE.Shape();
+ outline.moveTo(-.13,.10);
+ outline.quadraticCurveTo(-.25,.10,-.22,-.10);
+ outline.quadraticCurveTo(-.24,-.30,-.19,-.46);
+ outline.quadraticCurveTo(-.165,-.57,-.145,-.65);
+ outline.lineTo(.145,-.65);
+ outline.quadraticCurveTo(.165,-.57,.19,-.46);
+ outline.quadraticCurveTo(.24,-.30,.22,-.10);
+ outline.quadraticCurveTo(.25,.10,.13,.10);
+ outline.closePath();
+ const sleeveGeo=new THREE.ExtrudeGeometry(outline,{
+  depth:.29,steps:1,bevelEnabled:true,bevelThickness:.024,
+  bevelSize:.027,bevelSegments:3,curveSegments:9
+ });
+ const sleeve=add(shoulder,sleeveGeo,main,[0,0,-.145]);
+ sleeve.name='SingleCurvedSleeve';
+ // Retain the old elbow animation pivot but attach only the little wrist and C hand.
+ const elbow=new THREE.Group();
+ elbow.position.set(0,-.50,-.035);
+ shoulder.add(elbow);
+ // A very short peg just below the sleeve, the way a LEGO grip fits the arm.
+ cyl(elbow,.077,.077,.095,hand,0,-.165,-.005,18);
+ // Torus lies in the XY/front plane: opening visible rather than turned edge-on.
+ // The 44-degree gap at the bottom makes a compact, unmistakable C cup.
+ const gap=.77;
+ const cup=new THREE.Mesh(
+  new THREE.TorusGeometry(.109,.039,10,28,Math.PI*2-gap),
+  hand
+ );
+ cup.rotation.z=-Math.PI/2+gap/2;
+ cup.position.set(0,-.274,-.012);
+ cup.castShadow=true;cup.receiveShadow=true;
+ cup.name='ClassicCHook';
+ elbow.add(cup);
+ shoulder.userData.elbow=elbow;
+ shoulder.rotation.z=sx*.11;
  return shoulder;
 }
 function buildSimpleHead(body,main,skin,ink){
