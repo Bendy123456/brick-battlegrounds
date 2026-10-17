@@ -1,8 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.8 CINEMATIC DOJO
+# BRICK BATTLEGROUNDS — v0.8.9 FULL-SCREEN DOJO
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.9:** Full-screen cinematic home menu. Crimson and Verdant remain the same-sized live 3D models in a now-wide dojo; the giant logo is centered near the top and premium Fight / Create / Join buttons are centered at the bottom. Removed the old blue split panel and kept the nine-fighter roster exclusively after selecting Fight, with all online room flows and combat rules unchanged. Responsive small-screen layout and reduced-motion behavior remain supported.
 
 - **v0.8.8:** Redesigned home screen: cinematic dojo environment with actual, live Three.js Crimson and Verdant classic minifigures, subtle idle and showcased combat animations, theatrical lighting, action-focused controls and responsive layouts. **No roster on the home screen**: selecting Fight the Bot opens the nine-fighter selection screen. Online rooms preserve the existing Create / Join → Waiting → Character Select workflow. The dojo loads separately and gracefully falls back if WebGL is unsupported; combat and controls are unchanged.
 
