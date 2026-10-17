@@ -435,6 +435,31 @@
   border:1px solid color-mix(in srgb,var(--cloth) 60%,#000000);
   box-shadow:inset 2px 0 2px #ffffff20,0 -1px 2px #ffffff24;
 }
+/* CHANGED: v0.8.14 short LEGO neck connector, tucked behind each head.
+   Same original fighter color; no body or shoulders are drawn. */
+#selectScreen .roster-item .lego-head-neck {
+  position:absolute;
+  z-index:1;
+  left:38%;
+  top:79%;
+  width:24%;
+  height:18%;
+  border-radius:18% 18% 34% 34%;
+  background:linear-gradient(90deg,
+    color-mix(in srgb,var(--cloth) 54%,#000000) 0%,
+    color-mix(in srgb,var(--cloth) 85%,#ffffff) 24%,
+    var(--cloth) 48%,
+    color-mix(in srgb,var(--cloth) 63%,#000000) 100%);
+  border:1px solid color-mix(in srgb,var(--cloth) 55%,#111111);
+  box-shadow:inset 2px 0 2px #ffffff24,inset -3px 0 2px #0004,0 4px 6px #0007;
+}
+#selectScreen .roster-item .lego-head-neck::after {
+  content:'';
+  position:absolute;
+  left:0;right:0;bottom:0;height:18%;
+  border-radius:0 0 30% 30%;
+  background:color-mix(in srgb,var(--cloth) 66%,#000000);
+}
 #selectScreen .roster-item .lego-head-shell {
   position:absolute;
   z-index:2;
