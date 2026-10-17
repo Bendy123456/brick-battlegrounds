@@ -5,6 +5,8 @@ import {setupTouchControls} from './touch-controls.js';
 import {captureCombatRest,sampleCombatPose,applyCombatPose,resetCombatPose} from './combat-poses.js';
 // CHANGED: Connected hit chains, one-second stun and ragdoll-style knockdowns.
 import {HIT_STUN_SECONDS,KNOCKDOWN_SECONDS,clearHitChain,recordHitForKnockdown,startImpact,tickImpact,poseKnockdown} from './combat-impact.js';
+// CHANGED: Custom forward-punch, left/right sidestep and backflip dash animations.
+import {DASH_ANIMATIONS,sampleDashPose,applyDashPose,clearDashVisual} from './dash-poses.js';
 
 const $ = id => document.getElementById(id);
 const scene = new THREE.Scene();
@@ -170,7 +172,7 @@ function fighter(color,x,z){
   box(sheath,.18,.08,.18,0,1.24,0,accent);
  }
  visual.userData={arms,legs,body,head,cloth,pants,accent,trim,baseColor:color};
- return {root,visual,hp:150,guard:100,v:new THREE.Vector3(),onGround:true,yVel:0,face:0,attack:null,attackTime:0,attackCooldown:0,iframes:0,stun:0,dodge:0,block:false,specialCooldown:0,combo:0,comboWindow:0,queuedLight:false,score:0,moving:0,runTime:0,hitFlash:0,ragdoll:0,ragdollTotal:0,ragdollSide:1,hitChain:null,combatClock:0,prevAction:{},name:'NINJA'};
+ return {root,visual,hp:150,guard:100,v:new THREE.Vector3(),onGround:true,yVel:0,face:0,attack:null,attackTime:0,attackCooldown:0,iframes:0,stun:0,dodge:0,dashKind:null,dashDuration:0,dashDirection:new THREE.Vector3(),block:false,specialCooldown:0,combo:0,comboWindow:0,queuedLight:false,score:0,moving:0,runTime:0,hitFlash:0,ragdoll:0,ragdollTotal:0,ragdollSide:1,hitChain:null,combatClock:0,prevAction:{},name:'NINJA'};
 }
 const p=fighter(0x1186ca,-3.8,0),cpu=fighter(0xc83d39,3.8,0);
 // CHANGED: Cache neutral joint rotations before the first animation frame.
@@ -303,10 +305,11 @@ function pollInput(){
   camYaw-=rx*.041;camPitch=THREE.MathUtils.clamp(camPitch+ry*.024,-.28,.75);
  }
  const press=(name,keyboard,button)=>({edge:(keys.has(keyboard)&&!p.prevAction[name])||trigger(button)});
- const light=trigger(2),heavy=press('heavy','KeyR',3),dodge=press('dodge','ShiftLeft',1),jump=press('jump','Space',0),special=press('special','KeyQ',5),target=press('target','Tab',7);
+ // CHANGED: Q / B / Circle = directional dash. Q formerly used Special; Special is now E.
+ const light=trigger(2),heavy=press('heavy','KeyR',3),dodge=press('dodge','KeyQ',1),jump=press('jump','Space',0),special=press('special','KeyE',5),target=press('target','Tab',7);
  let mx=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+lx+touch.mx,my=(keys.has('KeyS')?1:0)-(keys.has('KeyW')?1:0)+ly+touch.my;
  const m=Math.hypot(mx,my);if(m>1){mx/=m;my/=m}
- for(const [name,key] of [['heavy','KeyR'],['dodge','ShiftLeft'],['jump','Space'],['special','KeyQ'],['target','Tab']])p.prevAction[name]=keys.has(key);
+ for(const [name,key] of [['heavy','KeyR'],['dodge','KeyQ'],['jump','Space'],['special','KeyE'],['target','Tab']])p.prevAction[name]=keys.has(key);
  return {mx,my,light:mouseLight||light||touch.light,heavy:heavy.edge||touch.heavy,dodge:dodge.edge||touch.dodge,jump:jump.edge||touch.jump,special:special.edge||touch.special,block:keys.has('KeyL')||down(4)||touch.block,target:target.edge||touch.target};
 }
 const MAX_HEALTH=150,LIGHT_DAMAGE=10,HEAVY_DAMAGE=20;
@@ -316,6 +319,8 @@ function resetFighter(f,x){
  f.root.position.set(x,0,0);f.v.set(0,0,0);f.hp=MAX_HEALTH;f.guard=100;
  f.onGround=true;f.yVel=0;f.attack=null;f.attackTime=0;f.attackCooldown=0;
  f.combo=0;f.comboWindow=0;f.queuedLight=false;f.stun=0;f.dodge=0;f.iframes=0;
+ // CHANGED: No lingering spin, air offset or sideways vector between rounds.
+ f.dashKind=null;f.dashDuration=0;f.dashDirection.set(0,0,0);clearDashVisual(f);
  // CHANGED: Reset knockdown state and landed-hit counters on a new round.
  f.ragdoll=0;f.ragdollTotal=0;f.ragdollSide=1;f.combatClock=0;clearHitChain(f);
  f.specialCooldown=0;f.hitFlash=0;f.block=false;f.visual.position.set(0,0,0);
@@ -416,8 +421,17 @@ function poseFighter(f,dt=0){
  const stride=Math.sin(f.runTime),walk=Math.min(1,f.moving),idle=Math.sin(performance.now()*.0028)*.026;
  // CHANGED: Procedural limp-body fall takes priority over attack and idle poses.
  if(f.ragdoll>0){poseKnockdown(f);return;}
+  // CHANGED: Dash animation overrides ordinary walking/attacking poses for its short duration.
+  if(f.dodge>0&&f.dashKind){
+   applyDashPose(f,sampleDashPose(f));
+   return;
+  }
+  // CHANGED: Clear the previous backflip visual offset when dash ends/is interrupted.
+  if(f.dashKind&&f.dodge<=0){clearDashVisual(f);f.dashKind=null;}
  const combatPose=sampleCombatPose(f,dt);
  if(combatPose){
+  // CHANGED: Any cancelled dash releases its visual-only offset immediately.
+  f.visual.position.z=0;f.visual.rotation.y=0;f.visual.rotation.z=0;
   // CHANGED: Continuous fighting guard + contact-synced strikes are now one
   // CHANGED: pose pipeline, so the character never snaps to arms-down rest.
   applyCombatPose(f,combatPose);
@@ -487,11 +501,21 @@ function updateFighter(f,op,dt,controls){
  f.guard=Math.min(100,f.guard+dt*(f.block?2:15));
  f.block=controls.block&&f.stun<=0&&f.guard>0&&f.dodge<=0&&!f.attack;
  if(controls.jump&&f.onGround&&f.stun<=0){f.yVel=8;f.onGround=false}
- if(controls.dodge&&f.dodge<=0&&f.stun<=0&&f.attackCooldown<=0){
-  f.dodge=.34;f.iframes=.26;const dir=new THREE.Vector3(controls.mx,0,controls.my);
-  if(dir.lengthSq()<.01)dir.set(0,0,-1);
-  if(f===p)dir.applyAxisAngle(new THREE.Vector3(0,1,0),camYaw);
-  f.v.addScaledVector(dir.normalize(),12);
+ // CHANGED: Four proper directional dashes, selected on Q / B / Circle press.
+ if(controls.dodge&&f.dodge<=0&&f.stun<=0&&f.attackCooldown<=0&&!f.attack){
+  const mx=controls.mx||0,my=controls.my||0;
+  // CHANGED: W/stick-up (or no input) punches forward; A/D sidestep; S backflips.
+  const type=f===cpu?'back':Math.abs(mx)>Math.abs(my)&&Math.abs(mx)>.18?(mx<0?'left':'right'):
+   my>.18?'back':'forward';
+  const settings=DASH_ANIMATIONS[type];f.dashKind=type;f.dashDuration=settings.duration;
+  f.dodge=settings.duration;f.iframes=.26; // CHANGED: Keep the existing dash i-frame window.
+  // CHANGED: Character-local directions track the facing opponent, not screen pixels.
+  const forward=new THREE.Vector3(-Math.sin(f.face),0,-Math.cos(f.face));
+  const right=new THREE.Vector3(Math.cos(f.face),0,-Math.sin(f.face));
+  f.dashDirection.copy(type==='left'?right.multiplyScalar(-1):type==='right'?right:
+    type==='back'?forward.multiplyScalar(-1):forward).normalize();
+  // CHANGED: Snap the dash velocity immediately; footwork slows into the recovery.
+  f.v.copy(f.dashDirection).multiplyScalar(settings.speed);
  }
  if(controls.light)tryAttack(f,'light');
  if(controls.heavy)tryAttack(f,'heavy');
@@ -502,8 +526,16 @@ function updateFighter(f,op,dt,controls){
  if(f.stun>0)sp=0;
  if(f.attack)sp*=.27;
  if(f.dodge>0)sp*=.12;
- f.v.x=THREE.MathUtils.damp(f.v.x,dir.x*sp,8,dt);
- f.v.z=THREE.MathUtils.damp(f.v.z,dir.z*sp,8,dt);
+ // CHANGED: Dash has a committed travel vector; normal movement resumes at the end.
+ if(f.dodge>0&&f.dashKind){
+  const progress=1-f.dodge/f.dashDuration;
+  const decel=progress>.77?Math.max(.10,(1-progress)/.23):1;
+  const speed=DASH_ANIMATIONS[f.dashKind].speed*decel;
+  f.v.x=f.dashDirection.x*speed;f.v.z=f.dashDirection.z*speed;
+ }else{
+  f.v.x=THREE.MathUtils.damp(f.v.x,dir.x*sp,8,dt);
+  f.v.z=THREE.MathUtils.damp(f.v.z,dir.z*sp,8,dt);
+ }
  f.root.position.addScaledVector(f.v,dt);
  const radial=Math.hypot(f.root.position.x,f.root.position.z);
  if(radial>16.25){f.root.position.x*=16.25/radial;f.root.position.z*=16.25/radial}
