@@ -497,3 +497,248 @@
   border-radius:0 0 45% 45%;
   background:linear-gradient(180deg,transparent,#00000026);
 }
+
+
+/* CHANGED: v0.8.15 BLACK FOG CHARACTER SELECT.
+   Live HTML / CSS, not a baked illustration. Everything stays clickable. */
+#selectScreen{
+  isolation:isolate;
+  background:
+    radial-gradient(ellipse 82% 62% at 50% 82%,#191411 0%,transparent 69%),
+    radial-gradient(ellipse 36% 30% at 50% 46%,#17110d 0%,transparent 100%),
+    #050505;
+  color:#f5eddf;
+}
+#selectScreen .select-fog{
+  position:fixed;inset:0;z-index:0;overflow:hidden;
+  pointer-events:none;
+  background:
+    linear-gradient(180deg,#050505e8 0%,transparent 24%,transparent 72%,#030303d6 100%),
+    radial-gradient(ellipse 65% 42% at 50% 102%,#31231a52 0%,transparent 90%);
+}
+#selectScreen .select-fog-cloud{
+  position:absolute;pointer-events:none;
+  border-radius:50%;
+  filter:blur(34px);
+  opacity:.72;
+  will-change:transform;
+}
+#selectScreen .fog-cloud-left{
+  width:min(66vw,1000px);height:70vh;left:-25%;bottom:-12%;
+  background:
+    radial-gradient(ellipse at 43% 64%,#99918b68 0%,#69666553 20%,#302c2b64 36%,transparent 67%),
+    radial-gradient(ellipse at 66% 32%,#746b6552 0%,transparent 55%),
+    radial-gradient(ellipse at 19% 33%,#79736b32 0%,transparent 64%);
+  animation:selectFogDriftLeft 20s ease-in-out infinite alternate;
+}
+#selectScreen .fog-cloud-right{
+  width:min(67vw,1050px);height:73vh;right:-26%;bottom:-14%;
+  background:
+    radial-gradient(ellipse at 60% 63%,#938f8a62 0%,#5956546b 21%,#332f2c57 39%,transparent 69%),
+    radial-gradient(ellipse at 30% 25%,#85766a42 0%,transparent 59%),
+    radial-gradient(ellipse at 85% 19%,#857d753c 0%,transparent 63%);
+  animation:selectFogDriftRight 24s ease-in-out infinite alternate;
+}
+#selectScreen .fog-cloud-low{
+  width:125%;height:36vh;bottom:-23%;left:-12%;
+  filter:blur(44px);opacity:.55;
+  background:
+    radial-gradient(ellipse at 25% 40%,#78706b6d 0%,transparent 47%),
+    radial-gradient(ellipse at 72% 45%,#8a7f735e 0%,transparent 50%),
+    linear-gradient(0deg,#17120f8c,transparent 85%);
+  animation:selectFogLow 26s ease-in-out infinite alternate;
+}
+#selectScreen .select-fog-embers{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(circle 2px at 10% 35%,#ffb65e8f 0%,transparent 100%),
+    radial-gradient(circle 2px at 85% 27%,#ff995079 0%,transparent 100%),
+    radial-gradient(circle 1px at 18% 78%,#e99c5a73 0%,transparent 100%),
+    radial-gradient(circle 1px at 74% 82%,#f1ab677c 0%,transparent 100%),
+    radial-gradient(circle 2px at 91% 63%,#e9955f74 0%,transparent 100%),
+    radial-gradient(circle 1px at 39% 15%,#eab06f79 0%,transparent 100%);
+  animation:selectEmbers 13s ease-in-out infinite alternate;
+}
+@keyframes selectFogDriftLeft{from{transform:translate3d(-3%,1%,0) scale(1)}to{transform:translate3d(9%,-6%,0) scale(1.08)}}
+@keyframes selectFogDriftRight{from{transform:translate3d(5%,-5%,0) scale(1.04)}to{transform:translate3d(-7%,4%,0) scale(.96)}}
+@keyframes selectFogLow{from{transform:translate3d(-2%,0,0)}to{transform:translate3d(4%,-6%,0)}}
+@keyframes selectEmbers{from{opacity:.42;transform:translateY(6px)}to{opacity:.85;transform:translateY(-9px)}}
+#selectScreen .select-layout.centered-select{
+  position:relative;z-index:2;
+  padding-top:clamp(22px,3vh,46px);
+  padding-bottom:clamp(24px,3vh,40px);
+}
+#selectScreen .eyebrow{text-shadow:0 3px 14px #000}
+#selectScreen h2{text-shadow:0 5px 28px #000b}
+#selectScreen .selected-ability-panel.fighter-confirm-card{
+  --fighter-accent:#137db8;
+  isolation:isolate;position:relative;
+  width:min(575px,100%);max-width:none;
+  overflow:hidden;
+  margin:20px auto 0;
+  padding:18px 26px 18px;
+  border:2px solid #e8b765;
+  border-radius:0;
+  clip-path:polygon(13px 0,calc(100% - 13px) 0,100% 13px,100% calc(100% - 13px),calc(100% - 13px) 100%,13px 100%,0 calc(100% - 13px),0 13px);
+  background:
+    linear-gradient(115deg,rgba(177,105,45,.13),rgba(12,10,10,.96) 23%,rgba(11,10,10,.96) 77%,rgba(146,81,35,.16)),
+    repeating-linear-gradient(132deg,#ffffff08 0px,#ffffff08 1px,transparent 1px,transparent 13px),
+    #100e0d;
+  box-shadow:
+    inset 0 0 0 3px #160f09,
+    inset 0 0 0 4px #d69e5547,
+    inset 0 10px 25px #c37d2014,
+    0 13px 36px #000b,
+    0 0 24px #da9a3a3c;
+}
+#selectScreen .fighter-confirm-card::before{
+  content:'';position:absolute;inset:6px;z-index:0;pointer-events:none;
+  border:1px solid #d7aa565e;
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
+  background:
+    linear-gradient(90deg,#f3c778b0,transparent 23%,transparent 77%,#f3c778b0) top/100% 1px no-repeat,
+    linear-gradient(90deg,#f3c77885,transparent 28%,transparent 72%,#f3c77885) bottom/100% 1px no-repeat;
+}
+#selectScreen .fighter-confirm-card::after{
+  content:'';position:absolute;z-index:0;pointer-events:none;
+  top:42px;left:12%;right:12%;height:68px;
+  transform:skewX(-19deg);
+  opacity:.66;
+  background:
+    linear-gradient(95deg,transparent 2%,color-mix(in srgb,var(--fighter-accent) 50%,transparent) 24%,color-mix(in srgb,var(--fighter-accent) 30%,transparent) 73%,transparent 98%);
+  clip-path:polygon(0 42%,10% 13%,80% 9%,100% 33%,93% 55%,13% 90%,4% 78%);
+  filter:blur(4px);
+}
+#selectScreen .fighter-confirm-card > *{position:relative;z-index:1}
+#selectScreen .fighter-confirm-card .selected-label{
+  width:min(340px,100%);
+  display:flex;align-items:center;justify-content:center;gap:13px;
+  margin:0 0 2px;
+  color:#f5ce87;
+  font:900 10px Inter,Arial,sans-serif;letter-spacing:3.4px;
+}
+#selectScreen .fighter-confirm-card .selected-label::before,
+#selectScreen .fighter-confirm-card .selected-label::after{
+  content:'';height:1px;flex:1;
+  background:linear-gradient(90deg,transparent,#e4b569);
+}
+#selectScreen .fighter-confirm-card .selected-label::after{
+  background:linear-gradient(90deg,#e4b569,transparent);
+}
+#selectScreen .fighter-confirm-card #fighterName{
+  margin:5px 0 12px;
+  font:900 clamp(43px,4.8vw,68px)/.97 'Barlow Condensed',Impact,sans-serif;
+  letter-spacing:3px;
+  color:var(--fighter-accent,#c63633)!important;
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--fighter-accent) 62%,white) 0%,
+    var(--fighter-accent) 45%,
+    color-mix(in srgb,var(--fighter-accent) 56%,black) 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  filter:drop-shadow(2px 4px 0 #000d) drop-shadow(0 0 8px #0009);
+  -webkit-text-stroke:.5px #ffffff30;
+}
+#selectScreen .fighter-confirm-card .selected-ability-line{
+  width:min(375px,100%);
+  min-width:0;min-height:76px;
+  margin:1px auto 0;padding:9px 14px;
+  justify-content:flex-start;gap:15px;
+  clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px);
+  border:1px solid #e0b363bd;border-radius:0;
+  background:linear-gradient(145deg,#0d0e0ef5,#171510f5 65%,#1b150ff2);
+  box-shadow:inset 0 0 0 2px #bb8b3c1a,0 0 14px #a66f2344;
+  text-align:left;
+}
+#selectScreen .fighter-confirm-card .ability-icon{
+  display:grid;place-items:center;
+  flex:0 0 53px;width:53px;height:53px;
+  font-size:28px;
+  color:#ffe3a0;border:1px solid #bd8c42;
+  border-radius:7px;
+  background:radial-gradient(circle at 50% 45%,#a9793030,#0d0c0a 75%);
+  text-shadow:0 0 16px #fbc96b;
+  box-shadow:inset 0 0 16px #e09e2526,0 0 12px #d9a14227;
+}
+#selectScreen .fighter-confirm-card .ability-heading{
+  color:#e7bb72;font-size:10px;letter-spacing:2px;
+}
+#selectScreen .fighter-confirm-card #fighterAbility{
+  color:#f6f0e3;font:900 clamp(15px,1.5vw,19px) Inter,Arial,sans-serif;
+  margin-top:4px;letter-spacing:0;
+}
+#selectScreen .fighter-confirm-card .ability-note{
+  margin:12px 0 0;color:#c7c8c6;
+  font-size:11px;letter-spacing:.08px;
+}
+#selectScreen .fighter-confirm-card #roomStatus{
+  color:#f5c273;
+  margin:11px 0 0;font:800 10px Inter,Arial,sans-serif;letter-spacing:1.2px;
+  text-transform:uppercase;
+}
+#selectScreen .buttonrow{
+  width:min(575px,100%);margin:15px auto 0;gap:13px;
+}
+#selectScreen .buttonrow button{
+  position:relative;min-height:61px;
+  border:2px solid #cba15a;border-radius:0;
+  clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px);
+  font:900 clamp(12px,1.1vw,15px) Inter,Arial,sans-serif;letter-spacing:1px;
+  transition:transform .16s ease,filter .16s ease,box-shadow .16s ease;
+}
+#selectScreen .buttonrow button.secondary{
+  color:#fff0d8;
+  background:linear-gradient(150deg,#181716,#090c0ddf 65%,#14110c);
+  box-shadow:inset 0 0 0 3px #0b0907,inset 0 0 0 4px #cba15a57,0 8px 18px #0008;
+}
+#selectScreen .buttonrow button.primary{
+  color:#17130d;
+  border-color:#ffdda1;
+  background:linear-gradient(160deg,#ffe4a0 0%,#edb758 50%,#ca8e34 100%);
+  box-shadow:inset 0 0 0 2px #fff4c05c,inset 0 -8px 12px #97591b33,0 0 26px #dfa23b57;
+}
+#selectScreen .buttonrow button:hover{
+  transform:translateY(-3px);
+  filter:brightness(1.14);
+  box-shadow:0 0 22px #daa13c6e,0 10px 25px #0009;
+}
+#selectScreen .buttonrow button:focus-visible{
+  outline:3px solid #fff0c5;outline-offset:3px;
+}
+@media(max-width:550px){
+  #selectScreen .select-fog-cloud{filter:blur(28px)}
+  #selectScreen .fog-cloud-left{width:110vw;left:-56%}
+  #selectScreen .fog-cloud-right{width:110vw;right:-56%}
+  #selectScreen .selected-ability-panel.fighter-confirm-card{
+    margin-top:18px;padding:14px 12px 15px;
+  }
+  #selectScreen .fighter-confirm-card::after{top:38px;height:50px}
+  #selectScreen .fighter-confirm-card #fighterName{
+    font-size:clamp(37px,10vw,50px);letter-spacing:1.8px;margin:5px 0 10px;
+  }
+  #selectScreen .fighter-confirm-card .selected-ability-line{
+    min-height:64px;width:min(320px,100%);padding:7px 10px;gap:10px;
+  }
+  #selectScreen .fighter-confirm-card .ability-icon{
+    flex-basis:43px;width:43px;height:43px;font-size:24px;
+  }
+  #selectScreen .fighter-confirm-card #fighterAbility{font-size:15px}
+  #selectScreen .fighter-confirm-card .ability-note{font-size:9px;margin-top:9px}
+  #selectScreen .fighter-confirm-card #roomStatus{font-size:9px;margin-top:8px}
+  #selectScreen .buttonrow{margin-top:11px;gap:9px}
+  #selectScreen .buttonrow button{min-height:53px;letter-spacing:.2px;font-size:11px}
+}
+@media(max-height:720px) and (min-width:551px){
+  #selectScreen .selected-ability-panel.fighter-confirm-card{padding:13px 18px;margin-top:12px}
+  #selectScreen .fighter-confirm-card #fighterName{font-size:clamp(39px,4vw,53px);margin:3px 0 8px}
+  #selectScreen .fighter-confirm-card .selected-ability-line{min-height:60px;padding:5px 14px}
+  #selectScreen .fighter-confirm-card .ability-icon{flex-basis:43px;width:43px;height:43px}
+  #selectScreen .fighter-confirm-card .ability-note{margin-top:8px}
+  #selectScreen .fighter-confirm-card #roomStatus{margin-top:7px}
+  #selectScreen .buttonrow{margin-top:10px}
+  #selectScreen .buttonrow button{min-height:49px}
+}
+@media(prefers-reduced-motion:reduce){
+  #selectScreen .select-fog-cloud,#selectScreen .select-fog-embers{animation:none;will-change:auto}
+  #selectScreen .buttonrow button{transition:none}
+}
