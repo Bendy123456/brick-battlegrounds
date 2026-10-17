@@ -1,4 +1,4 @@
-// BRICK BATTLEGROUNDS v0.7.2 — Option B: plain classic minifigure prototype.
+// BRICK BATTLEGROUNDS v0.7.3 — Option B: plain classic minifigure prototype.
 // Replace public/classic-ninja.js with this file.
 // Only VERDANT and CRIMSON use this model; public/arena.js already restricts the swap.
 // Preserve the exact shoulder / elbow / hip / head rig interface for existing combat.
@@ -25,23 +25,23 @@ function cylinder(parent,material,rTop,rBottom,h,x,y,z,sides=28){
 
 // A properly tapered, simple one-piece classic minifigure torso.
 function makeTorso(parent,material){
-  // True minifigure trapezoid, slightly broader shoulders, narrow straight waist.
+  // A solid, very lightly beveled tapered minifigure torso.
+  // Flat back and front, broad shoulders, gently narrowing waist.
   const shape=new THREE.Shape();
-  shape.moveTo(-.427,1.112);
-  shape.lineTo(.427,1.112);
-  shape.lineTo(.513,2.043);
-  shape.quadraticCurveTo(.515,2.080,.480,2.080);
-  shape.lineTo(-.480,2.080);
-  shape.quadraticCurveTo(-.515,2.080,-.513,2.043);
+  shape.moveTo(-.438,1.106);
+  shape.lineTo(.438,1.106);
+  shape.lineTo(.545,2.035);
+  shape.quadraticCurveTo(.543,2.081,.493,2.081);
+  shape.lineTo(-.493,2.081);
+  shape.quadraticCurveTo(-.543,2.081,-.545,2.035);
   shape.closePath();
   const shell=put(parent,new THREE.ExtrudeGeometry(shape,{
-    depth:.442,steps:1,bevelEnabled:true,
-    bevelThickness:.010,bevelSize:.010,bevelSegments:2,curveSegments:5
-  }),material,0,0,-.221);
-  shell.name='ClassicOnePieceTrapezoid';
+    depth:.462,steps:1,bevelEnabled:true,
+    bevelThickness:.013,bevelSize:.012,bevelSegments:3,curveSegments:6
+  }),material,0,0,-.231);
+  shell.name='SmoothClassicMinifigTorso';
   return shell;
 }
-
 function makeHead(body,material){
   const head=new THREE.Group();
   head.name='PlainHead';
@@ -65,115 +65,110 @@ function makeHead(body,material){
 function makeLeg(visual,material,sx){
   const hip=new THREE.Group();
   hip.name=sx<0?'LeftLeg':'RightLeg';
-  hip.position.set(sx*.265,.990,0);
+  hip.position.set(sx*.264,.99,0);
   visual.add(hip);
-  // The hip hinge is tucked inside the body instead of visibly protruding.
-  const hinge=cylinder(hip,material,.163,.163,.415,0,-.060,0,20);
+  // The cylindrical hip joint is tucked inside the leg, not showing above it.
+  const hinge=cylinder(hip,material,.166,.166,.405,0,-.077,0,22);
   hinge.rotation.z=Math.PI/2;
-  const profile=new THREE.Shape();
-  profile.moveTo(-.231,-.865);
-  profile.lineTo(.231,-.865);
-  profile.lineTo(.231,-.124);
-  profile.quadraticCurveTo(.231,-.101,.207,-.101);
-  profile.lineTo(-.207,-.101);
-  profile.quadraticCurveTo(-.231,-.101,-.231,-.124);
-  profile.closePath();
-  const leg=put(hip,new THREE.ExtrudeGeometry(profile,{
-    depth:.456,steps:1,bevelEnabled:true,
-    bevelThickness:.010,bevelSize:.008,bevelSegments:2,curveSegments:3
-  }),material,0,0,-.228);
-  leg.name='ClassicStraightLeg';
-  // Foot is short, flush with the leg and extends forward only slightly.
-  const foot=block(hip,material,.468,.144,.528,0,-.819,-.031);
-  foot.name='IntegratedFlatFoot';
+  const outline=new THREE.Shape();
+  outline.moveTo(-.230,-.916);
+  outline.lineTo(.230,-.916);
+  outline.lineTo(.230,-.129);
+  outline.quadraticCurveTo(.230,-.105,.203,-.105);
+  outline.lineTo(-.203,-.105);
+  outline.quadraticCurveTo(-.230,-.105,-.230,-.129);
+  outline.closePath();
+  const leg=put(hip,new THREE.ExtrudeGeometry(outline,{
+    depth:.452,steps:1,bevelEnabled:true,
+    bevelThickness:.009,bevelSize:.008,bevelSegments:2,curveSegments:4
+  }),material,0,0,-.226);
+  leg.name='SolidClassicMinifigureLeg';
+  // Small block-shaped foot, integrated into the leg with no bulky heel.
+  const foot=block(hip,material,.467,.154,.519,0,-.905,-.028);
+  foot.name='FlatToyFoot';
   return hip;
 }
-
-// Mesh loft around a gently angled arm centerline instead of blocky
-// extrusions/capsules. Smooth normals make this read as a molded toy part.
 function makeMoldedSleeve(parent,material,sx){
-  // Narrow realistic molded minifigure arm: subtle shoulder and angled elbow.
-  // The shoulder is part of this single smooth plastic form, not a large ball.
+  // Moulded single-piece arm based on classic toy proportions:
+  // short rounded shoulder, gently outward elbow, tapered straight cuff.
+  // This replaces the sharply bent tubing from earlier prototypes.
   const rings=[
-    // y, offset away from torso, radius left-right, radius front-back, forward curve
-    [.065,-.006,.075,.084,.000],
-    [.029,.006,.105,.107,.000],
-    [-.048,.024,.126,.122,-.003],
-    [-.142,.055,.126,.126,-.011],
-    [-.248,.092,.113,.118,-.017],
-    [-.348,.115,.106,.109,-.025],
-    [-.438,.107,.094,.102,-.029],
-    [-.508,.090,.092,.099,-.027],
-    [-.535,.085,.073,.083,-.024]
+    // Y, X-offset outward, lateral radius, depth radius, Z-offset
+    [.084,.010,.065,.067,.000],
+    [.042,.018,.103,.105,.000],
+    [-.037,.061,.135,.127,-.006],
+    [-.135,.105,.135,.132,-.010],
+    [-.245,.170,.126,.124,-.018],
+    [-.365,.217,.114,.113,-.024],
+    [-.455,.232,.107,.107,-.026],
+    [-.521,.222,.104,.103,-.025],
+    [-.550,.215,.080,.083,-.024]
   ];
-  const sides=24,verts=[],indices=[];
+  const n=24,vertices=[],indices=[];
   for(const [y,offset,rx,rz,z] of rings){
-    for(let k=0;k<sides;k++){
-      const theta=k*2*Math.PI/sides;
-      verts.push(sx*(offset+rx*Math.cos(theta)),y,z+rz*Math.sin(theta));
+    for(let i=0;i<n;i++){
+      const t=2*Math.PI*i/n;
+      vertices.push(sx*(offset+rx*Math.cos(t)),y,z+rz*Math.sin(t));
     }
   }
-  for(let i=0;i<rings.length-1;i++){
-    for(let k=0;k<sides;k++){
-      const n=(k+1)%sides;
-      const a=i*sides+k,b=i*sides+n,c=(i+1)*sides+k,d=(i+1)*sides+n;
+  for(let j=0;j<rings.length-1;j++){
+    for(let i=0;i<n;i++){
+      const next=(i+1)%n;
+      const a=j*n+i,b=j*n+next,c=(j+1)*n+i,d=(j+1)*n+next;
       if(sx===1)indices.push(a,b,c,b,d,c);
       else indices.push(a,c,b,b,c,d);
     }
   }
-  // Proper sealed ends, rather than open tube edges.
-  const top=verts.length/3;
-  verts.push(sx*rings[0][1],rings[0][0],rings[0][4]);
-  const bot=verts.length/3;
+  const top=vertices.length/3;
+  vertices.push(sx*rings[0][1],rings[0][0],rings[0][4]);
+  const bottom=vertices.length/3;
   const last=rings[rings.length-1];
-  verts.push(sx*last[1],last[0],last[4]);
-  for(let k=0;k<sides;k++){
-    const n=(k+1)%sides,base=(rings.length-1)*sides;
-    if(sx===1)indices.push(top,k,n,bot,base+n,base+k);
-    else indices.push(top,n,k,bot,base+k,base+n);
+  vertices.push(sx*last[1],last[0],last[4]);
+  for(let i=0;i<n;i++){
+    const j=(i+1)%n,base=(rings.length-1)*n;
+    if(sx===1)indices.push(top,i,j,bottom,base+j,base+i);
+    else indices.push(top,j,i,bottom,base+i,base+j);
   }
   const geo=new THREE.BufferGeometry();
-  geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
-  geo.setIndex(indices);geo.computeVertexNormals();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
   const mesh=put(parent,geo,material);
-  mesh.name='SlimMoldedMinifigArm';
+  mesh.name='GentlyBentSinglePieceArm';
   return mesh;
 }
-
 function makeArm(body,material,sx){
   const shoulder=new THREE.Group();
   shoulder.name=sx<0?'LeftArm':'RightArm';
-  shoulder.position.set(sx*.606,2.018,0);
+  shoulder.position.set(sx*.633,2.015,0);
   body.add(shoulder);
   makeMoldedSleeve(shoulder,material,sx);
-  // Original elbow pivot is essential for the punch, block and heavy animations.
+  // Preserve the elbow pivot used by every combat animation.
   const elbow=new THREE.Group();
-  elbow.position.set(sx*.085,-.533,-.024);
+  elbow.position.set(sx*.215,-.550,-.024);
   shoulder.add(elbow);
-  // The wrist is only a tiny visible neck under the molded sleeve.
-  cylinder(elbow,material,.071,.071,.070,0,-.070,0,20);
-  // Actual open C-shaped clip geometry, not a nearly closed donut/torus.
-  // Flat rounded ends and a visible opening below, like classic toy hands.
-  const outer=.148,inner=.079,halfGap=.47;
-  const a=-Math.PI/2+halfGap,b=a+Math.PI*2-2*halfGap;
-  const shape=new THREE.Shape();
-  shape.moveTo(outer*Math.cos(a),outer*Math.sin(a));
-  shape.absarc(0,0,outer,a,b,false);
-  shape.lineTo(inner*Math.cos(b),inner*Math.sin(b));
-  shape.absarc(0,0,inner,b,a,true);
-  shape.closePath();
-  const clip=put(elbow,new THREE.ExtrudeGeometry(shape,{
-    depth:.095,steps:1,bevelEnabled:true,
-    bevelThickness:.012,bevelSize:.011,bevelSegments:3,curveSegments:28
-  }),material,0,-.180,-.050);
-  clip.name='OpenMoldedCGrip';
+  // Flush short wrist connection and a true open C, not a donut ring.
+  cylinder(elbow,material,.076,.076,.072,0,-.054,0,20);
+  const outer=.144,inner=.079,halfGap=.47;
+  const first=-Math.PI/2+halfGap;
+  const last=first+2*Math.PI-2*halfGap;
+  const grip=new THREE.Shape();
+  grip.moveTo(outer*Math.cos(first),outer*Math.sin(first));
+  grip.absarc(0,0,outer,first,last,false);
+  grip.lineTo(inner*Math.cos(last),inner*Math.sin(last));
+  grip.absarc(0,0,inner,last,first,true);
+  grip.closePath();
+  const cup=put(elbow,new THREE.ExtrudeGeometry(grip,{
+    depth:.097,steps:1,bevelEnabled:true,
+    bevelThickness:.012,bevelSize:.011,bevelSegments:3,curveSegments:30
+  }),material,0,-.164,-.049);
+  cup.name='TrueOpenCHand';
   shoulder.userData.elbow=elbow;
   return shoulder;
 }
-
 export function buildClassicNinja(mainColor){
   const visual=new THREE.Group();
-  visual.name='PLAIN_CLASSIC_MINIFIG_V072';
+  visual.name='PLAIN_CLASSIC_MINIFIG_V073';
   const main=plastic(mainColor);
   const body=new THREE.Group();
   body.name='Torso';
@@ -181,7 +176,7 @@ export function buildClassicNinja(mainColor){
   makeTorso(body,main);
   const head=makeHead(body,main);
   // Plain minifigure hip connector; no ninja costume, belt or scabbards.
-  block(visual,main,.994,.185,.498,0,1.018,0);
+  block(visual,main,1.005,.218,.495,0,1.000,0);
   const arms=[makeArm(body,main,-1),makeArm(body,main,1)];
   const legs=[makeLeg(visual,main,-1),makeLeg(visual,main,1)];
 
