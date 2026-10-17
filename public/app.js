@@ -32,7 +32,7 @@ const toast=t=>{$('lobbyMsg').textContent=t;};
 // CHANGED: No torso, hands, legs, head mask, or decorative emblems remain in the portrait.
 function avatar(i){
  const c=chars[i];
- return `<div class="avatar lego-head-portrait fighter-${i}" style="--cloth:${c[1]};--glow:${c[2]}"><div class="lego-head-stud" aria-hidden="true"></div><div class="lego-head-shell" aria-hidden="true"></div></div>`;
+ return `<div class="avatar lego-head-portrait fighter-${i}" style="--cloth:${c[1]};--glow:${c[2]}"><div class="lego-head-stud" aria-hidden="true"></div><div class="lego-head-neck" aria-hidden="true"></div><div class="lego-head-shell" aria-hidden="true"></div></div>`;
 }
 $('rosterGrid').innerHTML=chars.map((c,i)=>`<button type="button" title="${c[0]}" aria-label="Select ${c[0]}" class="roster-item" data-index="${i}">${avatar(i)}</button>`).join('');
 function select(i){
