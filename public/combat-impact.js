@@ -1,3 +1,5 @@
+// CHANGED: Crimson/Verdant rise to their relaxed stance, not permanent high guard.
+import {CLASSIC_RELAXED} from './classic-combat.js';
 // CHANGED: Consecutive landed-hit rules and visual knockdown. This is a
 // procedural, ragdoll-style fall; Three.js has no rigid-body ragdoll solver here.
 export const HIT_STUN_SECONDS=1.0;
@@ -67,18 +69,22 @@ export function poseKnockdown(f){
  const {arms,legs,body,head}=f.visual.userData;
  const mix=(down,guard)=>down*collapsed+guard*wake;
  const rad=Math.PI/180;
+ // CHANGED: Classic minifigures end their fall arms-down; other rigs unchanged.
+ const classic=f.visual.name.startsWith('PLAIN_CLASSIC_MINIFIG_');
+ const stance=classic?CLASSIC_RELAXED:null;
+ const joint=(key,axis,fallback)=>classic?stance[key][axis]*rad:fallback;
  // Rotate the fighter's VISUAL only, not root, physics or hurtboxes.
  f.visual.rotation.x=-1.37*collapsed;
  f.visual.rotation.z=side*.16*collapsed;
  f.visual.position.y=.12*collapsed;
- body.rotation.set(mix(-.15,-3*rad),mix(side*.13,-7*rad),mix(side*.18,-2*rad));
- head.rotation.set(mix(-.16,1.7*rad),mix(0,5.25*rad),mix(side*.11,1.3*rad));
- arms[0].rotation.set(mix(.67+sway*.35,57*rad),mix(0,-4*rad),mix(-1.04-sway*.2,16*rad));
- arms[1].rotation.set(mix(1.05-sway*.25,66*rad),mix(0,4*rad),mix(.80-sway*.2,-16*rad));
- arms[0].userData.elbow.rotation.set(mix(-.95,104*rad),0,0);
- arms[1].userData.elbow.rotation.set(mix(-.70,101*rad),0,0);
- legs[0].rotation.set(mix(.30+sway*.2,-7*rad),0,mix(-.12,0));
- legs[1].rotation.set(mix(-.35-sway*.3,8*rad),0,mix(.17,0));
- legs[0].userData.knee.rotation.set(mix(-.45,6*rad),0,0);
- legs[1].userData.knee.rotation.set(mix(-.65,-6*rad),0,0);
+ body.rotation.set(mix(-.15,joint('T',0,-3*rad)),mix(side*.13,joint('T',1,-7*rad)),mix(side*.18,joint('T',2,-2*rad)));
+ head.rotation.set(mix(-.16,joint('H',0,1.7*rad)),mix(0,joint('H',1,5.25*rad)),mix(side*.11,joint('H',2,1.3*rad)));
+ arms[0].rotation.set(mix(.67+sway*.35,joint('LS',0,57*rad)),mix(0,joint('LS',1,-4*rad)),mix(-1.04-sway*.2,joint('LS',2,16*rad)));
+ arms[1].rotation.set(mix(1.05-sway*.25,joint('RS',0,66*rad)),mix(0,joint('RS',1,4*rad)),mix(.80-sway*.2,joint('RS',2,-16*rad)));
+ arms[0].userData.elbow.rotation.set(mix(-.95,joint('LE',0,104*rad)),0,0);
+ arms[1].userData.elbow.rotation.set(mix(-.70,joint('RE',0,101*rad)),0,0);
+ legs[0].rotation.set(mix(.30+sway*.2,joint('LH',0,-7*rad)),0,mix(-.12,joint('LH',2,0)));
+ legs[1].rotation.set(mix(-.35-sway*.3,joint('RH',0,8*rad)),0,mix(.17,joint('RH',2,0)));
+ legs[0].userData.knee.rotation.set(mix(-.45,joint('LK',0,6*rad)),0,0);
+ legs[1].userData.knee.rotation.set(mix(-.65,joint('RK',0,-6*rad)),0,0);
 }
