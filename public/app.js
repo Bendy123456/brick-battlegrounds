@@ -26,7 +26,7 @@ const chars=[
  ['ROSE','#ce577c','#6e2d4c','BLOSSOM BLADE','Fast dodges and graceful combos.']
 ];
 let chosen=0,peerChoice=1,mode='solo',ws=null,room='',slot=0,peerReady=false,myReady=false,peerCount=0,screen='lobby',inFight=false;const elements=[...document.querySelectorAll('.page')];
-const show=(id)=>{screen=id;elements.forEach(e=>e.classList.toggle('show',e.id===id));$('grain').style.display=id==='none'?'none':'block';$('hud').classList.toggle('hidden',id!=='none');$('gameHelp').classList.toggle('hidden',id!=='none');$('quit').classList.toggle('hidden',id!=='none');$('reticle').style.display=id==='none'?'block':'none'};
+const show=(id)=>{screen=id;document.body.classList.toggle('in-match',id==='none');elements.forEach(e=>e.classList.toggle('show',e.id===id));$('grain').style.display=id==='none'?'none':'block';$('hud').classList.toggle('hidden',id!=='none');$('gameHelp').classList.toggle('hidden',id!=='none');$('quit').classList.toggle('hidden',id!=='none');$('reticle').style.display=id==='none'?'block':'none'};
 const toast=t=>{$('lobbyMsg').textContent=t;};
 const emblems=['✦','🔥','❖','☽','♛','❄','▲','✧','✿'];
 function avatar(i){const c=chars[i];return `<div class="avatar ninja-portrait fighter-${i}" style="--cloth:${c[1]};--glow:${c[2]}"><div class="hood"></div><div class="face"><i class="brow"></i><i class="eyes"></i></div><div class="mask"></div><div class="chest"><span class="sigil">${emblems[i]}</span></div></div>`}
