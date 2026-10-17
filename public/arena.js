@@ -394,8 +394,9 @@ function poseFighter(f){
  legs[1].rotation.x=-stride*.43*walk+gp('legR');
  arms[0].rotation.x=-stride*.22*walk+.15+gp('l');
  arms[1].rotation.x=stride*.22*walk+.15+gp('r');
- arms[0].rotation.z=-.14+gp('lz');
- arms[1].rotation.z=.14+gp('rz');
+ const idleArmSpread=f.visual.name==='PLAIN_CLASSIC_MINIFIG_V075'?.045:.14;
+ arms[0].rotation.z=-idleArmSpread+gp('lz');
+ arms[1].rotation.z=idleArmSpread+gp('rz');
  arms[0].userData.elbow.rotation.x=gp('el');
  arms[1].userData.elbow.rotation.x=gp('er');
  body.rotation.x=gp('lean');body.rotation.y=gp('bodyY');body.rotation.z=gp('bodyZ');
