@@ -1,34 +1,43 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101b23"><title>Brick Battlegrounds | Online Ninja Duels</title><link rel="stylesheet" href="/style.css"></head><body>
 <div id="game"></div><div id="grain"></div>
 
-<main id="lobby" class="page show cinematic-lobby">
- <div class="menu-ambient-lines" aria-hidden="true"></div>
- <div class="menu-copy leftpanel">
-  <div class="menu-season"><span class="menu-season-dot"></span> THE ULTIMATE BRICK FIGHTING GAME <span class="menu-season-line"></span> SEASON 01</div>
-  <p class="menu-topline">TWO RIVALS. ONE ARENA.</p>
-  <h1 class="menu-title"><span>BRICK</span><br><em>BATTLEGROUNDS</em></h1>
-  <div class="menu-title-underline"></div>
-  <p class="menu-tagline">BUILD YOUR LEGEND.<br><strong>BREAK THEIR GUARD.</strong></p>
-  <p class="menu-description">Explosive combos. Impossible dodges. Last brick standing wins.</p>
-  <div class="actions menu-actions">
-   <button id="solo" class="primary menu-play"><span class="menu-button-glyph" aria-hidden="true">⚔</span><span class="menu-button-copy"><strong>FIGHT THE BOT</strong><small>SOLO BATTLEGROUND</small></span><span class="menu-button-arrow" aria-hidden="true">↗</span></button>
-   <button id="create" class="secondary menu-online"><span class="menu-button-glyph" aria-hidden="true">◎</span><span class="menu-button-copy"><strong>CREATE ONLINE ROOM</strong><small>CHALLENGE A FRIEND</small></span><span class="menu-button-arrow" aria-hidden="true">↗</span></button>
-   <div class="join menu-join"><input id="roomInput" aria-label="Enter your private room code" placeholder="ENTER 6-DIGIT ROOM CODE" maxlength="6" autocomplete="off" spellcheck="false"><button id="join" type="button">JOIN ROOM <span aria-hidden="true">↗</span></button></div>
+<main id="lobby" class="page show cinematic-lobby centered-dojo">
+  <!-- CHANGED: One edge-to-edge, interactive Three.js dojo behind all UI. -->
+  <div class="menu-hero" aria-label="Live 3D Crimson and Verdant in the dojo">
+    <div id="menuScene" class="menu-3d-stage" aria-hidden="true">
+      <div class="menu-fallback" aria-hidden="true">
+        <div class="menu-fallback-emblem">⚔</div>
+        <strong>CRIMSON <span>VS</span> VERDANT</strong>
+        <small>ENTER THE DOJO</small>
+      </div>
+    </div>
   </div>
-  <p id="lobbyMsg" class="message" role="status"></p>
-  <div class="menu-modes"><span><b>01</b> NINE FIGHTERS</span><span><b>02</b> 1V1 DUELS</span><span><b>03</b> CONTROLLER READY</span></div>
- </div>
- <div class="hero menu-hero" aria-label="Live 3D Crimson and Verdant minifigures in a cinematic dojo">
-  <div class="menu-hero-glow" aria-hidden="true"></div>
-  <div class="menu-scene-shell">
-   <div id="menuScene" class="menu-3d-stage" aria-hidden="true">
-    <div class="menu-fallback" aria-hidden="true"><div class="menu-fallback-emblem">⚔</div><strong>CRIMSON <span>VS</span> VERDANT</strong><small>ENTER THE DOJO</small></div>
-   </div>
+  <div class="menu-atmosphere" aria-hidden="true"></div>
+  <!-- CHANGED: Centered giant game logo; no left-hand blue section. -->
+  <div class="menu-header">
+    <p class="menu-season"><span class="menu-season-dot"></span> THE ULTIMATE BRICK FIGHTING GAME <span class="menu-season-dot"></span></p>
+    <h1 class="menu-title"><span>BRICK</span><em>BATTLEGROUNDS</em></h1>
+    <div class="menu-title-underline"></div>
+    <p class="menu-tagline">BUILD YOUR LEGEND. <strong>BREAK THEIR GUARD.</strong></p>
   </div>
-  <div class="menu-hero-top"><span class="menu-index">01 // MAIN SHOWCASE</span><span class="menu-live"><i></i> LIVE 3D</span></div>
-  <div class="menu-hero-names" aria-hidden="true"><div><span class="menu-fighter-dot crimson"></span><strong>CRIMSON</strong><small>THE FIRE FIGHTER</small></div><div class="menu-versus">VS</div><div><span class="menu-fighter-dot verdant"></span><strong>VERDANT</strong><small>THE WIND FIGHTER</small></div></div>
-  <div class="menu-hero-footer"><span>THE DOJO // COMBAT SHOWCASE</span><span>SCROLL-FREE • REAL TIME</span></div>
- </div>
+  <div class="menu-stage-labels" aria-hidden="true">
+    <div class="menu-stage-label crimson"><span class="menu-fighter-dot crimson"></span><strong>CRIMSON</strong><small>FIRE FIGHTER</small></div>
+    <div class="menu-versus">VS</div>
+    <div class="menu-stage-label verdant"><span class="menu-fighter-dot verdant"></span><strong>VERDANT</strong><small>WIND FIGHTER</small></div>
+  </div>
+  <!-- CHANGED: Premium floating action buttons; original IDs preserve all game flows. -->
+  <div class="menu-bottom">
+    <div class="actions menu-actions">
+      <button id="solo" class="primary menu-play" type="button"><span class="menu-button-glyph" aria-hidden="true">⚔</span><span class="menu-button-copy"><strong>FIGHT THE BOT</strong><small>SOLO BATTLEGROUND</small></span><span class="menu-button-arrow" aria-hidden="true">↗</span></button>
+      <button id="create" class="secondary menu-online" type="button"><span class="menu-button-glyph" aria-hidden="true">◎</span><span class="menu-button-copy"><strong>CREATE ONLINE ROOM</strong><small>CHALLENGE A FRIEND</small></span><span class="menu-button-arrow" aria-hidden="true">↗</span></button>
+    </div>
+    <div class="join menu-join">
+      <input id="roomInput" aria-label="Enter a six-character private room code" placeholder="ENTER 6-DIGIT ROOM CODE" maxlength="6" autocomplete="off" spellcheck="false">
+      <button id="join" type="button">JOIN ROOM <span aria-hidden="true">↗</span></button>
+    </div>
+    <p id="lobbyMsg" class="message" role="status"></p>
+    <div class="menu-modes"><span><b>01</b> NINE FIGHTERS</span><span><b>02</b> 1V1 DUELS</span><span><b>03</b> CONTROLLER READY</span></div>
+  </div>
 </main>
 <section id="selectScreen" class="page"><div class="select-layout"><div class="roster"><p class="eyebrow">01 / CHARACTER SELECT</p><h2>CHOOSE YOUR <em>CHAMPION</em></h2><p class="dim">9 original ninja fighters · 3×3 roster</p><div id="rosterGrid" class="roster-grid"></div><div class="buttonrow"><button id="backHome" class="secondary">← BACK</button><button id="confirm" class="primary">CONFIRM FIGHTER →</button></div></div><div class="character-card"><p class="eyebrow" id="fighterClass">ELEMENTAL BLADE</p><div id="portraitLarge"></div><h2 id="fighterName">TEMPEST</h2><p id="fighterDescription">The storm never misses.</p><div class="stats"><span>SPEED <b>● ● ● ● ○</b></span><span>POWER <b>● ● ● ○ ○</b></span><span>GUARD <b>● ● ● ● ○</b></span></div><div id="roomStatus" class="room-status"></div></div></div></section>
 <section id="waiting" class="page"><div class="wait-box"><p class="eyebrow">PRIVATE MULTIPLAYER ROOM</p><h2>CHALLENGE <em>A FRIEND</em></h2><p>Send this code to your opponent. Both players need to open the same website.</p><button id="copyCode" class="room-code">------ <span>⧉ COPY</span></button><p id="waitStatus">Waiting for another player...</p><button id="waitingSelect" class="primary">SELECT MY FIGHTER →</button><button id="cancelRoom" class="ghost">LEAVE ROOM</button></div></section>
