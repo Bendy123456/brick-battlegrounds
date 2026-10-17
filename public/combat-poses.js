@@ -1789,7 +1789,7 @@ export function fightingStance(f,guarding=f.block){ // CHANGED: relaxed minifigu
  const walk=Math.min(1,f.moving||0)*(f.stun>0?.2:1);
  const stride=Math.sin(f.runTime||0),phase=Math.cos(f.runTime||0);
  const breath=Math.sin((f.combatClock||0)*3.4);
- // CHANGED: Classic minifigures do NOT hold their fists near the face when idle.
+ // CHANGED: All nine classic minifigures use relaxed arms-down idle.
  if(isClassicFighter(f)){
   if(guarding)return {...CLASSIC_RELAXED,
    LS:[73,-7,-14],LE:[118,0,0],RS:[74,7,14],RE:[118,0,0],
@@ -1833,7 +1833,7 @@ function atTime(frames,time){
 export function sampleCombatPose(f,dt){
  const attack=f.attack;
  if(attack?.kind==='special'){states.delete(f);return null;}
- // CHANGED: Only classic Crimson/Verdant use the new anime strike table.
+ // CHANGED: All nine classic minifigures use the same anime strike table.
  const table=isClassicFighter(f)?CLASSIC_COMBAT_POSES:COMBAT_POSES;
  const data=attack?.kind==='light'?table.light[attack.stage-1]:attack?.kind==='heavy'?table.heavy:null;
  // CHANGED: Guard-to-block eases over 110ms, never teleports fists upward.
