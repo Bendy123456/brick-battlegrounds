@@ -1,4 +1,4 @@
-# BRICK BATTLEGROUNDS — v0.5
+# BRICK BATTLEGROUNDS — v0.8.1 COMBAT TEST
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
@@ -7,7 +7,7 @@ Online-ready browser fighting game prototype using original brick ninja fighters
 - Exactly **nine** ninja fighters displayed in a **3 × 3** clickable circular portrait roster.
 - Individual chest crests and helmet/armor touches across all nine original fighters.
 - A new procedural dojo courtyard: octagonal platform, engraved tile crest, lanterns, twin temple buildings, entrance gates, flags and lighting. The fighting space is unobstructed.
-- Keyframed, smoothly interpolated character rig poses for left punch, right punch, right-leg kick, a heavy hook-and-roundhouse pair, block, movement, dodge and hit reactions.
+- Keyframed, smoothly interpolated character rig poses for left jab, right cross, right kick, new fourth-hit left hook, and the existing heavy hook-and-roundhouse. Attack poses are configurable in `public/combat-poses.js` (degrees and seconds). Idle/walk/jump poses remain unchanged.
 - **150 starting health** per fighter. Each unblocked light hit = **10** damage. Heavy is **one button press for two hits**, each hit = **20** damage if it lands (40 total maximum). Blocking mitigates damage; misses do no damage.
 - 60 FPS **target**, not guaranteed. On-screen FPS readout in combat. A fullscreen toggle stays available.
 - Preserves existing CPU match flow and **experimental** private online rooms (online combat is not yet server-authoritative).
@@ -15,7 +15,7 @@ Online-ready browser fighting game prototype using original brick ninja fighters
 
 ## Controls
 
-Keyboard + mouse: WASD move, **M1 / left-click** light attack (**click up to 3 times** within the combo window for left/right/kick), **R** heavy attack (automatically plays the two-hit hook + kick sequence), **L** block, Shift dodge, Space jump, Q special, Tab lock on, **M2 / right-click drag** camera.
+Keyboard + mouse: WASD move, **M1 / left-click** light attack (**click up to 4 times** within the combo window for jab/cross/kick/hook), **R** heavy attack (automatically plays the two-hit hook + kick sequence), **L** block, Shift dodge, Space jump, Q special, Tab lock on, **M2 / right-click drag** camera.
 
 Controller (standard Xbox/PS5 browser mapping): left stick move, right stick camera, X/Square light, Y/Triangle heavy, LB/L1 block, B/Circle dodge, A/Cross jump, RB/R1 special, Menu/Options lock on. Controller mappings may vary across browser/OS setups.
 
@@ -24,7 +24,7 @@ Controller (standard Xbox/PS5 browser mapping): left stick move, right stick cam
 1. Extract this ZIP.
 2. Replace the existing repository's **root** `server.js` and `package.json` and the four files in **`public/`** (`app.js`, `arena.js`, `index.html`, `style.css`). You may also replace this README.
 3. Commit to `main`; your already-configured Render service should auto-deploy if its setting is enabled.
-4. After the new Render deployment becomes **Live**, hard-refresh your website (Ctrl+Shift+R) and verify the menu shows **v0.5** at the top.
+4. After the new Render deployment becomes **Live**, hard-refresh your website (Ctrl+Shift+R) and verify the menu shows **v0.8.1 COMBAT TEST** at the top.
 5. Start Fight the Bot, select a fighter, test J/J/J and K, read 150 HP in the HUD, and verify fullscreen and FPS counter.
 
 Do not upload only the ZIP file to GitHub; unpack it first. Keep the `public` directory name and structure unchanged.
