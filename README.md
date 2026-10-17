@@ -1,8 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.5 DIRECTIONAL DASH
+# BRICK BATTLEGROUNDS — v0.8.6 LONGER DASH
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.6:** All four directional dashes travel approximately 25% farther at unchanged animation durations and with unchanged damage, dash input mappings and stun rules.
 
 - Exactly **nine** ninja fighters displayed in a **3 × 3** clickable circular portrait roster.
 - Individual chest crests and helmet/armor touches across all nine original fighters.
@@ -29,7 +31,7 @@ Controller (standard Xbox/PS5 browser mapping): left stick move, right stick cam
 1. Extract this ZIP.
 2. Replace the existing repository's **root** `server.js` and `package.json` and the four files in **`public/`** (`app.js`, `arena.js`, `index.html`, `style.css`). You may also replace this README.
 3. Commit to `main`; your already-configured Render service should auto-deploy if its setting is enabled.
-4. After the new Render deployment becomes **Live**, hard-refresh your website (Ctrl+Shift+R) and verify the menu shows **v0.8.5 DIRECTIONAL DASH** at the top.
+4. After the new Render deployment becomes **Live**, hard-refresh your website (Ctrl+Shift+R) and verify the menu shows **v0.8.6 LONGER DASH** at the top.
 5. Start Fight the Bot, select a fighter, test M1 combo, R heavy, and Q with W/A/S/D, read 150 HP in the HUD, and verify fullscreen and FPS counter.
 
 Do not upload only the ZIP file to GitHub; unpack it first. Keep the `public` directory name and structure unchanged.
