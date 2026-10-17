@@ -418,17 +418,25 @@ function poseFighter(f,dt=0){
  if(f.ragdoll>0){poseKnockdown(f);return;}
  const combatPose=sampleCombatPose(f,dt);
  if(combatPose){
+  // CHANGED: Continuous fighting guard + contact-synced strikes are now one
+  // CHANGED: pose pipeline, so the character never snaps to arms-down rest.
   applyCombatPose(f,combatPose);
-  // CHANGED: TEMP DEBUG — delete this LEFT JAB logging block after verification.
-  if(f===p&&f.attack?.kind==='light'&&f.attack.stage===1){ // CHANGED: TEMP DEBUG
-   const tick=Math.floor(f.attackTime/.08); // CHANGED: TEMP DEBUG, sample ~every 80ms
-   if(f.attack._jabDebugTick!==tick){ // CHANGED: TEMP DEBUG
-    f.attack._jabDebugTick=tick; // CHANGED: TEMP DEBUG
-    console.log('[LEFT JAB] t='+f.attackTime.toFixed(3)+'s, left arm rotation.x='+arms[0].rotation.x.toFixed(3)+' rad'); // CHANGED: TEMP DEBUG
-   } // CHANGED: TEMP DEBUG
-  } // CHANGED: TEMP DEBUG
-  if(f.hitFlash>0){body.rotation.z+=Math.sin(f.hitFlash*46)*.13;body.rotation.x-=.14}
-  f.visual.position.y=(f.onGround?Math.abs(stride)*.045*walk+idle:0);
+  // CHANGED: Dodge rolls lean as before; returning to standing always clears tilt.
+  if(f.dodge>0){
+   f.visual.rotation.x=-.30;
+   body.rotation.z+=Math.sin((.34-f.dodge)/.34*Math.PI)*.35;
+  }else f.visual.rotation.x=0;
+  // CHANGED: Visible two-shoulder hit recoil, recovering while stunned.
+  if(f.hitFlash>0){
+   const recoil=Math.sin((1-f.hitFlash/.19)*Math.PI);
+   body.rotation.x-=.21*recoil;
+   body.rotation.z+=Math.sin(f.hitFlash*46)*.10;
+   arms[0].rotation.x-=.15*recoil;
+   arms[1].rotation.x-=.15*recoil;
+   head.rotation.x+=.10*recoil;
+  }
+  // CHANGED: Lightweight grounded footstep bob, never translates fighter/hitbox.
+  f.visual.position.y=(f.onGround?Math.abs(stride)*.028*walk+idle:0);
   return;
  }
  // The existing special animation is deliberately kept as it was.
