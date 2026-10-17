@@ -74,25 +74,25 @@
 }
 
 
-/* CHANGED: v0.8.9 FULL-SCREEN CENTERED DOJO MAIN MENU.
+/* CHANGED: v0.8.11 DOJO FADES INTO DARKNESS — cinema-style charcoal atmosphere.
    One edge-to-edge live Three.js background with a cinematic, transparent UI.
    All selectors are scoped to #lobby; roster, waiting room and combat stay intact. */
 #lobby.centered-dojo{
   position:fixed;inset:0;isolation:isolate;overflow:hidden;
-  display:none;background:#070c10;color:#f8f0e4;
+  display:none;background:#0b0a0a;color:#f8f0e4;
 }
 #lobby.centered-dojo.show{display:block}
 #lobby.centered-dojo .menu-hero{
   position:absolute;inset:0;left:0;right:0;top:0;bottom:0;
   width:100%;height:100%;z-index:0;overflow:hidden;pointer-events:none;
-  background:radial-gradient(ellipse at 50% 46%,#25453d 0%,#131a1c 47%,#080d13 100%);
+  background:radial-gradient(ellipse at 50% 44%,#30251e 0%,#161311 48%,#0b0a0a 100%);
 }
 #lobby.centered-dojo .menu-3d-stage{width:100%;height:100%;position:absolute;inset:0}
 #lobby.centered-dojo .menu-3d-canvas{width:100%;height:100%;display:block;filter:none}
 #lobby.centered-dojo .menu-fallback{
   display:flex;position:absolute;inset:0;flex-direction:column;
   justify-content:center;align-items:center;gap:10px;
-  color:#e9d2a9;background:radial-gradient(ellipse,#3f463b 0%,#111b20 70%,#071016 100%);
+  color:#e9d2a9;background:radial-gradient(ellipse,#2c261e 0%,#171210 55%,#0b0a0a 100%);
   text-align:center;
 }
 #lobby.centered-dojo .menu-3d-ready .menu-fallback{display:none}
@@ -104,9 +104,10 @@
 #lobby.centered-dojo .menu-atmosphere{
   position:absolute;inset:0;z-index:1;pointer-events:none;
   background:
-    radial-gradient(ellipse 42% 20% at 50% 6%,#eab85b23,transparent 95%),
-    linear-gradient(180deg,rgba(2,5,9,.68) 0%,rgba(2,5,9,.28) 23%,rgba(4,7,11,.01) 38%,rgba(4,7,11,.04) 58%,rgba(3,6,10,.62) 84%,rgba(3,6,10,.88) 100%),
-    linear-gradient(90deg,rgba(2,5,9,.43),transparent 21%,transparent 79%,rgba(2,5,9,.43));
+    radial-gradient(ellipse 46% 24% at 50% 8%,rgba(241,177,86,.14),transparent 90%),
+    radial-gradient(ellipse 45% 31% at 50% 49%,transparent 0%,rgba(9,7,6,.12) 65%,rgba(9,7,6,.38) 100%),
+    linear-gradient(180deg,rgba(8,6,5,.64) 0%,rgba(8,6,5,.20) 24%,transparent 39%,transparent 61%,rgba(8,6,6,.51) 82%,rgba(8,7,7,.87) 100%),
+    linear-gradient(90deg,rgba(9,7,7,.80) 0%,rgba(9,7,7,.36) 13%,transparent 30%,transparent 70%,rgba(9,7,7,.36) 87%,rgba(9,7,7,.80) 100%);
 }
 #lobby.centered-dojo .menu-header{
   position:absolute;z-index:3;top:clamp(21px,3.5vh,43px);
@@ -251,7 +252,7 @@
 @media(max-width:510px){
   #lobby.centered-dojo{overflow-y:auto;overscroll-behavior:contain}
   #lobby.centered-dojo .menu-hero{position:fixed}
-  #lobby.centered-dojo .menu-atmosphere{position:fixed;background:linear-gradient(180deg,#04080dae 0%,#04090d44 30%,#04080d22 52%,#030609eb 100%)}
+  #lobby.centered-dojo .menu-atmosphere{position:fixed;background:linear-gradient(180deg,#0b090abe 0%,#0b090a55 30%,#0b090a2a 52%,#0b090af0 100%)}
   #lobby.centered-dojo .menu-header{position:relative;top:auto;margin:0;padding:clamp(23px,5vh,40px) 10px 0}
   #lobby.centered-dojo .menu-season{font-size:7px;letter-spacing:.7px;margin-bottom:10px}
   #lobby.centered-dojo .menu-title span{font-size:clamp(52px,13vw,67px)}
