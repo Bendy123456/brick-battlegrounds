@@ -1,12 +1,14 @@
 import * as THREE from '/vendor/three.module.js';
 import {buildClassicNinja} from './classic-ninja.js';
+import {setupTouchControls} from './touch-controls.js';
 
 const $ = id => document.getElementById(id);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x142637);
 scene.fog = new THREE.FogExp2(0x142637,0.0095);
 const renderer = new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.4));
+const phoneBrowser=Boolean(navigator.userAgentData?.mobile)||/iPhone|iPod|Android.*Mobile|Windows Phone|webOS|BlackBerry|Opera Mini/i.test(navigator.userAgent||'');
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,phoneBrowser?1.1:1.4));
 renderer.setSize(innerWidth,innerHeight);
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -236,13 +238,15 @@ export function setCharacters(local,opponent){
  $('p1name').textContent=local[0];$('p2name').textContent=opponent[0];
 }
 export function startFight(){startGame()}
-export function stopFight(){running=false;finished=false;roundWait=0}
+export function stopFight(){running=false;finished=false;roundWait=0;mobileTouch.reset()}
 export function receivePeerState(state){remoteState=state}
 export function receivePeerAttack(kind){if(gameMode==='online')tryAttack(cpu,kind)}
 export function receiveDamage(damage){if(gameMode==='online'&&running){p.hp=Math.max(0,p.hp-damage);p.stun=.24;p.hitFlash=.2;fx(p.root.position.clone().add(new THREE.Vector3(0,1.75,0)),0xff9977,11)}}
 cpu.root.rotation.y=Math.PI/2;p.root.rotation.y=-Math.PI/2;
 let running=false,finished=false,time=120,round=1,roundWait=0,lock=true,camYaw=-Math.PI/2,camPitch=.16;
 const keys=new Set(),mouse={drag:false,px:0,py:0};
+const mobileTouch=setupTouchControls();
+if(mobileTouch.enabled)renderer.domElement.style.touchAction='none';
 addEventListener('keydown',e=>{if(['Space','Tab','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.code==='KeyR'&&finished)startGame()});
 addEventListener('keyup',e=>keys.delete(e.code));
 addEventListener('blur',()=>keys.clear());
@@ -251,6 +255,8 @@ addEventListener('pointerup',()=>mouse.drag=false);
 addEventListener('pointermove',e=>{if(!mouse.drag)return;camYaw-=(e.clientX-mouse.px)*.005;camPitch=THREE.MathUtils.clamp(camPitch+(e.clientY-mouse.py)*.004,-.28,.75);mouse.px=e.clientX;mouse.py=e.clientY});
 const gpPrev=[];
 function pollInput(){
+ const touch=mobileTouch.sample();
+ if(mobileTouch.enabled){camYaw-=touch.lookX*.005;camPitch=THREE.MathUtils.clamp(camPitch+touch.lookY*.004,-.28,.75)}
  const pad=Array.from(navigator.getGamepads?.()||[]).find(Boolean);
  let lx=0,ly=0;const down=i=>!!pad?.buttons[i]?.pressed;
  const trigger=i=>{const was=gpPrev[i]||false,now=down(i);gpPrev[i]=now;return now&&!was};
@@ -263,10 +269,10 @@ function pollInput(){
  }
  const press=(name,keyboard,button)=>({edge:(keys.has(keyboard)&&!p.prevAction[name])||trigger(button)});
  const light=press('light','KeyJ',2),heavy=press('heavy','KeyK',3),dodge=press('dodge','ShiftLeft',1),jump=press('jump','Space',0),special=press('special','KeyQ',5),target=press('target','Tab',7);
- let mx=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+lx,my=(keys.has('KeyS')?1:0)-(keys.has('KeyW')?1:0)+ly;
+ let mx=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+lx+touch.mx,my=(keys.has('KeyS')?1:0)-(keys.has('KeyW')?1:0)+ly+touch.my;
  const m=Math.hypot(mx,my);if(m>1){mx/=m;my/=m}
  for(const [name,key] of [['light','KeyJ'],['heavy','KeyK'],['dodge','ShiftLeft'],['jump','Space'],['special','KeyQ'],['target','Tab']])p.prevAction[name]=keys.has(key);
- return {mx,my,light:light.edge,heavy:heavy.edge,dodge:dodge.edge,jump:jump.edge,special:special.edge,block:keys.has('KeyL')||down(4),target:target.edge};
+ return {mx,my,light:light.edge||touch.light,heavy:heavy.edge||touch.heavy,dodge:dodge.edge||touch.dodge,jump:jump.edge||touch.jump,special:special.edge||touch.special,block:keys.has('KeyL')||down(4)||touch.block,target:target.edge||touch.target};
 }
 const MAX_HEALTH=150,LIGHT_DAMAGE=10,HEAVY_DAMAGE=20;
 function resetFighter(f,x){
