@@ -117,7 +117,7 @@ function makeCHand(parent, material) {
   return hand;
 }
 
-function makeArmShell(parent, material, sx) {
+function makeArmShell(parent, material, sx, elbow) { // CHANGED: render two linked arm sections using original profile
   // v0.8.0: one molded arm with the rounded shoulder dome integral to the sleeve.
   // The shoulder rounds out as part of the sleeve, then slopes into a subtle elbow bend.
   const rings = [
@@ -140,39 +140,42 @@ function makeArmShell(parent, material, sx) {
     [-0.56, 0.046,0.089,0.094, 0.014],
     [-0.585,0.046,0.074,0.084, 0.014]
   ];
-  const sides=32,vertices=[],indices=[];
-  for(const [y,offset,rx,rz,z] of rings){
-    for(let i=0;i<sides;i++){
-      const t=i/sides*Math.PI*2;
-      vertices.push(sx*(offset+rx*Math.cos(t)),y,z+rz*Math.sin(t));
-    }
-  }
-  for(let row=0;row<rings.length-1;row++){
-    for(let i=0;i<sides;i++){
-      const next=(i+1)%sides;
-      const a=row*sides+i,b=row*sides+next,c=(row+1)*sides+i,d=(row+1)*sides+next;
-      if(sx===1)indices.push(a,b,c,b,d,c);
-      else indices.push(a,c,b,b,c,d);
-    }
-  }
-  const top=vertices.length/3;
-  vertices.push(sx*rings[0][1],rings[0][0],rings[0][4]);
-  const bottom=vertices.length/3;
-  const last=rings[rings.length-1];
-  vertices.push(sx*last[1],last[0],last[4]);
-  for(let i=0;i<sides;i++){
-    const next=(i+1)%sides,base=(rings.length-1)*sides;
-    if(sx===1)indices.push(top,i,next,bottom,base+next,base+i);
-    else indices.push(top,next,i,bottom,base+i,base+next);
-  }
-  const geo=new THREE.BufferGeometry();
-  geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
-  geo.setIndex(indices);
-  geo.computeVertexNormals();
-  const sleeve=put(parent,geo,material);
-  sleeve.name='OnePieceClassicArm';
-  return sleeve;
-}
+  // CHANGED: Preserve every original sleeve ring, splitting its geometry at
+  // CHANGED: anatomical elbow y=-.30 so the forearm can rotate independently.
+  const split=10; // CHANGED: Ring at the elbow, below the upper-arm section
+  const pivot=[sx*rings[split][1],rings[split][0],rings[split][4]]; // CHANGED
+  function section(first,last,target,origin,name){ // CHANGED: Mesh stays in same world position when straight
+    const segment=rings.slice(first,last+1),sides=32,vertices=[],indices=[]; // CHANGED
+    for(const [y,offset,rx,rz,z] of segment){ // CHANGED
+      for(let i=0;i<sides;i++){ // CHANGED
+        const t=i/sides*Math.PI*2; // CHANGED
+        vertices.push(sx*(offset+rx*Math.cos(t))-origin[0],y-origin[1],z+rz*Math.sin(t)-origin[2]); // CHANGED
+      } // CHANGED
+    } // CHANGED
+    for(let row=0;row<segment.length-1;row++){ // CHANGED
+      for(let i=0;i<sides;i++){ // CHANGED
+        const next=(i+1)%sides,a=row*sides+i,b=row*sides+next,c=(row+1)*sides+i,d=(row+1)*sides+next; // CHANGED
+        if(sx===1)indices.push(a,b,c,b,d,c);else indices.push(a,c,b,b,c,d); // CHANGED
+      } // CHANGED
+    } // CHANGED
+    const top=vertices.length/3; // CHANGED
+    vertices.push(sx*segment[0][1]-origin[0],segment[0][0]-origin[1],segment[0][4]-origin[2]); // CHANGED
+    const bottom=vertices.length/3,lastRing=segment[segment.length-1]; // CHANGED
+    vertices.push(sx*lastRing[1]-origin[0],lastRing[0]-origin[1],lastRing[4]-origin[2]); // CHANGED
+    for(let i=0;i<sides;i++){ // CHANGED
+      const next=(i+1)%sides,base=(segment.length-1)*sides; // CHANGED
+      if(sx===1)indices.push(top,i,next,bottom,base+next,base+i); // CHANGED
+      else indices.push(top,next,i,bottom,base+i,base+next); // CHANGED
+    } // CHANGED
+    const geo=new THREE.BufferGeometry(); // CHANGED
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3)); // CHANGED
+    geo.setIndex(indices);geo.computeVertexNormals(); // CHANGED
+    const sleeve=put(target,geo,material);sleeve.name=name; // CHANGED
+    return sleeve; // CHANGED
+  } // CHANGED
+  section(0,split,parent,[0,0,0],'ClassicUpperArmSleeve'); // CHANGED
+  section(split,rings.length-1,elbow,pivot,'ClassicForearmSleeve'); // CHANGED
+} // CHANGED
 
 function makeArm(body, material, sx) {
   const shoulder=new THREE.Group();
@@ -180,15 +183,17 @@ function makeArm(body, material, sx) {
   // Slight clearance from torso, with the rounded shoulder built into the sleeve.
   shoulder.position.set(sx*0.538,2.0,-0.006);
   body.add(shoulder);
-  makeArmShell(shoulder,material,sx);
-
-  // Preserve the articulated pivot used by combat animations and blocking.
-  const elbow=new THREE.Group();
-  elbow.position.set(sx*0.046,-0.585,0.014);
-  shoulder.add(elbow);
-  const wrist=cylinder(elbow,material,0.078,0.078,0.075,0,-0.05,0,20);
+  const elbow=new THREE.Group(); // CHANGED: Actual elbow pivot, not the wrist
+  elbow.name='ElbowPivot'; // CHANGED
+  elbow.position.set(sx*0.061,-0.30,0.028); // CHANGED: Anatomical elbow center on arm profile
+  shoulder.add(elbow); // CHANGED
+  makeArmShell(shoulder,material,sx,elbow); // CHANGED: Upper arm + hinged forearm, same rest silhouette
+  const wristAnchor=new THREE.Group(); // CHANGED: Keep original wrist placement below new elbow
+  wristAnchor.position.set(sx*(0.046-0.061),-0.285,0.014-0.028); // CHANGED
+  elbow.add(wristAnchor); // CHANGED
+  const wrist=cylinder(wristAnchor,material,0.078,0.078,0.075,0,-0.05,0,20); // CHANGED
   wrist.name='WristTube';
-  const hand=makeCHand(elbow,material);
+  const hand=makeCHand(wristAnchor,material); // CHANGED
   hand.rotation.z=sx<0?-0.14:0.14;
   hand.rotation.x=-0.06;
   hand.rotation.y=sx<0?0.04:-0.04;
