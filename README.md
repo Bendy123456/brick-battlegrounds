@@ -1,4 +1,4 @@
-# BRICK BATTLEGROUNDS — v0.8.4 ANIME COMBAT
+# BRICK BATTLEGROUNDS — v0.8.5 DIRECTIONAL DASH
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
@@ -16,19 +16,21 @@ Online-ready browser fighting game prototype using original brick ninja fighters
 
 - **Knockdowns:** Land **4 light hits**, **2 separate heavy attacks (two R presses, at least one impact each)**, or **2 light hits followed by one heavy attack** within 3.5 seconds to trigger a procedural ragdoll-style fall. A blocked attack or taking a hit breaks your chain. The target is stunned for 1 second on clean hits, and knockdowns take 1.65 seconds plus brief wake-up protection. The game has no physical ragdoll engine; this is an animated fall and recovery. Experimental online rooms reuse existing hit messages with stun/knockdown effect flags (combat remains client-trusted, not server-authoritative).
 
+- **New directional dashes:** Q on keyboard or **B / Circle** on a standard gamepad. Hold **W (or stick up)** for a forward punching dash, **A/D (stick left/right)** for side-steps, or **S (stick down)** for an animated backward backflip. Tapping Q without direction defaults to forward; CPU dodges retreat backward. Dashes keep the pre-existing brief invulnerability and stun restrictions. The dash punch is **animation-only**, not an extra damaging hit. **E** now activates Special on keyboard because Q is assigned to dash; controller RB/R1 Special is unchanged. Mobile DODGE button now says DASH. Other damage/hitbox rules are unchanged.
+
 ## Controls
 
-Keyboard + mouse: WASD move, **M1 / left-click** light attack (**click up to 4 times** within the combo window for jab/cross/kick/hook), **R** heavy attack (automatically plays the two-hit hook + kick sequence), **L** block, Shift dodge, Space jump, Q special, Tab lock on, **M2 / right-click drag** camera.
+Keyboard + mouse: WASD move, **M1 / left-click** light attack (**click up to 4 times** within the combo window for jab/cross/kick/hook), **R** heavy attack (automatically plays the two-hit hook + kick sequence), **L** block, **Q** directional dash, Space jump, **E** special, Tab lock on, **M2 / right-click drag** camera.
 
-Controller (standard Xbox/PS5 browser mapping): left stick move, right stick camera, X/Square light, Y/Triangle heavy, LB/L1 block, B/Circle dodge, A/Cross jump, RB/R1 special, Menu/Options lock on. Controller mappings may vary across browser/OS setups.
+Controller (standard Xbox/PS5 browser mapping): left stick move, right stick camera, X/Square light, Y/Triangle heavy, LB/L1 block, B/Circle directional dash, A/Cross jump, RB/R1 special, Menu/Options lock on. Controller mappings may vary across browser/OS setups.
 
 ## Deploying to your existing GitHub + Render site
 
 1. Extract this ZIP.
 2. Replace the existing repository's **root** `server.js` and `package.json` and the four files in **`public/`** (`app.js`, `arena.js`, `index.html`, `style.css`). You may also replace this README.
 3. Commit to `main`; your already-configured Render service should auto-deploy if its setting is enabled.
-4. After the new Render deployment becomes **Live**, hard-refresh your website (Ctrl+Shift+R) and verify the menu shows **v0.8.4 ANIME COMBAT** at the top.
-5. Start Fight the Bot, select a fighter, test J/J/J and K, read 150 HP in the HUD, and verify fullscreen and FPS counter.
+4. After the new Render deployment becomes **Live**, hard-refresh your website (Ctrl+Shift+R) and verify the menu shows **v0.8.5 DIRECTIONAL DASH** at the top.
+5. Start Fight the Bot, select a fighter, test M1 combo, R heavy, and Q with W/A/S/D, read 150 HP in the HUD, and verify fullscreen and FPS counter.
 
 Do not upload only the ZIP file to GitHub; unpack it first. Keep the `public` directory name and structure unchanged.
 
