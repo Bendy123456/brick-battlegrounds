@@ -1,6 +1,8 @@
 import * as THREE from '/vendor/three.module.js';
 import {buildClassicNinja} from './classic-ninja.js';
 import {setupTouchControls} from './touch-controls.js';
+// CHANGED: Visual-only combat poses live independently of hit detection.
+import {captureCombatRest,sampleCombatPose,applyCombatPose,resetCombatPose} from './combat-poses.js';
 
 const $ = id => document.getElementById(id);
 const scene = new THREE.Scene();
@@ -145,11 +147,15 @@ function fighter(color,x,z){
   const claw=new THREE.Mesh(new THREE.TorusGeometry(.12,.045,8,18,Math.PI*1.6),skin); claw.position.set(0,-.68,.04); claw.rotation.set(Math.PI/2,0,Math.PI/5); claw.castShadow=true; claw.receiveShadow=true; elbow.add(claw);
   shoulder.userData.elbow=elbow; arms.push(shoulder);
   const hip=new THREE.Group();hip.position.set(sx*.31,.95,0);visual.add(hip);
-  box(hip,.56,.84,.62,0,-.42,0,pants);
+  // CHANGED: Knee Group added. Rest positions of all visible pieces remain identical.
+  box(hip,.56,.42,.62,0,-.21,0,pants);
   box(hip,.58,.16,.64,0,-.02,0,trim);
   box(hip,.4,.12,.1,0,-.22,-.31,accent);
-  box(hip,.5,.24,.66,0,-.74,0,boot);
-  box(hip,.58,.1,.68,0,-.93,0,accent);
+  const knee=new THREE.Group();knee.position.set(0,-.42,0);knee.name='KneePivot';hip.add(knee);
+  box(knee,.56,.42,.62,0,-.21,0,pants);
+  box(knee,.5,.24,.66,0,-.32,0,boot);
+  box(knee,.58,.1,.68,0,-.51,0,accent);
+  hip.userData.knee=knee;
   legs.push(hip);
  }
  // Crossed scabbards on the back read more like a pro-designed fighter silhouette.
@@ -165,6 +171,8 @@ function fighter(color,x,z){
  return {root,visual,hp:150,guard:100,v:new THREE.Vector3(),onGround:true,yVel:0,face:0,attack:null,attackTime:0,attackCooldown:0,iframes:0,stun:0,dodge:0,block:false,specialCooldown:0,combo:0,comboWindow:0,queuedLight:false,score:0,moving:0,runTime:0,hitFlash:0,prevAction:{},name:'NINJA'};
 }
 const p=fighter(0x1186ca,-3.8,0),cpu=fighter(0xc83d39,3.8,0);
+// CHANGED: Cache neutral joint rotations before the first animation frame.
+captureCombatRest(p);captureCombatRest(cpu);
 export const gameEvents={onState:null,onAttack:null,onHit:null,onEnd:null,onDisconnect:null};
 let gameMode='solo',remoteState=null,netTick=0,playerSlot=0;
 export function setMode(m,slot=0){gameMode=m;playerSlot=slot;remoteState=null;netTick=0}
@@ -173,15 +181,21 @@ function dressFighter(f,c){
  // Swap only the two approved prototype fighters. Their classic geometry keeps
  // the exact shoulder/elbow/hip/head animation pivots used by v0.5 combat.
  if(!f.originalVisual)f.originalVisual=f.visual;
+ // CHANGED: Reset the outgoing fighter's joint rotations before swapping visuals.
+ resetCombatPose(f);
  if(c[0]==='VERDANT'||c[0]==='CRIMSON'){
   const color=new THREE.Color(c[1]);
   if(!f.classicVisual)f.classicVisual=buildClassicNinja(color);
   f.classicVisual.userData.cloth.color.copy(color);
   if(f.visual!==f.classicVisual){f.root.remove(f.visual);f.visual=f.classicVisual;f.root.add(f.visual);}
   f.name=c[0];
+  // CHANGED: Cache classic model's rest pivots after switching.
+  captureCombatRest(f);
   return;
  }
  if(f.visual!==f.originalVisual){f.root.remove(f.visual);f.visual=f.originalVisual;f.root.add(f.visual);}
+ // CHANGED: Cache the neutral pivots for the original fighter visual.
+ captureCombatRest(f);
 
  f.name=c[0];
  const ud=f.visual.userData;
@@ -285,6 +299,8 @@ function pollInput(){
 }
 const MAX_HEALTH=150,LIGHT_DAMAGE=10,HEAVY_DAMAGE=20;
 function resetFighter(f,x){
+ // CHANGED: Restore every animated joint before beginning a round.
+ resetCombatPose(f);
  f.root.position.set(x,0,0);f.v.set(0,0,0);f.hp=MAX_HEALTH;f.guard=100;
  f.onGround=true;f.yVel=0;f.attack=null;f.attackTime=0;f.attackCooldown=0;
  f.combo=0;f.comboWindow=0;f.queuedLight=false;f.stun=0;f.dodge=0;f.iframes=0;
@@ -295,12 +311,14 @@ function startGame(){p.score=cpu.score=0;round=1;finished=false;newRound();runni
 function newRound(){resetFighter(p,gameMode==='online'&&playerSlot===1?3.8:-3.8);resetFighter(cpu,gameMode==='online'&&playerSlot===1?-3.8:3.8);time=120;showToast('ROUND '+round,1.2);updateHUD()}
 let toastT=0;function showToast(txt,secs){$('toast').textContent=txt;toastT=secs}
 function aimAt(f,op){const d=new THREE.Vector3().subVectors(op.root.position,f.root.position);f.face=Math.atan2(-d.x,-d.z);f.root.rotation.y=f.face}
-// Light: three *separate* button presses. Heavy: one press plays a two-impact combo.
+// CHANGED: Four separately pressed light attacks. Heavy remains a two-hit combo.
 const ATTACKS={
  light:[
   {name:'LEFT JAB',len:.48,dmg:LIGHT_DAMAGE,range:2.8,arc:1.9,hits:[.48]},
   {name:'RIGHT CROSS',len:.48,dmg:LIGHT_DAMAGE,range:2.85,arc:1.9,hits:[.48]},
-  {name:'RIGHT KICK',len:.69,dmg:LIGHT_DAMAGE,range:3.25,arc:1.9,hits:[.55]}
+  {name:'RIGHT KICK',len:.69,dmg:LIGHT_DAMAGE,range:3.25,arc:1.9,hits:[.55]},
+  // CHANGED: Fourth combo attack, with existing LIGHT_DAMAGE and hit() logic.
+  {name:'LEFT HOOK',len:.50,dmg:LIGHT_DAMAGE,range:2.85,arc:1.9,hits:[.48]}
  ],
  heavy:{name:'HOOK + ROUNDHOUSE',len:1.25,dmg:HEAVY_DAMAGE,range:3.5,arc:1.85,hits:[.30,.72]},
  special:{name:'SPECIAL',len:1.02,dmg:24,range:4.5,arc:2.4,hits:[.49]}
@@ -315,7 +333,7 @@ function tryAttack(f,kind){
  if(f.attackCooldown>0)return;
  if(kind==='special'&&f.specialCooldown>0)return;
  if(kind==='light'){
-  f.combo=f.comboWindow>0?(f.combo%3)+1:1;
+  f.combo=f.comboWindow>0?(f.combo%4)+1:1; // CHANGED: Four-hit sequence
   f.comboWindow=1.17;
  }else{f.combo=0;f.comboWindow=0;f.queuedLight=false}
  const base=kind==='light'?ATTACKS.light[f.combo-1]:ATTACKS[kind];
