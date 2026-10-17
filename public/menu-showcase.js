@@ -1,4 +1,4 @@
-// CHANGED: v0.8.8 CINEMATIC DOJO MAIN MENU.
+// CHANGED: v0.8.9 FULL-SCREEN CINEMATIC DOJO MAIN MENU.
 // Uses the actual arena minifigure geometry, actual roster colors, and actual
 // anime animation evaluator. This menu scene is visual-only: no combat state.
 import * as THREE from '/vendor/three.module.js';
@@ -35,16 +35,16 @@ function makeDojo(scene){
  }
  // Actual modeled ceremonial dojo / gate, kept behind the fighter silhouettes.
  const back=-4.8;
- block(scene,10,.28,.42,0,4.12,back,lacquer);
- block(scene,10.7,.14,.61,0,4.38,back,black);
- block(scene,11.1,.13,.5,0,4.58,back,gold);
- for(const x of [-4.55,4.55]){
+ block(scene,17.1,.28,.42,0,4.12,back,lacquer); // CHANGED: wide full-screen dojo façade
+ block(scene,17.8,.14,.61,0,4.38,back,black); // CHANGED: extend roof framing
+ block(scene,18.2,.13,.5,0,4.58,back,gold); // CHANGED: full-width gold trim
+ for(const x of [-8.40,-4.55,4.55,8.40]){ // CHANGED: additional exterior columns
   block(scene,.34,4.9,.43,x,2.02,back,lacquer);
   block(scene,.42,.12,.5,x,3.87,back,gold);
   block(scene,.47,.12,.5,x,.40,back,gold);
  }
  // Giant segmented shoji panels plus layered roof silhouette.
- for(let i=-3;i<=3;i++){
+ for(let i=-7;i<=7;i++){ // CHANGED: seamless wall across ultra-wide displays
   const x=i*1.13;
   block(scene,1.05,2.78,.13,x,2.03,back-.28,mat(0x283239,.85));
   block(scene,.98,2.69,.03,x,2.03,back-.17,mat(0x6b6657,.7,0,0x987848,.16));
@@ -52,8 +52,8 @@ function makeDojo(scene){
   block(scene,.046,2.73,.045,x,2.03,back-.10,wood);
  }
  // Architectural roof cap / dramatic dark outline.
- block(scene,11.5,.28,1.07,0,4.82,back-.26,wood);
- block(scene,12,.12,.92,0,5.03,back-.25,lacquer);
+ block(scene,18.5,.28,1.07,0,4.82,back-.26,wood); // CHANGED: fill the entire hero backdrop
+ block(scene,19,.12,.92,0,5.03,back-.25,lacquer); // CHANGED: widescreen roof cap
  for(const side of [-1,1]){
   block(scene,.33,3.3,.38,side*3.87,1.65,-3.84,wood);
   const metal=side<0?ember:jade;
