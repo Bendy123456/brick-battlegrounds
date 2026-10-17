@@ -1782,11 +1782,11 @@ function interpolate(a,b,t){
  }
  return out;
 }
-export function fightingStance(f){
+export function fightingStance(f,guarding=f.block){ // CHANGED: optional defensive pose for soft transitions
  const walk=Math.min(1,f.moving||0)*(f.stun>0?.2:1);
  const stride=Math.sin(f.runTime||0),phase=Math.cos(f.runTime||0);
  const breath=Math.sin((f.combatClock||0)*3.4);
- if(f.block)return withGuard({LS:[76,-5,11],LE:[125,0,0],RS:[76,5,-11],RE:[125,0,0],LH:[-8,0,0],RH:[7,0,0],LK:[12,0,0],RK:[10,0,0],T:[10,-3,0]});
+ if(guarding)return withGuard({LS:[76,-5,11],LE:[125,0,0],RS:[76,5,-11],RE:[125,0,0],LH:[-8,0,0],RH:[7,0,0],LK:[12,0,0],RK:[10,0,0],T:[10,-3,0]});
  return withGuard({
   LS:[57+walk*stride*7+breath*1.2,-4,16+walk*phase*3],LE:[104-walk*stride*6,0,0],
   RS:[66-walk*stride*7-breath,4,-16-walk*phase*3],RE:[101+walk*stride*6,0,0],
@@ -1815,9 +1815,12 @@ export function sampleCombatPose(f,dt){
  const attack=f.attack;
  if(attack?.kind==='special'){states.delete(f);return null;}
  const data=attack?.kind==='light'?COMBAT_POSES.light[attack.stage-1]:attack?.kind==='heavy'?COMBAT_POSES.heavy:null;
- const guard=fightingStance(f);
+ // CHANGED: Guard-to-block eases over 110ms, never teleports fists upward.
+ const normalGuard=fightingStance(f,false),highBlock=fightingStance(f,true);
  let st=states.get(f);
- if(!st){st={attack:null,pose:guard,from:guard,releaseFrom:guard,release:OUT};states.set(f,st)}
+ if(!st){st={attack:null,pose:normalGuard,from:normalGuard,releaseFrom:normalGuard,release:OUT,blockBlend:0};states.set(f,st)}
+ st.blockBlend=clamp(st.blockBlend+(f.block?1:-1)*Math.max(0,dt||0)/.11);
+ const guard=interpolate(normalGuard,highBlock,EASE.sine(st.blockBlend));
  if(data){
   if(st.attack!==attack){st.from=st.pose;st.attack=attack;}
   const desired=atTime(data.frames,Math.min(data.len,f.attackTime));
