@@ -1,8 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.7 CLASSIC ROSTER
+# BRICK BATTLEGROUNDS — v0.8.8 CINEMATIC DOJO
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.8:** Redesigned home screen: cinematic dojo environment with actual, live Three.js Crimson and Verdant classic minifigures, subtle idle and showcased combat animations, theatrical lighting, action-focused controls and responsive layouts. **No roster on the home screen**: selecting Fight the Bot opens the nine-fighter selection screen. Online rooms preserve the existing Create / Join → Waiting → Character Select workflow. The dojo loads separately and gracefully falls back if WebGL is unsupported; combat and controls are unchanged.
 
 - **v0.8.7:** All nine fighters now use the same plain, articulated LEGO-style model and the Crimson/Verdant anime combat animations. Each keeps its exact original roster color, and character-select portraits reflect the classic body. The existing dash distance, damage, inputs and knockdown mechanics are unchanged.
 - **v0.8.6:** All four directional dashes travel approximately 25% farther at unchanged animation durations and with unchanged damage, dash input mappings and stun rules.
@@ -32,7 +34,7 @@ Controller (standard Xbox/PS5 browser mapping): left stick move, right stick cam
 1. Extract this ZIP.
 2. Replace the existing repository's **root** `server.js` and `package.json` and the four files in **`public/`** (`app.js`, `arena.js`, `index.html`, `style.css`). You may also replace this README.
 3. Commit to `main`; your already-configured Render service should auto-deploy if its setting is enabled.
-4. After the new Render deployment becomes **Live**, hard-refresh your website (Ctrl+Shift+R) and verify the menu shows **v0.8.7 CLASSIC ROSTER** at the top.
+4. After the new Render deployment becomes **Live**, hard-refresh your website (Ctrl+Shift+R) and verify the menu shows **v0.8.8 CINEMATIC DOJO** at the top.
 5. Start Fight the Bot, select a fighter, test M1 combo, R heavy, and Q with W/A/S/D, read 150 HP in the HUD, and verify fullscreen and FPS counter.
 
 Do not upload only the ZIP file to GitHub; unpack it first. Keep the `public` directory name and structure unchanged.
