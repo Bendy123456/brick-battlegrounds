@@ -1,4 +1,4 @@
-// BRICK BATTLEGROUNDS v0.8.0 — Option B: plain classic minifigure prototype.
+// BRICK BATTLEGROUNDS v0.8.1 — Option B: plain classic minifigure prototype.
 // Replace public/classic-ninja.js with this file.
 // Only VERDANT and CRIMSON use this model; public/arena.js already restricts the swap.
 // Preserve the exact shoulder / elbow / hip / head rig interface for existing combat.
@@ -62,32 +62,40 @@ function makeHead(body,material){
   return head;
 }
 
+// CHANGED: Add an independent knee pivot; in rest pose both pieces align
+// exactly with the existing shank and foot (no foot world-position change).
 function makeLeg(visual,material,sx){
   const hip=new THREE.Group();
   hip.name=sx<0?'LeftLeg':'RightLeg';
-  hip.position.set(sx*.264,.99,0);
-  visual.add(hip);
-  // The cylindrical hip joint is tucked inside the leg, not showing above it.
+  hip.position.set(sx*.264,.99,0);visual.add(hip);
   const hinge=cylinder(hip,material,.166,.166,.405,0,-.077,0,22);
   hinge.rotation.z=Math.PI/2;
-  const outline=new THREE.Shape();
-  outline.moveTo(-.230,-.916);
-  outline.lineTo(.230,-.916);
-  outline.lineTo(.230,-.129);
-  outline.quadraticCurveTo(.230,-.105,.203,-.105);
-  outline.lineTo(-.203,-.105);
-  outline.quadraticCurveTo(-.230,-.105,-.230,-.129);
-  outline.closePath();
-  const leg=put(hip,new THREE.ExtrudeGeometry(outline,{
+  const geometry=shape=>new THREE.ExtrudeGeometry(shape,{
     depth:.452,steps:1,bevelEnabled:true,
     bevelThickness:.009,bevelSize:.008,bevelSegments:2,curveSegments:4
-  }),material,0,0,-.226);
-  leg.name='SolidClassicMinifigureLeg';
-  // Small block-shaped foot, integrated into the leg with no bulky heel.
-  const foot=block(hip,material,.467,.154,.519,0,-.905,-.028);
+  });
+  const upper=new THREE.Shape();
+  upper.moveTo(-.230,-.430);upper.lineTo(.230,-.430);
+  upper.lineTo(.230,-.129);
+  upper.quadraticCurveTo(.230,-.105,.203,-.105);
+  upper.lineTo(-.203,-.105);
+  upper.quadraticCurveTo(-.230,-.105,-.230,-.129);
+  upper.closePath();
+  const thigh=put(hip,geometry(upper),material,0,0,-.226);
+  thigh.name='ClassicUpperLeg';
+  const knee=new THREE.Group();knee.name='KneePivot';
+  knee.position.set(0,-.430,0);hip.add(knee);
+  const lower=new THREE.Shape();
+  lower.moveTo(-.230,-.486);lower.lineTo(.230,-.486);
+  lower.lineTo(.230,0);lower.lineTo(-.230,0);lower.closePath();
+  const shin=put(knee,geometry(lower),material,0,0,-.226);
+  shin.name='ClassicLowerLeg';
+  const foot=block(knee,material,.467,.154,.519,0,-.475,-.028);
   foot.name='FlatToyFoot';
+  hip.userData.knee=knee;
   return hip;
 }
+
 function makeCHand(parent, material) {
   // Solid molded C-shaped grip: short and rounded, with a visible opening.
   const grip = new THREE.Shape();
@@ -190,7 +198,7 @@ function makeArm(body, material, sx) {
 
 export function buildClassicNinja(mainColor){
   const visual=new THREE.Group();
-  visual.name='PLAIN_CLASSIC_MINIFIG_V080';
+  visual.name='PLAIN_CLASSIC_MINIFIG_V081';
   const main=plastic(mainColor);
   const body=new THREE.Group();
   body.name='Torso';
