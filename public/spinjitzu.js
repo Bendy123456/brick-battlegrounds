@@ -77,6 +77,7 @@ export function setSpinjitzuColor(f,color){
 }
 export function stopSpinjitzu(f){
  const fx=f.spinjitzu;if(!fx)return;
+ if(fx.active)f.visual.rotation.y=0; // CHANGED: Interrupts cannot leave a sideways-spun fighter.
  fx.active=false;fx.group.visible=false;fx.light.intensity=0;
  // The normal combat pose and knockdown pipelines own resetting visual rotation.
 }
