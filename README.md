@@ -1,8 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.11 DOJO INTO DARKNESS
+# BRICK BATTLEGROUNDS — v0.8.12 CENTERED CHARACTER SELECT
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.12:** Character select now centers all nine classic minifigure icons in a 3×3 grid. The large right-side card and decorative speed/power/guard stats are removed; selecting an icon reveals a compact fighter-name and ability panel directly below. The game currently provides the same 8-second-cooldown Special Attack to every fighter, rather than distinct character powers. All roster colors, solo Confirm, controller menu navigation and multiplayer room/ready flow are preserved.
 
 - **v0.8.11:** Reworked the full-screen live 3D menu dojo so the shoji wall and roof dissolve into charcoal darkness instead of a blue enclosed room. Warm neutral fill and lantern lights, distance fog, subtle procedural floating haze, and a stronger edge vignette replace the cold backdrop. Fighter sizes/positions, title, main-menu buttons, roster-after-Fight and online matchmaking are unchanged.
 
