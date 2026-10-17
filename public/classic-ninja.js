@@ -1,4 +1,4 @@
-// Brick Battlegrounds / classic ninja prototype rig, v0.6.6.
+// Brick Battlegrounds / classic ninja prototype rig, v0.6.7.
 // Original simplified minifigure-inspired character geometry.
 // Only applied to VERDANT and CRIMSON, not the rest of the roster.
 import * as THREE from '/vendor/three.module.js';
@@ -57,16 +57,16 @@ function simpleArm(parent,main,hand,sx){
  elbow.position.set(0,-.50,-.035);
  shoulder.add(elbow);
  // A very short peg just below the sleeve, the way a LEGO grip fits the arm.
- cyl(elbow,.077,.077,.095,hand,0,-.165,-.005,18);
+ cyl(elbow,.103,.103,.10,hand,0,-.159,-.005,18);
  // Torus lies in the XY/front plane: opening visible rather than turned edge-on.
  // The 44-degree gap at the bottom makes a compact, unmistakable C cup.
  const gap=.77;
  const cup=new THREE.Mesh(
-  new THREE.TorusGeometry(.109,.039,10,28,Math.PI*2-gap),
+  new THREE.TorusGeometry(.147,.053,10,32,Math.PI*2-gap),
   hand
  );
  cup.rotation.z=-Math.PI/2+gap/2;
- cup.position.set(0,-.274,-.012);
+ cup.position.set(0,-.296,-.012);
  cup.castShadow=true;cup.receiveShadow=true;
  cup.name='ClassicCHook';
  elbow.add(cup);
