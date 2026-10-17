@@ -1,4 +1,4 @@
-// Brick Battlegrounds / classic ninja prototype rig, v0.6.3.
+// Brick Battlegrounds / classic ninja prototype rig, v0.6.4.
 // Original simplified minifigure-inspired character geometry.
 // Only applied to VERDANT and CRIMSON, not the rest of the roster.
 import * as THREE from '/vendor/three.module.js';
@@ -36,50 +36,44 @@ function simpleLeg(parent,mat,x){
 }
 function simpleArm(parent,main,hand,sx){
  const shoulder=new THREE.Group();shoulder.position.set(sx*.72,2.03,0);parent.add(shoulder);
- // One uncluttered classic arm silhouette; no cuff or differently colored floating hand.
- add(shoulder,new THREE.CapsuleGeometry(.205,.42,4,14),main,[0,-.32,0]);
+ // v0.6.4: no separate hand, cuff or torus claw; a smooth integrated forearm and mitten.
+ add(shoulder,new THREE.CapsuleGeometry(.20,.42,4,12),main,[0,-.31,0]);
  const elbow=new THREE.Group();elbow.position.set(0,-.56,0);shoulder.add(elbow);
- // Forearm and C-clamp are a single continuous piece of geometry, in the sleeve color.
- // Retain the elbow pivot so the existing punch/block animations still work.
- const outline=new THREE.Shape();
- outline.moveTo(-.18,.01);outline.lineTo(.18,.01);
- outline.quadraticCurveTo(.21,-.19,.18,-.33);
- outline.quadraticCurveTo(.28,-.43,.26,-.54);
- outline.quadraticCurveTo(.26,-.73,.095,-.74);
- outline.quadraticCurveTo(.015,-.75,.025,-.65);
- outline.lineTo(.025,-.58);
- outline.quadraticCurveTo(.16,-.62,.15,-.52);
- outline.quadraticCurveTo(.13,-.43,0,-.44);
- outline.quadraticCurveTo(-.13,-.43,-.15,-.52);
- outline.quadraticCurveTo(-.16,-.62,-.025,-.58);
- outline.lineTo(-.025,-.65);
- outline.quadraticCurveTo(-.015,-.75,-.095,-.74);
- outline.quadraticCurveTo(-.26,-.73,-.26,-.54);
- outline.quadraticCurveTo(-.28,-.43,-.18,-.33);
- outline.closePath();
- const geo=new THREE.ExtrudeGeometry(outline,{depth:.19,steps:1,bevelEnabled:true,bevelThickness:.024,bevelSize:.021,bevelSegments:2,curveSegments:8});
- add(elbow,geo,main,[0,0,-.095]);
+ const shape=new THREE.Shape();
+ shape.moveTo(-.16,.02);
+ shape.quadraticCurveTo(.16,.02,.17,-.10);
+ shape.lineTo(.17,-.44);
+ shape.quadraticCurveTo(.17,-.54,.10,-.58);
+ shape.quadraticCurveTo(.03,-.62,.03,-.53);
+ shape.quadraticCurveTo(.03,-.45,.10,-.42);
+ shape.quadraticCurveTo(.00,-.43,-.10,-.42);
+ shape.quadraticCurveTo(-.03,-.45,-.03,-.53);
+ shape.quadraticCurveTo(-.03,-.62,-.10,-.58);
+ shape.quadraticCurveTo(-.17,-.54,-.17,-.44);
+ shape.lineTo(-.17,-.10);
+ shape.quadraticCurveTo(-.16,.02,-.16,.02);
+ const geometry=new THREE.ExtrudeGeometry(shape,{depth:.18,steps:1,bevelEnabled:true,bevelThickness:.02,bevelSize:.018,bevelSegments:2,curveSegments:8});
+ add(elbow,geometry,main,[0,0,-.09]);
  shoulder.userData.elbow=elbow;
  shoulder.rotation.z=sx*.12;
  return shoulder;
 }
 function buildSimpleHead(body,main,skin,ink){
  const head=new THREE.Group();head.position.set(0,2.52,0);body.add(head);
- // Slim rounded hood with a genuine opening, not a yellow face plate on top.
- const hoodRadius=.435;
- add(head,new THREE.CylinderGeometry(hoodRadius,hoodRadius,.70,32,1,true,Math.PI+.60,Math.PI*2-1.20),main,[0,.08,.02]);
- cyl(head,.145,.145,.12,main,0,.49,.03,24);
- // Curved yellow minifigure face sits slightly behind the hood opening.
- add(head,new THREE.CylinderGeometry(.400,.400,.29,24,1,true,Math.PI-.62,1.24),skin,[0,.145,.02]);
- // Simple smooth top rim and narrow lower mask, no boxy face side plates.
- cyl(head,.44,.44,.13,main,0,.395,.02,32);
- cyl(head,.443,.44,.275,main,0,-.205,.02,32);
- box(head,.65,.055,.06,main,0,-.038,-.408);
+ // Subtle v0.6.4 polish: slimmer hood, smaller stud, curved inset face.
+ const hoodRadius=.428;
+ // Genuine front opening: do not replace this with a solid cylinder.
+ add(head,new THREE.CylinderGeometry(hoodRadius,hoodRadius,.72,32,1,true,Math.PI+.60,Math.PI*2-1.20),main,[0,.08,.02]);
+ cyl(head,.135,.135,.105,main,0,.505,.03,24);
+ add(head,new THREE.CylinderGeometry(.395,.395,.29,24,1,true,Math.PI-.62,1.24),skin,[0,.145,.02]);
+ cyl(head,.434,.434,.13,main,0,.395,.02,32);
+ cyl(head,.436,.432,.275,main,0,-.205,.02,32);
+ box(head,.63,.055,.06,main,0,-.038,-.400);
  for(const sx of [-1,1]){
-  const eye=box(head,.072,.079,.012,ink,sx*.13,.145,-.386);
-  eye.rotation.z=sx*.11;
-  const brow=box(head,.129,.027,.015,ink,sx*.13,.222,-.386);
-  brow.rotation.z=-sx*.16;
+  const eye=box(head,.068,.074,.012,ink,sx*.123,.145,-.379);
+  eye.rotation.z=sx*.09;
+  const brow=box(head,.125,.025,.015,ink,sx*.123,.221,-.380);
+  brow.rotation.z=-sx*.15;
  }
  return head;
 }
