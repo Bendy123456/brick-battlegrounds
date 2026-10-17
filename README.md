@@ -1,8 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.13 HEAD-ONLY ROSTER ICONS
+# BRICK BATTLEGROUNDS — v0.8.14 LEGO NECK CONNECTORS
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.14:** Add a small matching-color neck connector below each of the nine head-only character select icons. Head size, color, selected ring, 3×3 grid, menu buttons and all combat models remain unchanged.
 
 - **v0.8.13:** Updated all nine centered character-selection portraits to show only the actual classic LEGO-style colored head and top stud, without torso, arms, or legs. Preserves each original roster color, selected highlight, fighter ability panel, controller selection and Confirm/online flows. In-game character models are unchanged.
 
