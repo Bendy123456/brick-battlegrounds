@@ -45,7 +45,7 @@ function makeTorso(parent,material){
 function makeHead(body,material){
   const head=new THREE.Group();
   head.name='PlainHead';
-  head.position.set(0,2.51,0);
+  head.position.set(0,1.43,0); // CHANGED: offset from waist pivot; same resting head world position
   body.add(head);
 
   // A single smooth, unprinted cylindrical head with softly rounded edges.
@@ -181,7 +181,7 @@ function makeArm(body, material, sx) {
   const shoulder=new THREE.Group();
   shoulder.name=sx<0?'LeftArm':'RightArm';
   // Slight clearance from torso, with the rounded shoulder built into the sleeve.
-  shoulder.position.set(sx*0.538,2.0,-0.006);
+  shoulder.position.set(sx*0.538,0.92,-0.006); // CHANGED: local shoulder below waist-mounted body; same resting world position
   body.add(shoulder);
   const elbow=new THREE.Group(); // CHANGED: Actual elbow pivot, not the wrist
   elbow.name='ElbowPivot'; // CHANGED
@@ -203,12 +203,16 @@ function makeArm(body, material, sx) {
 
 export function buildClassicNinja(mainColor){
   const visual=new THREE.Group();
-  visual.name='PLAIN_CLASSIC_MINIFIG_V081';
+  visual.name='PLAIN_CLASSIC_MINIFIG_V084'; // CHANGED: anime animation rig revision
   const main=plastic(mainColor);
   const body=new THREE.Group();
   body.name='Torso';
+  // CHANGED: True hip-height waist pivot. Body can now twist without swinging
+  // the torso around the fighter's feet; mesh remains at its original world Y.
+  body.position.y=1.08;
   visual.add(body);
-  makeTorso(body,main);
+  const torsoShell=makeTorso(body,main);
+  torsoShell.position.y=-1.08; // CHANGED: exactly counter-offset world-space mesh
   const head=makeHead(body,main);
   // Plain minifigure hip connector; no ninja costume, belt or scabbards.
   block(visual,main,1.005,.218,.495,0,1.000,0);
