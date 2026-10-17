@@ -92,13 +92,17 @@ export function poseSpinjitzu(f){
  // inside the glowing vortex. Only visual yaw spins; movement root does not.
  const rad=Math.PI/180;
  const legWave=Math.sin(rotation*1.25)*27*glow;
- const stance={...CLASSIC_RELAXED,
-  LS:[77,-18,-24],LE:[120,0,0],RS:[78,18,24],RE:[121,0,0],
+ const action={LS:[77,-18,-24],LE:[120,0,0],RS:[78,18,24],RE:[121,0,0],
   LH:[14+legWave,0,-8],RH:[14-legWave,0,8],
   LK:[-32-14*Math.max(0,Math.sin(rotation))*glow,0,0],
   RK:[-32-14*Math.max(0,-Math.sin(rotation))*glow,0,0],
   T:[-10*glow,Math.sin(rotation*.5)*9*glow,Math.sin(rotation)*7*glow],
   H:[0,0,0]};
+ // CHANGED: Smooth guard windup and final release: no instant raised arms
+ // CHANGED: when the player taps E, and no snap back to idle after two seconds.
+ const stance={};
+ for(const key of Object.keys(CLASSIC_RELAXED))
+  stance[key]=CLASSIC_RELAXED[key].map((base,i)=>base+(action[key][i]-base)*glow);
  applyCombatPose(f,stance);
  const progress=ease(t/.18);
  // No jump in visual orientation when attack starts; ease spin away on exit.
