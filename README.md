@@ -15,7 +15,7 @@ Online-ready browser fighting game prototype using original brick ninja fighters
 
 ## Controls
 
-Keyboard: WASD move, **J** light attack (**press up to 3 times** within the combo window for left/right/kick), **K** heavy attack (automatically plays the two-hit hook + kick sequence), **L** block, Shift dodge, Space jump, Q special, Tab lock on, mouse drag camera.
+Keyboard + mouse: WASD move, **M1 / left-click** light attack (**click up to 3 times** within the combo window for left/right/kick), **R** heavy attack (automatically plays the two-hit hook + kick sequence), **L** block, Shift dodge, Space jump, Q special, Tab lock on, **M2 / right-click drag** camera.
 
 Controller (standard Xbox/PS5 browser mapping): left stick move, right stick camera, X/Square light, Y/Triangle heavy, LB/L1 block, B/Circle dodge, A/Cross jump, RB/R1 special, Menu/Options lock on. Controller mappings may vary across browser/OS setups.
 
