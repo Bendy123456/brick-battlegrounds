@@ -34,15 +34,21 @@
   </div>
 </main>
 <section id="selectScreen" class="page">
-  <!-- CHANGED: v0.8.12 centered roster, with ability information directly below the selected icon grid. -->
+  <!-- CHANGED: v0.8.15 black-fog fighter select and premium gold-framed live confirmation card. -->
+  <div class="select-fog" aria-hidden="true">
+    <div class="select-fog-cloud fog-cloud-left"></div>
+    <div class="select-fog-cloud fog-cloud-right"></div>
+    <div class="select-fog-cloud fog-cloud-low"></div>
+    <div class="select-fog-embers"></div>
+  </div>
   <div class="select-layout centered-select">
     <div class="roster select-center">
       <p class="eyebrow">01 / CHARACTER SELECT</p>
       <h2>CHOOSE YOUR <em>CHAMPION</em></h2>
       <p class="dim">Choose one of nine brick fighters</p>
       <div id="rosterGrid" class="roster-grid" role="group" aria-label="Choose a fighter"></div>
-      <div class="selected-ability-panel" aria-live="polite" aria-atomic="true">
-        <p class="selected-label">YOUR FIGHTER</p>
+      <div class="selected-ability-panel fighter-confirm-card" aria-live="polite" aria-atomic="true">
+        <p class="selected-label"><span>YOUR FIGHTER</span></p>
         <h3 id="fighterName">AZURE</h3>
         <div class="selected-ability-line">
           <span class="ability-icon" aria-hidden="true">✦</span>
