@@ -1,8 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.24 SHOW-INSPIRED SPINJITZU
+# BRICK BATTLEGROUNDS — v0.8.25 CONTAINED SPINJITZU
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.25 — Spinjitzu fighter containment:** Updated the playable 3D effect so the visible LEGO minifigure tucks arms/legs inward and eases down to 59% of its normal visual size, while lifting into the tornado's wide center. This prevents stray hands, head and feet from extending beyond the neon energy funnel. It grows back naturally as the tornado dissipates; interrupts and knockdowns restore normal visual scale, position and yaw. The gameplay root, hitboxes, 2-second duration, five-hit timing/damage, 8-second cooldown and online sync are not changed. Simulated intro/active/recovery/interruption transform checks passed.
 
 - **v0.8.24 — Reference-matched Spinjitzu energy:** Reworked the actual in-game Three.js vortex to resemble the supplied bright green show reference: a tall inverted funnel, wide luminous top, concentrated swirling midsection and tight base. Added 116 partially broken, gently slanted, almost-horizontal wind streaks batched into two GPU meshes, plus 15 flowing helix ribbons, 4 rippling translucent shells, 240 soft round sparks, and stronger ground lighting/impact flare. Sharper, layered shader stripes create the sense of rapid rotational motion and soft glowing energy instead of obvious block geometry. Each of the nine ninja colors has an enhanced neon elemental variant; Verdant uses a vivid lime-green glow. Kept all Spinjitzu combat logic untouched (2-second duration, five hits, finisher ragdoll, 8-second cooldown, E/R1/RB), along with multiplayer, other attacks and dashes. Runtime geometry/color/pose tests passed across all nine fighter colors. This update changes the live-game procedural 3D effect, not a static image or Blender render.
 
