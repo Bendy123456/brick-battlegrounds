@@ -1,8 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.19 FULL BODY LEAN
+# BRICK BATTLEGROUNDS — v0.8.20 DIRECTIONAL DASH COOLDOWNS
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.20:** Backward backflip dash speed increased from 14.5 to 19.5 (~34.5% more travel) with the same .48s animation. Added a per-fighter shared dash cooldown, starting on dash activation: 2.0 seconds for forward and backward, 1.0 second for left/right. Dash input is blocked until the cooldown expires, and the timer clears on every new round. Original controller/keyboard/touch controls, directional animations, dash i-frames, collision, damage, other dash speeds and multiplayer message formats are unchanged. Simulated game-tick tests passed for each direction and confirmed the new backward travel distance.
 
 - **v0.8.19:** Added clear body-weight leaning throughout punches, kicks, and all four directional dash animations. The three punch animations and opening heavy hook drive the torso and cosmetic fighter forward on impact; the snapkick and heavy roundhouse counterbalance backward. Mirrored left/right sidesteps now roll toward travel, the forward punch-dash stays committed to forward tilt, and the backflip gets shaped takeoff/landing lean. The rest stance remains unchanged. All animation-only changes preserve attack contact times/duration, damage, dash speed/distance, collision, i-frames, controller input and multiplayer state. Verified all five attack recovery clips and four dashes at simulated 60 FPS.
 
