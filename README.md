@@ -1,8 +1,11 @@
-# BRICK BATTLEGROUNDS — v0.8.23 CINEMATIC SPINJITZU
+# BRICK BATTLEGROUNDS — v0.8.24 SHOW-INSPIRED SPINJITZU
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.24 — Reference-matched Spinjitzu energy:** Reworked the actual in-game Three.js vortex to resemble the supplied bright green show reference: a tall inverted funnel, wide luminous top, concentrated swirling midsection and tight base. Added 116 partially broken, gently slanted, almost-horizontal wind streaks batched into two GPU meshes, plus 15 flowing helix ribbons, 4 rippling translucent shells, 240 soft round sparks, and stronger ground lighting/impact flare. Sharper, layered shader stripes create the sense of rapid rotational motion and soft glowing energy instead of obvious block geometry. Each of the nine ninja colors has an enhanced neon elemental variant; Verdant uses a vivid lime-green glow. Kept all Spinjitzu combat logic untouched (2-second duration, five hits, finisher ragdoll, 8-second cooldown, E/R1/RB), along with multiplayer, other attacks and dashes. Runtime geometry/color/pose tests passed across all nine fighter colors. This update changes the live-game procedural 3D effect, not a static image or Blender render.
+
 
 - **v0.8.23 — Cinematic Spinjitzu visual overhaul:** Replaced the rigid five tubes, four solid rings, faceted tetrahedron particles, and simple cylinder with a three-layer animated cyclone of translucent shader-driven energy, twelve broad/tapered spiraling wind ribbons, 105 soft round GPU spark sprites, and an animated arena-floor aura. Vertex/fragment shaders deform the vortex and create flowing/highlighted spiral streaks rather than just rotating rigid meshes. The fighter remains visible inside, performing ten fully eased rotations. Reuses geometry/materials for efficiency, retains all nine fighter-element colors, and does not modify the 2s move, 8s cooldown, five-hit damage, knockdown, controls, multiplayer, or other animations. Runtime geometry/keyframe/color checks passed for all nine. This is a live Three.js shader effect, not a Blender-exported mesh; the development environment did not have Blender installed.
 
