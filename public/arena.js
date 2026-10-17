@@ -309,16 +309,21 @@ function poseFighter(f,dt=0){
   if(f.dashKind&&f.dodge<=0){clearDashVisual(f);f.dashKind=null;}
  const combatPose=sampleCombatPose(f,dt);
  if(combatPose){
-  // CHANGED: Any cancelled dash releases its visual-only offset immediately.
-  f.visual.position.z=0;f.visual.rotation.y=0;f.visual.rotation.z=0;
-  // CHANGED: Continuous fighting guard + contact-synced strikes are now one
-  // CHANGED: pose pipeline, so the character never snaps to arms-down rest.
+  // CHANGED: A small full-figure lean reinforces the already animated hip-height
+  // CHANGED: torso pivot. This is cosmetic ONLY; root, collision, hits and speed stay put.
+  // CHANGED: Forward punch lean is negative X; kick counterbalance leans positive X.
+  // CHANGED: Keep the stance vertical when idle/blocking and after the clip ends.
+  const striking=f.attack&&(f.attack.kind==='light'||f.attack.kind==='heavy');
+  const pitch=striking?THREE.MathUtils.clamp((combatPose.T?.[0]||0)*Math.PI/180*.24,-.15,.15):0;
+  const roll=striking?THREE.MathUtils.clamp((combatPose.T?.[2]||0)*Math.PI/180*.16,-.09,.09):0;
+  f.visual.position.z=0;
+  f.visual.rotation.set(pitch,0,roll);
+  // CHANGED: Original shoulder/hip joint posing remains completely unchanged.
   applyCombatPose(f,combatPose);
-  // CHANGED: Dodge rolls lean as before; returning to standing always clears tilt.
   if(f.dodge>0){
    f.visual.rotation.x=-.30;
    body.rotation.z+=Math.sin((.34-f.dodge)/.34*Math.PI)*.35;
-  }else f.visual.rotation.x=0;
+  }
   // CHANGED: Visible two-shoulder hit recoil, recovering while stunned.
   if(f.hitFlash>0){
    const recoil=Math.sin((1-f.hitFlash/.19)*Math.PI);
