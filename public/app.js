@@ -28,8 +28,12 @@ const chars=[
 let chosen=0,peerChoice=1,mode='solo',ws=null,room='',slot=0,peerReady=false,myReady=false,peerCount=0,screen='lobby',inFight=false;const elements=[...document.querySelectorAll('.page')];
 const show=(id)=>{screen=id;document.body.classList.toggle('in-match',id==='none');elements.forEach(e=>e.classList.toggle('show',e.id===id));$('grain').style.display=id==='none'?'none':'block';$('hud').classList.toggle('hidden',id!=='none');$('gameHelp').classList.toggle('hidden',id!=='none');$('quit').classList.toggle('hidden',id!=='none');$('reticle').style.display=id==='none'?'block':'none'};
 const toast=t=>{$('lobbyMsg').textContent=t;};
-const emblems=['✦','🔥','❖','☽','♛','❄','▲','✧','✿'];
-function avatar(i){const c=chars[i];return `<div class="avatar ninja-portrait fighter-${i}" style="--cloth:${c[1]};--glow:${c[2]}"><div class="hood"></div><div class="face"><i class="brow"></i><i class="eyes"></i></div><div class="mask"></div><div class="chest"><span class="sigil">${emblems[i]}</span></div></div>`}
+// CHANGED: Roster icons show the SAME plain-colored classic LEGO heads as the in-game fighters.
+// CHANGED: No torso, hands, legs, head mask, or decorative emblems remain in the portrait.
+function avatar(i){
+ const c=chars[i];
+ return `<div class="avatar lego-head-portrait fighter-${i}" style="--cloth:${c[1]};--glow:${c[2]}"><div class="lego-head-stud" aria-hidden="true"></div><div class="lego-head-shell" aria-hidden="true"></div></div>`;
+}
 $('rosterGrid').innerHTML=chars.map((c,i)=>`<button type="button" title="${c[0]}" aria-label="Select ${c[0]}" class="roster-item" data-index="${i}">${avatar(i)}</button>`).join('');
 function select(i){
   chosen=(i+chars.length)%chars.length;
