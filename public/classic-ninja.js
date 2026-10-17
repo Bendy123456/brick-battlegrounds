@@ -1,4 +1,4 @@
-// BRICK BATTLEGROUNDS v0.7.4 — Option B: plain classic minifigure prototype.
+// BRICK BATTLEGROUNDS v0.7.5 — Option B: plain classic minifigure prototype.
 // Replace public/classic-ninja.js with this file.
 // Only VERDANT and CRIMSON use this model; public/arena.js already restricts the swap.
 // Preserve the exact shoulder / elbow / hip / head rig interface for existing combat.
@@ -114,15 +114,15 @@ function makeArmShell(parent, material, sx) {
   // One smooth sleeve, with the bottom ending just above a tiny wrist tube.
   const rings = [
     // y, outward x offset, lateral radius, front/back radius, z offset
-    [ 0.09, 0.01, 0.10,  0.10,  0.00],
-    [ 0.05, 0.04, 0.15,  0.14,  0.00],
-    [-0.04, 0.10, 0.17,  0.16, -0.005],
-    [-0.16, 0.15, 0.16,  0.16, -0.01],
-    [-0.28, 0.18, 0.145, 0.145,-0.012],
-    [-0.40, 0.195,0.125, 0.13, -0.015],
-    [-0.48, 0.205,0.105, 0.115,-0.018],
-    [-0.54, 0.215,0.095, 0.105,-0.02],
-    [-0.58, 0.22, 0.082, 0.092,-0.02]
+    [ 0.09, 0.008,0.10,  0.10,  0.00],
+    [ 0.05, 0.015,0.15,  0.14,  0.00],
+    [-0.04,0.040,0.17,  0.16, -0.005],
+    [-0.16,0.052,0.16,  0.16, -0.01],
+    [-0.28,0.072,0.145, 0.145,-0.012],
+    [-0.40,0.087,0.125, 0.13, -0.015],
+    [-0.48,0.098,0.105, 0.115,-0.018],
+    [-0.54,0.108,0.095, 0.105,-0.02],
+    [-0.58,0.115,0.082, 0.092,-0.02]
   ];
   const sides = 24, vertices = [], indices = [];
   for (const [y, offset, rx, rz, z] of rings) {
@@ -166,7 +166,7 @@ function makeArmShell(parent, material, sx) {
 function makeArm(body, material, sx) {
   const shoulder = new THREE.Group();
   shoulder.name = sx < 0 ? 'LeftArm' : 'RightArm';
-  shoulder.position.set(sx * 0.64, 2.01, 0);
+  shoulder.position.set(sx * 0.565, 2.01, 0);
   body.add(shoulder);
   // Compact shoulder socket integrated into the fuller molded sleeve.
   const ball = put(shoulder, new THREE.SphereGeometry(0.12,16,12), material, 0,0.02,0);
@@ -175,7 +175,7 @@ function makeArm(body, material, sx) {
   makeArmShell(shoulder, material, sx);
   // Keep exactly the elbow pivot the combat engine expects.
   const elbow = new THREE.Group();
-  elbow.position.set(sx * 0.225, -0.575, -0.02);
+  elbow.position.set(sx * 0.115, -0.575, -0.02);
   shoulder.add(elbow);
   const wrist = cylinder(elbow, material, 0.078,0.078,0.075, 0,-0.05,0, 20);
   wrist.name = 'WristTube';
@@ -186,7 +186,7 @@ function makeArm(body, material, sx) {
 
 export function buildClassicNinja(mainColor){
   const visual=new THREE.Group();
-  visual.name='PLAIN_CLASSIC_MINIFIG_V074';
+  visual.name='PLAIN_CLASSIC_MINIFIG_V075';
   const main=plastic(mainColor);
   const body=new THREE.Group();
   body.name='Torso';
