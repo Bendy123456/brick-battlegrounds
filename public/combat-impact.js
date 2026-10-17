@@ -1,5 +1,7 @@
 // CHANGED: Crimson/Verdant rise to their relaxed stance, not permanent high guard.
 import {CLASSIC_RELAXED} from './classic-combat.js';
+// CHANGED: Clear backflip offsets if an enemy interrupts a dash.
+import {clearDashVisual} from './dash-poses.js';
 // CHANGED: Consecutive landed-hit rules and visual knockdown. This is a
 // procedural, ragdoll-style fall; Three.js has no rigid-body ragdoll solver here.
 export const HIT_STUN_SECONDS=1.0;
@@ -32,6 +34,8 @@ export function recordHitForKnockdown(att,attack,blocked=false){
  return knock;
 }
 export function startImpact(def,knockdown){
+ // CHANGED: A hit interrupts the dash's visual-only translation and spin.
+ if(def.dashKind){clearDashVisual(def);def.dashKind=null;}
  // The attacker cannot continue an attack during hitstun.
  def.attack=null;
  def.queuedLight=false;
