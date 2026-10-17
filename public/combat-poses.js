@@ -1,4 +1,6 @@
-// BRICK BATTLEGROUNDS — v0.8.3 animation pass
+// BRICK BATTLEGROUNDS — v0.8.4 character-specific anime animation pass
+// CHANGED: Import the exclusive Crimson/Verdant fighting poses.
+import {CLASSIC_RELAXED,CLASSIC_COMBAT_POSES} from './classic-combat.js';
 // CHANGED: Editorially authored guard, windup, impact, overshoot, recoil, recovery.
 // Rotation values are degrees; conversion into radians happens only in applyCombatPose().
 // Contact frames retain all existing combat timing (.2304, .3795, .24, .375, .9).
@@ -1782,10 +1784,27 @@ function interpolate(a,b,t){
  }
  return out;
 }
-export function fightingStance(f,guarding=f.block){ // CHANGED: optional defensive pose for soft transitions
+const isClassicFighter=f=>f.visual?.name?.startsWith('PLAIN_CLASSIC_MINIFIG_')===true; // CHANGED: scope to Crimson & Verdant
+export function fightingStance(f,guarding=f.block){ // CHANGED: relaxed minifigure vs. original standard fighters
  const walk=Math.min(1,f.moving||0)*(f.stun>0?.2:1);
  const stride=Math.sin(f.runTime||0),phase=Math.cos(f.runTime||0);
  const breath=Math.sin((f.combatClock||0)*3.4);
+ // CHANGED: Classic minifigures do NOT hold their fists near the face when idle.
+ if(isClassicFighter(f)){
+  if(guarding)return {...CLASSIC_RELAXED,
+   LS:[73,-7,-14],LE:[118,0,0],RS:[74,7,14],RE:[118,0,0],
+   LH:[-8,0,-4],RH:[8,0,4],LK:[11,0,0],RK:[11,0,0],T:[8,-4,0]};
+  const motion=Math.min(1,walk),breathe=breath*1.5;
+  return {...CLASSIC_RELAXED,
+   LS:[8+motion*stride*19+breathe,-4,-9-motion*phase*3],
+   RS:[10-motion*stride*19-breathe,4,9+motion*phase*3],
+   LE:[9+motion*Math.max(0,stride)*9,0,0],
+   RE:[9+motion*Math.max(0,-stride)*9,0,0],
+   LH:[-6+motion*stride*24,0,-3],RH:[7-motion*stride*24,0,3],
+   LK:[3+motion*Math.max(0,-stride)*20,0,0],
+   RK:[3+motion*Math.max(0,stride)*20,0,0],
+   T:[1+motion*phase*2,-4+motion*stride*4,0]};
+ }
  if(guarding)return withGuard({LS:[76,-5,11],LE:[125,0,0],RS:[76,5,-11],RE:[125,0,0],LH:[-8,0,0],RH:[7,0,0],LK:[12,0,0],RK:[10,0,0],T:[10,-3,0]});
  return withGuard({
   LS:[57+walk*stride*7+breath*1.2,-4,16+walk*phase*3],LE:[104-walk*stride*6,0,0],
@@ -1814,7 +1833,9 @@ function atTime(frames,time){
 export function sampleCombatPose(f,dt){
  const attack=f.attack;
  if(attack?.kind==='special'){states.delete(f);return null;}
- const data=attack?.kind==='light'?COMBAT_POSES.light[attack.stage-1]:attack?.kind==='heavy'?COMBAT_POSES.heavy:null;
+ // CHANGED: Only classic Crimson/Verdant use the new anime strike table.
+ const table=isClassicFighter(f)?CLASSIC_COMBAT_POSES:COMBAT_POSES;
+ const data=attack?.kind==='light'?table.light[attack.stage-1]:attack?.kind==='heavy'?table.heavy:null;
  // CHANGED: Guard-to-block eases over 110ms, never teleports fists upward.
  const normalGuard=fightingStance(f,false),highBlock=fightingStance(f,true);
  let st=states.get(f);
