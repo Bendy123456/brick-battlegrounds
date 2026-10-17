@@ -3,6 +3,8 @@ import {buildClassicNinja} from './classic-ninja.js';
 import {setupTouchControls} from './touch-controls.js';
 // CHANGED: Visual-only combat poses live independently of hit detection.
 import {captureCombatRest,sampleCombatPose,applyCombatPose,resetCombatPose} from './combat-poses.js';
+// CHANGED: Connected hit chains, one-second stun and ragdoll-style knockdowns.
+import {HIT_STUN_SECONDS,KNOCKDOWN_SECONDS,clearHitChain,recordHitForKnockdown,startImpact,tickImpact,poseKnockdown} from './combat-impact.js';
 
 const $ = id => document.getElementById(id);
 const scene = new THREE.Scene();
@@ -168,7 +170,7 @@ function fighter(color,x,z){
   box(sheath,.18,.08,.18,0,1.24,0,accent);
  }
  visual.userData={arms,legs,body,head,cloth,pants,accent,trim,baseColor:color};
- return {root,visual,hp:150,guard:100,v:new THREE.Vector3(),onGround:true,yVel:0,face:0,attack:null,attackTime:0,attackCooldown:0,iframes:0,stun:0,dodge:0,block:false,specialCooldown:0,combo:0,comboWindow:0,queuedLight:false,score:0,moving:0,runTime:0,hitFlash:0,prevAction:{},name:'NINJA'};
+ return {root,visual,hp:150,guard:100,v:new THREE.Vector3(),onGround:true,yVel:0,face:0,attack:null,attackTime:0,attackCooldown:0,iframes:0,stun:0,dodge:0,block:false,specialCooldown:0,combo:0,comboWindow:0,queuedLight:false,score:0,moving:0,runTime:0,hitFlash:0,ragdoll:0,ragdollTotal:0,ragdollSide:1,hitChain:null,combatClock:0,prevAction:{},name:'NINJA'};
 }
 const p=fighter(0x1186ca,-3.8,0),cpu=fighter(0xc83d39,3.8,0);
 // CHANGED: Cache neutral joint rotations before the first animation frame.
@@ -255,7 +257,17 @@ export function startFight(){startGame()}
 export function stopFight(){running=false;finished=false;roundWait=0;mobileTouch.reset()}
 export function receivePeerState(state){remoteState=state}
 export function receivePeerAttack(kind){if(gameMode==='online')tryAttack(cpu,kind)}
-export function receiveDamage(damage){if(gameMode==='online'&&running){p.hp=Math.max(0,p.hp-damage);p.stun=.24;p.hitFlash=.2;fx(p.root.position.clone().add(new THREE.Vector3(0,1.75,0)),0xff9977,11)}}
+// CHANGED: Multiplayer reuses the original damage event with stun/knockdown flags.
+export function receiveDamage(damage,knockdown=false,stun=true){
+ if(gameMode!=='online'||!running)return;
+ p.hp=Math.max(0,p.hp-damage);
+ if(stun){ // CHANGED: Interrupt incoming victim's attack, just like local combat.
+  startImpact(p,!!knockdown);
+  clearHitChain(p);
+  if(knockdown)resetCombatPose(p);
+ }else p.hitFlash=.12;
+ fx(p.root.position.clone().add(new THREE.Vector3(0,1.75,0)),0xff9977,11);
+}
 cpu.root.rotation.y=Math.PI/2;p.root.rotation.y=-Math.PI/2;
 let running=false,finished=false,time=120,round=1,roundWait=0,lock=true,camYaw=-Math.PI/2,camPitch=.16;
 const keys=new Set(),mouse={drag:false,px:0,py:0};
@@ -304,6 +316,8 @@ function resetFighter(f,x){
  f.root.position.set(x,0,0);f.v.set(0,0,0);f.hp=MAX_HEALTH;f.guard=100;
  f.onGround=true;f.yVel=0;f.attack=null;f.attackTime=0;f.attackCooldown=0;
  f.combo=0;f.comboWindow=0;f.queuedLight=false;f.stun=0;f.dodge=0;f.iframes=0;
+ // CHANGED: Reset knockdown state and landed-hit counters on a new round.
+ f.ragdoll=0;f.ragdollTotal=0;f.ragdollSide=1;f.combatClock=0;clearHitChain(f);
  f.specialCooldown=0;f.hitFlash=0;f.block=false;f.visual.position.set(0,0,0);
  f.visual.rotation.set(0,0,0);f.runTime=0;
 }
@@ -360,16 +374,27 @@ function hit(att,def,attack){
  const blocked=def.block&&def.guard>0;
  const damage=blocked?Math.max(1,Math.round(attack.dmg*.1)):attack.dmg;
  def.hp=Math.max(0,def.hp-damage);
- if(gameMode==='online'&&att===p)gameEvents.onHit?.(damage);
+ let knockdown=false,stunApplied=false; // CHANGED: Effects do not alter damage.
  if(blocked){
+  recordHitForKnockdown(att,attack,true); // CHANGED: Blocking breaks the hit chain.
   def.guard=Math.max(0,def.guard-attack.dmg*2.1);
-  if(def.guard<=0){def.stun=.65;def.block=false;showToast('GUARD BREAK',.35)}
-  else showToast('BLOCKED',.21);
+  if(def.guard<=0){
+   startImpact(def,false); // CHANGED: One-second stun on a broken guard.
+   clearHitChain(def);
+   stunApplied=true;
+   showToast('GUARD BREAK',.35);
+  }else showToast('BLOCKED',.21);
  }else{
-  def.stun=attack.kind==='heavy'?.37:attack.kind==='light'?.14:.42;
-  def.hitFlash=.19;
-  showToast(attack.kind==='light'?attack.name+' · 10':attack.kind==='heavy'?'HEAVY · 20':'SPECIAL HIT!',.29);
+  knockdown=recordHitForKnockdown(att,attack,false); // CHANGED: 4L / 2R / 2L+R.
+  startImpact(def,knockdown); // CHANGED: 1s stun and attack interruption.
+  clearHitChain(def); // CHANGED: Getting hit breaks your own combo.
+  if(knockdown)resetCombatPose(def); // CHANGED: Hand control to knockdown pose.
+  stunApplied=true;
+  showToast(knockdown?'RAGDOLL KNOCKDOWN!':
+   attack.kind==='light'?attack.name+' · 10':attack.kind==='heavy'?'HEAVY · 20':'SPECIAL HIT!',knockdown?.8:.29);
  }
+ // CHANGED: Same multiplayer damage event; synchronize hitstun and knockdown.
+ if(gameMode==='online'&&att===p)gameEvents.onHit?.(damage,{knockdown,stun:stunApplied});
  const knock=new THREE.Vector3().subVectors(b,a).setY(0).normalize();
  def.v.addScaledVector(knock,blocked?1.0:attack.kind==='heavy'?4.4:2.6);
  fx(b.clone().add(new THREE.Vector3(0,1.55,0)),blocked?0xffde97:att===p?0x71dfff:0xff8970,blocked?8:13);
@@ -389,6 +414,8 @@ function keyPose(frames,t){
 function poseFighter(f,dt=0){
  const {arms,legs,body,head}=f.visual.userData;
  const stride=Math.sin(f.runTime),walk=Math.min(1,f.moving),idle=Math.sin(performance.now()*.0028)*.026;
+ // CHANGED: Procedural limp-body fall takes priority over attack and idle poses.
+ if(f.ragdoll>0){poseKnockdown(f);return;}
  const combatPose=sampleCombatPose(f,dt);
  if(combatPose){
   applyCombatPose(f,combatPose);
@@ -446,6 +473,8 @@ function cpuInput(dt){
  return aiMove;
 }
 function updateFighter(f,op,dt,controls){
+ // CHANGED: Elapsed time drives knockdowns and landed-combo expiration.
+ f.combatClock=(f.combatClock||0)+dt;tickImpact(f,dt);
  for(const k of ['stun','attackCooldown','specialCooldown','iframes','dodge','comboWindow','hitFlash'])f[k]=Math.max(0,f[k]-dt);
  f.guard=Math.min(100,f.guard+dt*(f.block?2:15));
  f.block=controls.block&&f.stun<=0&&f.guard>0&&f.dodge<=0&&!f.attack;
@@ -529,6 +558,8 @@ function animate(){
     cpu.root.rotation.y=remoteState.rot;cpu.hp=remoteState.hp;cpu.guard=remoteState.guard;
    }
    cpu.attackCooldown=Math.max(0,cpu.attackCooldown-dt);
+   // CHANGED: Animate the remote fighter's visual knockdown at local frame rate.
+   tickImpact(cpu,dt);
    if(cpu.attack){cpu.attackTime+=dt;if(cpu.attackTime>=cpu.attack.len)cpu.attack=null}
    cpu.runTime+=dt*3;poseFighter(cpu,dt);
   }
