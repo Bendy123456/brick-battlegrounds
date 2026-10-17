@@ -1,15 +1,16 @@
-# BRICK BATTLEGROUNDS — v0.8.6 LONGER DASH
+# BRICK BATTLEGROUNDS — v0.8.7 CLASSIC ROSTER
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
 
+- **v0.8.7:** All nine fighters now use the same plain, articulated LEGO-style model and the Crimson/Verdant anime combat animations. Each keeps its exact original roster color, and character-select portraits reflect the classic body. The existing dash distance, damage, inputs and knockdown mechanics are unchanged.
 - **v0.8.6:** All four directional dashes travel approximately 25% farther at unchanged animation durations and with unchanged damage, dash input mappings and stun rules.
 
 - Exactly **nine** ninja fighters displayed in a **3 × 3** clickable circular portrait roster.
 - Individual chest crests and helmet/armor touches across all nine original fighters.
 - A new procedural dojo courtyard: octagonal platform, engraved tile crest, lanterns, twin temple buildings, entrance gates, flags and lighting. The fighting space is unobstructed.
-- Keyframed, smoothly interpolated character rig poses for left jab, right cross, right kick, new fourth-hit left hook, and the existing heavy hook-and-roundhouse. Attack poses are configurable in `public/combat-poses.js` (degrees and seconds). **Crimson and Verdant only** use the new exaggerated anime attack set in `public/classic-combat.js`: relaxed arms-down idle, deep punch windups, dramatically wider jab/cross/hook extensions, high-chamber kicks, and waist-driven torso rotation. Their knockdown get-up returns to relaxed idle. The other seven fighters retain the original v0.8.3 animation system; jumping and gameplay controls remain unchanged.
+- Keyframed, smoothly interpolated character rig poses for left jab, right cross, right kick, new fourth-hit left hook, and the existing heavy hook-and-roundhouse. Attack poses are configurable in `public/combat-poses.js` (degrees and seconds). **All nine roster fighters** now use the exaggerated anime attack set in `public/classic-combat.js`: relaxed arms-down idle, deep punch windups, dramatically wider jab/cross/hook extensions, high-chamber kicks, and waist-driven torso rotation. Their knockdown get-up returns to relaxed idle. All nine fighters share the same rig and poses; jumping and gameplay controls remain unchanged.
 - **150 starting health** per fighter. Each unblocked light hit = **10** damage. Heavy is **one button press for two hits**, each hit = **20** damage if it lands (40 total maximum). Blocking mitigates damage; misses do no damage.
 - 60 FPS **target**, not guaranteed. On-screen FPS readout in combat. A fullscreen toggle stays available.
 - Preserves existing CPU match flow and **experimental** private online rooms (online combat is not yet server-authoritative).
@@ -31,7 +32,7 @@ Controller (standard Xbox/PS5 browser mapping): left stick move, right stick cam
 1. Extract this ZIP.
 2. Replace the existing repository's **root** `server.js` and `package.json` and the four files in **`public/`** (`app.js`, `arena.js`, `index.html`, `style.css`). You may also replace this README.
 3. Commit to `main`; your already-configured Render service should auto-deploy if its setting is enabled.
-4. After the new Render deployment becomes **Live**, hard-refresh your website (Ctrl+Shift+R) and verify the menu shows **v0.8.6 LONGER DASH** at the top.
+4. After the new Render deployment becomes **Live**, hard-refresh your website (Ctrl+Shift+R) and verify the menu shows **v0.8.7 CLASSIC ROSTER** at the top.
 5. Start Fight the Bot, select a fighter, test M1 combo, R heavy, and Q with W/A/S/D, read 150 HP in the HUD, and verify fullscreen and FPS counter.
 
 Do not upload only the ZIP file to GitHub; unpack it first. Keep the `public` directory name and structure unchanged.
