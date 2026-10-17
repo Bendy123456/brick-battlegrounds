@@ -1,8 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.18 CINEMATIC DASH ANIMATIONS
+# BRICK BATTLEGROUNDS — v0.8.19 FULL BODY LEAN
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.19:** Added clear body-weight leaning throughout punches, kicks, and all four directional dash animations. The three punch animations and opening heavy hook drive the torso and cosmetic fighter forward on impact; the snapkick and heavy roundhouse counterbalance backward. Mirrored left/right sidesteps now roll toward travel, the forward punch-dash stays committed to forward tilt, and the backflip gets shaped takeoff/landing lean. The rest stance remains unchanged. All animation-only changes preserve attack contact times/duration, damage, dash speed/distance, collision, i-frames, controller input and multiplayer state. Verified all five attack recovery clips and four dashes at simulated 60 FPS.
 
 - **v0.8.18:** Reanimated all four directional dashes with articulated upper/lower limbs and eased cinematic keyframes. Forward now drives a guarded straight punch from a cocked elbow, lateral sidesteps use mirrored foot push-off and body counter-lean, and backward dash features a full tucked backflip with deliberate untuck and landing. Smoothed transitions and verified the full rig returns to relaxed idle. Dash durations (forward .36s; sides .32s; back .48s), speeds, distance, Q/Circle/B control, i-frames, collision and network synchronization remain unchanged.
 
