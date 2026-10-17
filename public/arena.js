@@ -374,35 +374,7 @@ function hit(att,def,attack){
  def.v.addScaledVector(knock,blocked?1.0:attack.kind==='heavy'?4.4:2.6);
  fx(b.clone().add(new THREE.Vector3(0,1.55,0)),blocked?0xffde97:att===p?0x71dfff:0xff8970,blocked?8:13);
 }
-// Individually authored combat poses, smoothly eased between windup, extension and recovery.
-// Angles rotate real shoulder/hip pivots, rather than moving a whole rigid limb mesh.
-const LIGHT_POSES=[
- [
-  [0,{}],[.25,{l:-.92,r:-.25,ly:.22,bodyY:.27,bodyZ:.12}],
-  [.53,{l:1.63,r:-.50,el:-.33,bodyY:-.30,bodyZ:-.12,lean:.21}],
-  [.77,{l:1.40,r:.1,bodyY:-.12,lean:.10}],[1,{}]
- ],
- [
-  [0,{}],[.24,{r:-.96,l:.20,bodyY:-.27,bodyZ:-.12}],
-  [.52,{r:1.74,l:-.5,er:-.40,bodyY:.29,bodyZ:.14,lean:.21}],
-  [.81,{r:1.1,l:0,lean:.08}],[1,{}]
- ],
- [
-  [0,{}],[.26,{legR:-.48,legL:.18,l:1.07,r:1.1,bodyZ:.26,lean:-.14}],
-  [.58,{legR:1.56,legL:-.10,l:1.3,r:.85,bodyZ:.42,lean:-.26,lift:.28}],
-  [.76,{legR:1.40,bodyZ:.32,lift:.18}],[1,{}]
- ]
-];
-const HEAVY_POSES=[
- [0,{}],
- [.16,{l:-1.05,r:.45,bodyY:.45,bodyZ:.27,lean:-.12}],
- [.33,{l:1.92,r:.22,el:-.5,bodyY:-.48,bodyZ:-.22,lean:.3}],
- [.46,{l:1.3,bodyY:-.12}],
- [.55,{legR:-.53,legL:.15,l:1.0,r:1.2,bodyY:1.02,bodyZ:.27,lean:-.18}],
- [.76,{legR:1.72,legL:-.16,l:1.35,r:.86,bodyY:1.18,bodyZ:.44,lift:.33,lean:-.28}],
- [.89,{legR:.9,bodyY:.55,bodyZ:.24,lift:.1}],
- [1,{}]
-];
+// CHANGED: All LIGHT/HEAVY keyframes, angle tables and interpolation are in combat-poses.js.
 const SPECIAL_POSES=[[0,{}],[.19,{l:1.55,r:1.55,lift:.18,lean:-.12}],[.53,{l:2.25,r:2.25,bodyY:2.1,bodyZ:.24,lift:.35}],[.8,{l:1,r:1,bodyY:3.1}],[1,{}]];
 const ease=t=>{t=THREE.MathUtils.clamp(t,0,1);return t*t*(3-2*t)};
 function keyPose(frames,t){
@@ -412,13 +384,26 @@ function keyPose(frames,t){
  for(const key of new Set([...Object.keys(a[1]),...Object.keys(b[1])]))pose[key]=(a[1][key]||0)*(1-k)+(b[1][key]||0)*k;
  return pose;
 }
-function poseFighter(f){
+// CHANGED: Combat-only pose animation on shoulder/elbow/hip/knee/torso joints.
+// The original idle, walk, jump, block, special, hit reactions and visual bob remain.
+function poseFighter(f,dt=0){
  const {arms,legs,body,head}=f.visual.userData;
  const stride=Math.sin(f.runTime),walk=Math.min(1,f.moving),idle=Math.sin(performance.now()*.0028)*.026;
- const pose=f.attack?keyPose(f.attack.kind==='light'?LIGHT_POSES[f.attack.stage-1]:f.attack.kind==='heavy'?HEAVY_POSES:SPECIAL_POSES,THREE.MathUtils.clamp(f.attackTime/f.attack.len,0,1)):{};
+ const combatPose=sampleCombatPose(f,dt);
+ if(combatPose){
+  applyCombatPose(f,combatPose);
+  if(f.hitFlash>0){body.rotation.z+=Math.sin(f.hitFlash*46)*.13;body.rotation.x-=.14}
+  f.visual.position.y=(f.onGround?Math.abs(stride)*.045*walk+idle:0);
+  return;
+ }
+ // The existing special animation is deliberately kept as it was.
+ const pose=f.attack?.kind==='special'?keyPose(SPECIAL_POSES,THREE.MathUtils.clamp(f.attackTime/f.attack.len,0,1)):{};
  const gp=key=>pose[key]||0;
  legs[0].rotation.x=stride*.43*walk+gp('legL');
  legs[1].rotation.x=-stride*.43*walk+gp('legR');
+ // CHANGED: A neutral, unbent knee is the exact resting leg pose.
+ legs[0].userData.knee.rotation.set(0,0,0);
+ legs[1].userData.knee.rotation.set(0,0,0);
  arms[0].rotation.x=-stride*.22*walk+.15+gp('l');
  arms[1].rotation.x=stride*.22*walk+.15+gp('r');
  const idleArmSpread=f.visual.name.startsWith('PLAIN_CLASSIC_MINIFIG_')?.015:.14;
@@ -495,7 +480,7 @@ function updateFighter(f,op,dt,controls){
    if(lightQueued){f.attackCooldown=0;tryAttack(f,'light')}
   }
  }
- poseFighter(f);
+ poseFighter(f,dt);
 }
 function updateHUD(){
  $('hp1').style.width=(100*p.hp/MAX_HEALTH)+'%';$('hp2').style.width=(100*cpu.hp/MAX_HEALTH)+'%';
@@ -537,7 +522,7 @@ function animate(){
    }
    cpu.attackCooldown=Math.max(0,cpu.attackCooldown-dt);
    if(cpu.attack){cpu.attackTime+=dt;if(cpu.attackTime>=cpu.attack.len)cpu.attack=null}
-   cpu.runTime+=dt*3;poseFighter(cpu);
+   cpu.runTime+=dt*3;poseFighter(cpu,dt);
   }
   const delta=new THREE.Vector3().subVectors(cpu.root.position,p.root.position),dist=delta.length();
   if(dist<1.25&&dist>.0001){delta.normalize();p.root.position.addScaledVector(delta,-(1.25-dist)*.5);cpu.root.position.addScaledVector(delta,(1.25-dist)*.5)}
