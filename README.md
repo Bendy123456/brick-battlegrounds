@@ -1,8 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.17 REAL PUNCH MECHANICS
+# BRICK BATTLEGROUNDS — v0.8.18 CINEMATIC DASH ANIMATIONS
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.18:** Reanimated all four directional dashes with articulated upper/lower limbs and eased cinematic keyframes. Forward now drives a guarded straight punch from a cocked elbow, lateral sidesteps use mirrored foot push-off and body counter-lean, and backward dash features a full tucked backflip with deliberate untuck and landing. Smoothed transitions and verified the full rig returns to relaxed idle. Dash durations (forward .36s; sides .32s; back .48s), speeds, distance, Q/Circle/B control, i-frames, collision and network synchronization remain unchanged.
 
 - **v0.8.17:** Punch animations now follow an articulated guard → elbow-back coil → forward hand drive → recoil sequence, instead of swinging the straight arm up. The first two light punches, fourth-hit left hook, and the heavy opening hook are updated. The opposite hand stays up, elbows visibly retract, and knuckles travel forward on contact. Right kick and heavy roundhouse remain unchanged, as do damage, hit timing, input, stun/ragdoll and networking. Pose-kinematic and frame-to-idle transition tests passed for all five clips.
 
