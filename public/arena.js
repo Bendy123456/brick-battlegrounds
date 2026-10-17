@@ -392,6 +392,14 @@ function poseFighter(f,dt=0){
  const combatPose=sampleCombatPose(f,dt);
  if(combatPose){
   applyCombatPose(f,combatPose);
+  // CHANGED: TEMP DEBUG — delete this LEFT JAB logging block after verification.
+  if(f===p&&f.attack?.kind==='light'&&f.attack.stage===1){ // CHANGED: TEMP DEBUG
+   const tick=Math.floor(f.attackTime/.08); // CHANGED: TEMP DEBUG, sample ~every 80ms
+   if(f.attack._jabDebugTick!==tick){ // CHANGED: TEMP DEBUG
+    f.attack._jabDebugTick=tick; // CHANGED: TEMP DEBUG
+    console.log('[LEFT JAB] t='+f.attackTime.toFixed(3)+'s, left arm rotation.x='+arms[0].rotation.x.toFixed(3)+' rad'); // CHANGED: TEMP DEBUG
+   } // CHANGED: TEMP DEBUG
+  } // CHANGED: TEMP DEBUG
   if(f.hitFlash>0){body.rotation.z+=Math.sin(f.hitFlash*46)*.13;body.rotation.x-=.14}
   f.visual.position.y=(f.onGround?Math.abs(stride)*.045*walk+idle:0);
   return;
