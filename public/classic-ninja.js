@@ -1,6 +1,6 @@
-// BRICK BATTLEGROUNDS v0.8.1 — Option B: plain classic minifigure prototype.
-// Replace public/classic-ninja.js with this file.
-// Only VERDANT and CRIMSON use this model; public/arena.js already restricts the swap.
+// BRICK BATTLEGROUNDS v0.8.7 — unified classic minifigure roster.
+// CHANGED: All nine fighters use this same articulated model; each model
+// CHANGED: instance has its own material and keeps its selected roster color.
 // Preserve the exact shoulder / elbow / hip / head rig interface for existing combat.
 import * as THREE from '/vendor/three.module.js';
 
@@ -220,7 +220,7 @@ export function buildClassicNinja(mainColor){
   const legs=[makeLeg(visual,main,-1),makeLeg(visual,main,1)];
 
   // Preserve the exact API expected by arena.js and its poseFighter().
-  // All parts share 'main', so recoloring VERDANT / CRIMSON still works.
+  // CHANGED: All parts share this fighter's own main material; supports all nine roster colors.
   visual.userData={
     arms,legs,body,head,
     cloth:main,pants:main,accent:main,baseColor:mainColor
