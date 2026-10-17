@@ -1,4 +1,4 @@
-// Brick Battlegrounds / classic ninja prototype rig, v0.6.7.
+// Brick Battlegrounds / classic ninja prototype rig, v0.6.8.
 // Original simplified minifigure-inspired character geometry.
 // Only applied to VERDANT and CRIMSON, not the rest of the roster.
 import * as THREE from '/vendor/three.module.js';
@@ -32,46 +32,48 @@ function simpleLeg(parent,mat,x){
 }
 function simpleArm(parent,main,hand,sx){
  const shoulder=new THREE.Group();
- shoulder.position.set(sx*.72,2.03,0);
+ // A tighter shoulder, matching the narrower classic minifigure silhouette.
+ shoulder.position.set(sx*.705,2.03,0);
  parent.add(shoulder);
- // One continuous curved sleeve, sized like a classic minifigure arm.
- // No long hanging finger/forearm extension.
+
+ // ONE gently curved plastic sleeve. Compared to v0.6.7 it is shorter,
+ // narrower, and shallower, with a rounded shoulder and slim cuff.
  const outline=new THREE.Shape();
- outline.moveTo(-.13,.10);
- outline.quadraticCurveTo(-.25,.10,-.22,-.10);
- outline.quadraticCurveTo(-.24,-.30,-.19,-.46);
- outline.quadraticCurveTo(-.165,-.57,-.145,-.65);
- outline.lineTo(.145,-.65);
- outline.quadraticCurveTo(.165,-.57,.19,-.46);
- outline.quadraticCurveTo(.24,-.30,.22,-.10);
- outline.quadraticCurveTo(.25,.10,.13,.10);
- outline.closePath();
+ outline.moveTo(-.12,.07);
+ outline.quadraticCurveTo(.115,.11,.15,-.035);
+ outline.quadraticCurveTo(.176,-.14,.155,-.26);
+ outline.quadraticCurveTo(.144,-.40,.103,-.51);
+ outline.quadraticCurveTo(.09,-.55,.045,-.55);
+ outline.lineTo(-.09,-.55);
+ outline.quadraticCurveTo(-.123,-.54,-.134,-.48);
+ outline.quadraticCurveTo(-.163,-.36,-.151,-.22);
+ outline.quadraticCurveTo(-.17,-.075,-.12,.07);
  const sleeveGeo=new THREE.ExtrudeGeometry(outline,{
-  depth:.29,steps:1,bevelEnabled:true,bevelThickness:.024,
-  bevelSize:.027,bevelSegments:3,curveSegments:9
+  depth:.225,steps:1,bevelEnabled:true,bevelThickness:.028,
+  bevelSize:.024,bevelSegments:3,curveSegments:10
  });
- const sleeve=add(shoulder,sleeveGeo,main,[0,0,-.145]);
- sleeve.name='SingleCurvedSleeve';
- // Retain the old elbow animation pivot but attach only the little wrist and C hand.
+ const sleeve=add(shoulder,sleeveGeo,main,[0,0,-.1125]);
+ sleeve.name='SlimBentMinifigureArm';
+ sleeve.scale.x=sx;
+
+ // Keep the elbow pivot expected by the existing fight animations.
+ // The small C-shaped hand sits RIGHT underneath the sleeve—not on a long stem.
  const elbow=new THREE.Group();
- elbow.position.set(0,-.50,-.035);
+ elbow.position.set(0,-.49,-.015);
  shoulder.add(elbow);
- // A very short peg just below the sleeve, the way a LEGO grip fits the arm.
- cyl(elbow,.103,.103,.10,hand,0,-.159,-.005,18);
- // Torus lies in the XY/front plane: opening visible rather than turned edge-on.
- // The 44-degree gap at the bottom makes a compact, unmistakable C cup.
- const gap=.77;
+ cyl(elbow,.082,.082,.09,hand,0,-.112,0,18);
+ const gap=.78;
  const cup=new THREE.Mesh(
-  new THREE.TorusGeometry(.147,.053,10,32,Math.PI*2-gap),
-  hand
+  new THREE.TorusGeometry(.128,.048,10,32,Math.PI*2-gap),hand
  );
  cup.rotation.z=-Math.PI/2+gap/2;
- cup.position.set(0,-.296,-.012);
+ cup.position.set(0,-.237,-.008);
  cup.castShadow=true;cup.receiveShadow=true;
- cup.name='ClassicCHook';
+ cup.name='ShortClassicCCup';
  elbow.add(cup);
+
  shoulder.userData.elbow=elbow;
- shoulder.rotation.z=sx*.11;
+ shoulder.rotation.z=sx*.09;
  return shoulder;
 }
 function buildSimpleHead(body,main,skin,ink){
