@@ -1,8 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.22 ELEMENTAL SPINJITZU
+# BRICK BATTLEGROUNDS — v0.8.23 CINEMATIC SPINJITZU
 
 Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
 
 ## What's new
+
+- **v0.8.23 — Cinematic Spinjitzu visual overhaul:** Replaced the rigid five tubes, four solid rings, faceted tetrahedron particles, and simple cylinder with a three-layer animated cyclone of translucent shader-driven energy, twelve broad/tapered spiraling wind ribbons, 105 soft round GPU spark sprites, and an animated arena-floor aura. Vertex/fragment shaders deform the vortex and create flowing/highlighted spiral streaks rather than just rotating rigid meshes. The fighter remains visible inside, performing ten fully eased rotations. Reuses geometry/materials for efficiency, retains all nine fighter-element colors, and does not modify the 2s move, 8s cooldown, five-hit damage, knockdown, controls, multiplayer, or other animations. Runtime geometry/keyframe/color checks passed for all nine. This is a live Three.js shader effect, not a Blender-exported mesh; the development environment did not have Blender installed.
 
 - **v0.8.22 — Elemental Spinjitzu:** Replaced the one-hit 1.02s Special Attack with a playable, 2-second, target-seeking Spinjitzu vortex. All nine fighters get the same procedural live Three.js tornado (5 spiraling tube ribbons, tapered cyclone core, rotating rings and embers) tinted to their selected roster color. The minifigure spins inside with guarded arms, tucked knees, eased windup, ten full turns and smooth landing. Five spaced hit checks land at 0.38/0.74/1.10/1.46/1.80 seconds, dealing 5/5/5/5/8 damage when unblocked and in range; the fifth confirmed unblocked hit knocks the opponent back and starts the existing ragdoll-style knockdown. Guarding or evading the finisher prevents knockdown. The existing 8s cooldown and E / PS5 R1 / Xbox RB controls are preserved. Multiplayer carries the finisher flag through the existing WebSocket hit relay so both players see the push/knockdown. Other combat moves, dash distances and cooldowns, roster colors, and controls are unchanged. Tornado geometry is reused instead of recreated on each activation.
 
