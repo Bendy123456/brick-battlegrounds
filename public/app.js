@@ -45,6 +45,8 @@ function select(i){
   }
   $('fighterName').textContent=chars[chosen][0];
   $('fighterName').style.color=chars[chosen][1];
+  // CHANGED: Color the premium title and subtle brushstroke using the chosen fighter's original shade.
+  $('fighterName').parentElement?.style.setProperty('--fighter-accent',chars[chosen][1]);
   $('fighterAbility').textContent='Special Attack';
   $('roomStatus').textContent=mode==='online'?`ROOM ${room} · ${peerCount}/2 CONNECTED${myReady?' · READY':''}`:'SOLO TRAINING · CPU OPPONENT';
   send({type:'select',character:chosen});
