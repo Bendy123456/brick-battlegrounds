@@ -251,6 +251,10 @@ engine.renderer.domElement.addEventListener('click',()=>{
   engine.renderer.domElement.requestPointerLock?.().catch?.(()=>{})
 });
 window.addEventListener('keydown',e=>{
+ if(e.code==='KeyH'&&screen==='game'&&!e.repeat){
+  const both=engine.toggleGrip();
+  notify(both?'TWO-HAND GRIP':'ONE-HAND GRIP');
+ }
  if(e.code==='Escape'&&screen==='game'){paused=true;goto('pause')}
  if(e.code==='Tab'&&screen==='game'){$('killfeed').textContent='SCORE: '+(lastSnap?.score.join(' - ')||'0 - 0')}
 });
@@ -265,6 +269,7 @@ if(new URLSearchParams(location.search).has('debug')){
    serverX:local?.x,serverY:local?.y,serverZ:local?.z,
    lowFpsMode:engine.lowFpsMode,clientOnlyProps:engine.props.length,
    renderY:engine.renderPos.y,shadowMapEnabled:engine.renderer.shadowMap.enabled,
+   gripTwoHanded:engine.gripTwoHanded,
    weaponModelCount:engine.weaponModels.size,weaponModelIds:engine.weaponModelIds,
    failedWeaponModels:engine.failedWeaponModels,selectedViewmodel:engine.lastWeapon,
    inputAgeMs:local?.inputAgeMs,ackSeq:local?.ackSeq,sentSeq:seq,
