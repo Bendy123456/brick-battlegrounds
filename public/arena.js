@@ -82,11 +82,11 @@ export function stopFight(){running=false;finished=false;roundWait=0;hitStopRema
 export function receivePeerState(state){remoteState=state}
 export function receivePeerAttack(kind){if(gameMode==='online')tryAttack(cpu,kind)}
 // CHANGED: Multiplayer reuses the original damage event with stun/knockdown flags.
-export function receiveDamage(damage,knockdown=false,stun=true,spinjitzuFinisher=false){
+export function receiveDamage(damage,knockdown=false,stun=true,spinjitzuFinisher=false,impactKind='light'){
  if(gameMode!=='online'||!running)return;
  p.hp=Math.max(0,p.hp-damage);
  if(stun){ // CHANGED: Interrupt incoming victim's attack, just like local combat.
-  startImpact(p,!!knockdown);
+  startImpact(p,!!knockdown,impactKind);
   clearHitChain(p);
   if(knockdown)resetCombatPose(p);
  }else p.hitFlash=.12;
@@ -166,7 +166,7 @@ function resetFighter(f,x){
  // CHANGED: Reset knockdown state and landed-hit counters on a new round.
  f.ragdoll=0;f.ragdollTotal=0;f.ragdollSide=1;f.combatClock=0;clearHitChain(f);
  f.specialCooldown=0;f.hitFlash=0;f.block=false;f.visual.position.set(0,0,0);
- f.visual.rotation.set(0,0,0);f.runTime=0;
+ f.visual.rotation.set(0,0,0);f.runTime=0;f.moving=0;f.reactionDuration=.20;f.reactionKind='light';resetFootwork(f);
 }
 function startGame(){stopSpinjitzuWind(p);stopSpinjitzuWind(cpu);p.score=cpu.score=0;round=1;finished=false;hitStopRemaining=0;shakeRemaining=0;clearBufferedInputs();newRound();running=true}
 function newRound(){stopSpinjitzuWind(p);stopSpinjitzuWind(cpu);resetFighter(p,gameMode==='online'&&playerSlot===1?3.8:-3.8);resetFighter(cpu,gameMode==='online'&&playerSlot===1?-3.8:3.8);time=120;showToast('ROUND '+round,1.2);updateHUD()}
@@ -238,7 +238,7 @@ function hit(att,def,attack){
   recordHitForKnockdown(att,attack,true); // CHANGED: Blocking breaks the hit chain.
   def.guard=Math.max(0,def.guard-attack.dmg*2.1);
   if(def.guard<=0){
-   startImpact(def,false); // CHANGED: One-second stun on a broken guard.
+   startImpact(def,false,'guardBreak'); // CHANGED: One-second stun on a broken guard.
    clearHitChain(def);
    stunApplied=true;
    showToast('GUARD BREAK',.35);
@@ -248,7 +248,7 @@ function hit(att,def,attack){
   // CHANGED: final confirmed, unblocked strike.
   knockdown=recordHitForKnockdown(att,attack,false)||
    (attack.kind==='special'&&attack.finisher===true);
-  startImpact(def,knockdown); // CHANGED: 1s stun and attack interruption.
+  startImpact(def,knockdown,attack.kind); // CHANGED: 1s stun and attack interruption.
   clearHitChain(def); // CHANGED: Getting hit breaks your own combo.
   if(knockdown)resetCombatPose(def); // CHANGED: Hand control to knockdown pose.
   stunApplied=true;
@@ -257,7 +257,7 @@ function hit(att,def,attack){
  }
  // CHANGED: Same multiplayer damage event; synchronize hitstun and knockdown.
  if(gameMode==='online'&&att===p)gameEvents.onHit?.(damage,{
-  knockdown,stun:stunApplied,
+  knockdown,stun:stunApplied,impactKind:blocked&&def.guard<=0?'guardBreak':attack.kind,
   spinjitzuFinisher:knockdown&&attack.kind==='special'&&attack.finisher===true
  });
  const knock=new THREE.Vector3().subVectors(b,a).setY(0).normalize();
@@ -293,6 +293,32 @@ function keyPose(frames,t){
  for(const key of new Set([...Object.keys(a[1]),...Object.keys(b[1])]))pose[key]=(a[1][key]||0)*(1-k)+(b[1][key]||0)*k;
  return pose;
 }
+// Ground-contact pass: foot orientation and small visual-only correction.
+const contactWorld=new THREE.Vector3();
+function resetFootwork(f){
+ f.footWeights=[0,0];
+ for(const leg of f.visual.userData.legs)leg.userData.ankle?.rotation.set(0,0,0);
+}
+function applyFootwork(f,dt,striking=false,kicking=false){
+ const legs=f.visual.userData.legs;if(!legs.every(l=>l.userData.ankle&&l.userData.foot))return;
+ f.footWeights||=[0,0];
+ const airborne=!f.onGround||f.ragdoll>0||f.attack?.kind==='special';
+ const support=striking?(kicking?0:(f.attack?.stage===1||f.attack?.stage===4?1:0)):
+  (f.moving>.15||f.dodge>0?(Math.sin(f.runTime)>0?1:0):-1);
+ for(let i=0;i<2;i++){
+  const leg=legs[i],knee=leg.userData.knee,ankle=leg.userData.ankle;
+  const target=airborne?0:support<0?.42:(i===support?1:.08);
+  const weight=f.footWeights[i]=THREE.MathUtils.damp(f.footWeights[i],target,13,Math.max(0,dt));
+  ankle.rotation.x=THREE.MathUtils.clamp(-leg.rotation.x-knee.rotation.x,-.95,.95)*weight;
+  ankle.rotation.z=THREE.MathUtils.clamp(-leg.rotation.z-knee.rotation.z,-.32,.32)*weight;
+ }
+ if(airborne)return;
+ const index=f.footWeights[1]>f.footWeights[0]?1:0,w=f.footWeights[index];
+ if(w<.20)return;
+ f.root.updateMatrixWorld(true);
+ legs[index].userData.foot.getWorldPosition(contactWorld);
+ f.visual.position.y+=THREE.MathUtils.clamp(.077-contactWorld.y,-.12,.14)*w*.78;
+}
 // CHANGED: Combat-only pose animation on shoulder/elbow/hip/knee/torso joints.
 // The original idle, walk, jump, block, special, hit reactions and visual bob remain.
 function poseFighter(f,dt=0){
@@ -305,6 +331,7 @@ function poseFighter(f,dt=0){
   // CHANGED: Dash animation overrides ordinary walking/attacking poses for its short duration.
   if(f.dodge>0&&f.dashKind){
    applyDashPose(f,sampleDashPose(f));
+    if(f.dashKind!=='back'&&f.dodge<(f.dashDuration||.35)*.20)applyFootwork(f,dt);
    return;
   }
   // CHANGED: Clear the previous backflip visual offset when dash ends/is interrupted.
@@ -332,9 +359,11 @@ function poseFighter(f,dt=0){
   }
   // CHANGED: Visible two-shoulder hit recoil, recovering while stunned.
   if(f.hitFlash>0){
-   const recoil=Math.sin((1-f.hitFlash/.19)*Math.PI);
+   const phase=THREE.MathUtils.clamp(1-f.hitFlash/(f.reactionDuration||.20),0,1);
+   const strength=f.reactionKind==='guardBreak'?1.65:f.reactionKind==='heavy'?1.40:1;
+   const recoil=Math.sin(phase*Math.PI)*strength;
    body.rotation.x-=.21*recoil;
-   body.rotation.z+=Math.sin(f.hitFlash*46)*.10;
+   body.rotation.z+=Math.sin(phase*11)*.11*recoil;
    arms[0].rotation.x-=.15*recoil;
    arms[1].rotation.x-=.15*recoil;
    head.rotation.x+=.10*recoil;
@@ -347,7 +376,8 @@ function poseFighter(f,dt=0){
   const weight=striking?Math.sin(actionProgress*Math.PI)**2:0;
   const kicking=f.attack&&((f.attack.stage===3&&f.attack.kind==='light')||
     (f.attack.kind==='heavy'&&actionProgress>.50));
-  f.visual.position.y=f.onGround?bob*(1-weight)-weight*(kicking?.09:.03):0;
+  f.visual.position.y=f.onGround?bob*(1-weight)-weight*(kicking?.05:.018):0;
+   applyFootwork(f,dt,!!striking,!!kicking);
   return;
  }
  // The existing special animation is deliberately kept as it was.
@@ -525,8 +555,13 @@ function animate(){
     // CHANGED: Dash animation piggybacks on existing synchronized state.
     dashKind:p.dodge>0?p.dashKind:null,dashProgress:p.dodge>0?1-p.dodge/p.dashDuration:1})}
    if(remoteState){
+    const before=cpu.root.position.clone();
     cpu.root.position.lerp(new THREE.Vector3(remoteState.x,remoteState.y,remoteState.z),Math.min(1,dt*14));
-    cpu.root.rotation.y=remoteState.rot;cpu.hp=remoteState.hp;cpu.guard=remoteState.guard;
+    const movement=Math.hypot(cpu.root.position.x-before.x,cpu.root.position.z-before.z);
+    cpu.moving=THREE.MathUtils.damp(cpu.moving,THREE.MathUtils.clamp(movement/(Math.max(.001,dt)*7),0,1),12,dt);
+    const turn=Math.atan2(Math.sin(remoteState.rot-cpu.root.rotation.y),Math.cos(remoteState.rot-cpu.root.rotation.y));
+    cpu.root.rotation.y+=turn*(1-Math.exp(-15*dt));cpu.face=cpu.root.rotation.y;
+    cpu.hp=remoteState.hp;cpu.guard=remoteState.guard;
     // CHANGED: The peer sees the same animation direction and spin.
     const kind=remoteState.dashKind;
     if(['forward','back','left','right'].includes(kind)&&Number.isFinite(remoteState.dashProgress)){
@@ -541,7 +576,7 @@ function animate(){
    // CHANGED: Animate the remote fighter's visual knockdown at local frame rate.
    tickImpact(cpu,dt);
    if(cpu.attack){cpu.attackTime+=dt;if(cpu.attackTime>=cpu.attack.len)cpu.attack=null}
-   cpu.runTime+=dt*3;poseFighter(cpu,dt);
+   cpu.runTime+=dt*cpu.moving*12;poseFighter(cpu,dt);
   }
   const delta=new THREE.Vector3().subVectors(cpu.root.position,p.root.position),dist=delta.length();
   if(dist<1.25&&dist>.0001){delta.normalize();p.root.position.addScaledVector(delta,-(1.25-dist)*.5);cpu.root.position.addScaledVector(delta,(1.25-dist)*.5)}
