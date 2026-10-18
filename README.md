@@ -1,3 +1,17 @@
+# The Arena V2 — original multi-level Blender FPS map
+
+A replacement for the old rectangular blockout, modeled from scratch in Blender, influenced by the user-approved industrial arena layout. Built-in features include the balanced red and blue team bases, central raised cargo objective with stairs, alpha/bravo routes, side mezzanines with navigable stairs, plywood tactical dividers, industrial containers, realistic inflatable cover, safety netting, industrial trusses/fixtures, factory doors, painted floor markings and room signage.
+
+**Editable project:** `art/the_arena_v2.blend` (all original named geometry and packed textures). **Game asset:** `client/public/assets/arena.glb`. **Source:** `art/build_arena_v2.py`, generated through `.github/workflows/blender-arena-v2.yml`.
+
+**Important synchronization rule:** `shared/arena-layout.json` is the single source of the **122+ world obstacle bounding boxes** for both Rapier collision engines AND the Blender geometry generator. The client hides collision placeholders when its GLB loads, but the colliders remain in place. Invisible player-specific dynamic props are removed as before. Visual tiny nuts, seams, sign details, truss elements and rail decoration remain non-collidable; gameplay-sized obstacles match the server colliders. Netting is deliberately BB-permeable.
+
+**Rendering:** approximately eighteen reusable PBR materials, packed procedural concrete/OSB/metal/rubber textures, emissive non-shadow light panels, mesh-batched material GLB. A realistic full bake of physically accurate GI, bespoke hand-painted source textures and navmesh are not yet included. Performance and player navigation on real hardware still need testing.
+
+**Map layout:** 120 × 80m enclosure. Southward accessible team mezzanines and accessible center roof. Bots share world collision; their pathfinding is still heuristic rather than a navmesh. Online and VS Bot reuse the existing movement/combat systems.
+
+---
+
 ## Weapon visual style — bare skin and no attachments (October 2026)
 
 All nine original Blender base weapons were regenerated using `art/rebuild_black_barearms.py` with an identical approved visual direction: matte/satin **black airsoft gun parts**, **bright orange airsoft safety tip on every muzzle**, natural **deep ebony skin on bare hands and forearms**, **no gloves**, **no sleeves**, and individual contacts on the trigger grip/supporting handguard, pump or pistol frame. Each weapon has its own native Blender source (`art/weapons/<id>.blend`) and game-ready GLB (`client/public/assets/weapons/<id>.glb`).

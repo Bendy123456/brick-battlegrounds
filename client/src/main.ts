@@ -2,7 +2,7 @@ import {Engine} from './engine.ts';
 import {Controls,settings,binds,defaultBinds,resetBinds,rebind,saveSettings,updateSetting,anyPadConnected,padHasActivity} from './controls.ts';
 import {sfx,unlockAudio,setAudioVolume} from './audio.ts';
 import {WEAPONS,type Actor,type Input,type Snapshot} from '../../shared/config.ts';
-import {zoneName} from '../../shared/map.ts';
+import {ARENA_VERSION,zoneName} from '../../shared/map.ts';
 import {$,show,notify} from './screen.ts';
 
 const controller=new Controls(),engine=new Engine();
@@ -242,7 +242,7 @@ if(new URLSearchParams(location.search).has('debug')){
  (window as any).__AIRSOFT_DEBUG__=()=>({
   screen,ready,paused,room,localHP:local?.hp,localAmmo:local?.ammo,
   socket:ws?.readyState,pointerLocked:!!document.pointerLockElement,
-  frames:engine.frame,assetState:engine.assetState,lastInput:controller.lastInput,
+  frames:engine.frame,assetState:engine.assetState,arenaVersion:ARENA_VERSION,lastInput:controller.lastInput,
    playerX:engine.localPos.x,playerY:engine.localPos.y,playerZ:engine.localPos.z,
    cameraY:engine.camera.position.y,serverError:engine.lastServerError,renderFPS:Math.round(measuredFPS),
    slideTime:engine.motion.slideTime,slideCooldown:engine.motion.cooldown,velocity:engine.strideSpeed,serverSlide:local?.sliding,serverSprint:local?.sprinting,
