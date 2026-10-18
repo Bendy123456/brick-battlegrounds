@@ -62,6 +62,7 @@ export class Controls{
    yaw:this.yaw,pitch:this.pitch,
    jump:down('jump')||edge(0),
    crouch:down('crouch')||btn(1),
+   slide:once.has(binds.crouch)||edge(1),
    prone:down('prone'),
    sprint:down('sprint')||btn(10),
    fire:mouse0||btn(7),
@@ -72,7 +73,7 @@ export class Controls{
   };
   if(once.has(binds.slot1))input.swap=0;
   if(once.has(binds.slot2)||edge(3))input.swap=7;
-  if(!inGame){input.f=0;input.s=0;input.fire=false;input.jump=false;input.reload=false}
+  if(!inGame){input.f=0;input.s=0;input.fire=false;input.jump=false;input.slide=false;input.reload=false}
   once.clear();
   const length=Math.hypot(input.f,input.s);
   if(length>1){input.f/=length;input.s/=length}
