@@ -34,7 +34,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML=`<div id="viewport"></
 <section id="settings" class="overlay hidden"><div class="shell"><div class="tag">PERSONALIZATION</div><h2>SETTINGS</h2>
 <div id="sliders"></div><div class="tag">REBINDS · CLICK A KEY AND PRESS A NEW KEY</div><div id="bindings" class="bindings"></div>
 <div class="row" style="margin-top:18px"><button id="settingsBack" class="primary">SAVE & BACK</button><button id="resetBinds">RESET BINDS</button></div></div></section>
-<section id="loadout" class="overlay hidden"><div class="shell"><div class="tag">AIRSOFT ARMORY</div><h2>LOADOUT</h2><div id="loadoutButtons"></div><p>All options are fictional airsoft replicas firing plastic BBs.</p><button id="loadoutBack" class="primary">CONFIRM</button></div></section>
+<section id="loadout" class="overlay hidden"><div class="shell"><div class="tag">AIRSOFT ARMORY</div><h2>LOADOUT</h2><div id="loadoutButtons"></div><p>All options are fictional airsoft replicas firing plastic BBs. Press <strong>H</strong> during a match to switch between one-hand and two-hand grips for the equipped gun.</p><button id="loadoutBack" class="primary">CONFIRM</button></div></section>
 <section id="mobile" class="overlay hidden"><div class="shell"><h2>DESKTOP ONLY</h2><p>Version one requires a desktop browser and a keyboard/mouse or game controller.</p></div></section>
 `;
 export const $=(id:string)=>document.getElementById(id)!;
