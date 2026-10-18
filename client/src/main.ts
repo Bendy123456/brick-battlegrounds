@@ -227,6 +227,13 @@ window.addEventListener('keydown',e=>{
  if(e.code==='Escape'&&screen==='game'){paused=true;goto('pause')}
  if(e.code==='Tab'&&screen==='game'){$('killfeed').textContent='SCORE: '+(lastSnap?.score.join(' - ')||'0 - 0')}
 });
+if(new URLSearchParams(location.search).has('debug')){
+ (window as any).__AIRSOFT_DEBUG__=()=>({
+  screen,ready,paused,room,localHP:local?.hp,localAmmo:local?.ammo,
+  socket:ws?.readyState,pointerLocked:!!document.pointerLockElement,
+  frames:engine.frame,assetState:engine.assetState,lastInput:controller.lastInput
+ });
+}
 const mobile=/Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(navigator.userAgent);
 if(mobile)goto('mobile');else goto('menu');
 let last=performance.now(),frameDelta=0,sendClock=0,stepClock=0,seq=0;
