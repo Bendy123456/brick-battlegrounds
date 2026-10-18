@@ -13,9 +13,9 @@ export const WEAPONS:Weapon[]=[
 ];
 export const ROUND_KILLS=5,MAX_HP=100;
 export const DIFFICULTIES={Easy:.60,Normal:.40,Hard:.25,Nightmare:.15} as const;
-export const SPEED={walk:5.8,sprint:8.7,crouch:3.0,prone:1.4,slide:10.2};
-export type Input={f:number,s:number,yaw:number,pitch:number,jump:boolean,crouch:boolean,sprint:boolean,prone:boolean,fire:boolean,ads:boolean,reload:boolean,swap?:number,grenade?:boolean,melee?:boolean,seq?:number};
-export type Actor={id:string,side:number,x:number,y:number,z:number,yaw:number,pitch:number,hp:number,kills:number,deaths:number,ammo:number,mag:number,weapon:number,alive:boolean,ads:boolean,crouch:boolean,prone:boolean,velocity:number,reloadEnd:number};
+export {MOVE as SPEED} from './movement.ts';
+export type Input={f:number,s:number,yaw:number,pitch:number,jump:boolean,crouch:boolean,sprint:boolean,prone:boolean,slide?:boolean,fire:boolean,ads:boolean,reload:boolean,swap?:number,grenade?:boolean,melee?:boolean,seq?:number};
+export type Actor={id:string,side:number,x:number,y:number,z:number,yaw:number,pitch:number,hp:number,kills:number,deaths:number,ammo:number,mag:number,weapon:number,alive:boolean,ads:boolean,crouch:boolean,prone:boolean,sliding:boolean,sprinting:boolean,velocity:number,reloadEnd:number};
 export type Snapshot={type:'snapshot',players:Actor[],pellets:{id:number,x:number,y:number,z:number}[],timer:number,score:[number,number],status:string,round:number,ping?:number};
 export function hitDamage(zone:'head'|'torso'|'limb',base:number){return zone==='head'?100:zone==='torso'?base:25}
 export function canShoot(ammo:number,last:number,now:number,rate:number){return ammo>0&&now-last>=60000/rate}
