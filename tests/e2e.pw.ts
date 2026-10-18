@@ -103,3 +103,34 @@ test('sprinting stays above the modeled collision floor even at reduced render F
  await page.keyboard.up('ShiftLeft');
  expect(errors).toEqual([]);
 });
+
+test('Blender arena uses shared collision only and slow-render movement keeps camera above floor',async({page})=>{
+ const errors:string[]=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.setViewportSize({width:800,height:500});
+ await page.goto('/?debug=1');
+ await page.locator('#vsBot').click();
+ await expect(page.locator('#hud')).toBeVisible({timeout:55000});
+ await expect.poll(async()=>{
+  const s=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
+  return s?.assetState;
+ },{timeout:18000}).toBe('BLENDER ASSETS READY');
+ const initial=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
+ expect(initial.clientOnlyProps).toBe(0);
+ expect(initial.shadowMapEnabled).toBe(false);
+ await page.keyboard.down('KeyW');
+ await page.waitForTimeout(2600);
+ const later=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
+ await page.keyboard.up('KeyW');
+ console.log('FLOOR_WALK_DIAGNOSTICS='+JSON.stringify({initial,later}));
+ expect(later.cameraY).toBeGreaterThan(.20);
+ expect(later.playerY).toBeGreaterThan(.65);
+ expect(later.clientOnlyProps).toBe(0);
+ expect(later.shadowMapEnabled).toBe(false);
+ if(later.lowFpsMode){
+  expect(later.serverError).toBeLessThan(2);
+  expect(Math.abs(later.playerX-later.serverX)).toBeLessThan(1);
+  expect(Math.abs(later.playerZ-later.serverZ)).toBeLessThan(1);
+ }
+ expect(errors).toEqual([]);
+});

@@ -234,7 +234,10 @@ if(new URLSearchParams(location.search).has('debug')){
   frames:engine.frame,assetState:engine.assetState,lastInput:controller.lastInput,
    playerX:engine.localPos.x,playerY:engine.localPos.y,playerZ:engine.localPos.z,
    cameraY:engine.camera.position.y,serverError:engine.lastServerError,renderFPS:Math.round(measuredFPS),
-   slideTime:engine.motion.slideTime,slideCooldown:engine.motion.cooldown,velocity:engine.strideSpeed,serverSlide:local?.sliding,serverSprint:local?.sprinting
+   slideTime:engine.motion.slideTime,slideCooldown:engine.motion.cooldown,velocity:engine.strideSpeed,serverSlide:local?.sliding,serverSprint:local?.sprinting,
+   serverX:local?.x,serverY:local?.y,serverZ:local?.z,
+   lowFpsMode:engine.lowFpsMode,clientOnlyProps:engine.props.length,
+   renderY:engine.renderPos.y,shadowMapEnabled:engine.renderer.shadowMap.enabled
  });
 }
 const mobile=/Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(navigator.userAgent);
@@ -268,13 +271,13 @@ function frame(timestamp:number){
   if(inp.slide){pendingSlide=true;localSlideQueued=true}
   stepClock+=physicsElapsed;sendClock+=elapsed;
   let steps=0;
-  while(stepClock>=1/60&&steps<7){
+  while(!engine.lowFpsMode&&stepClock>=1/60&&steps<7){
    const simInput=localSlideQueued?{...inp,slide:true}:{...inp,slide:false};
    engine.predict(1/60,simInput);
    localSlideQueued=false;stepClock-=1/60;steps++;
   }
   // Never build an unlimited backlog after changing windows / tab throttling.
-  if(steps===7)stepClock=Math.min(stepClock,1/60);
+  if(steps===7||engine.lowFpsMode)stepClock=Math.min(stepClock,1/60);
   if(sendClock>=1/30){
    sendClock=0;send({type:'input',data:{...inp,slide:pendingSlide,seq:++seq,swap:inp.swap??(seq===1?preferred:undefined)}});
    pendingSlide=false;

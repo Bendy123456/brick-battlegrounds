@@ -217,7 +217,7 @@ export class Engine{
     this.body.setTranslation({x:local.x,y:local.y,z:local.z},true);
     this.localPos.set(local.x,local.y,local.z);
     this.strideSpeed=Math.max(0,local.velocity)*11.5;
-    this.motion.slideTime=local.sliding?.20:0;
+    this.motion.slideTime=local.sliding ? .20 : 0;
    }else if(error>4.5){
     // Large desync / respawn: restore server position without resetting the
     // current velocity each time (that reset created repeated sprint stalls).
