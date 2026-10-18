@@ -72,38 +72,37 @@ def vertex_points(weapon_meshes):
  return pts
 
 def contact_point(points,lo,hi,frac,z_frac,side,y_shift=0):
- """Choose a physical gun-side vertex in this exact grip region.
- Avoid world bounding-box extremes from rails, optics, or folding stocks.
+ """Snap a hand to the *actual* left or right gun surface at the desired
+ longitudinal grip station. Some authored assets are offset along X or
+ asymmetric; left is the low-X face, not necessarily negative global X.
  """
  ys=lo.y+(hi.y-lo.y)*frac+y_shift
  zs=lo.z+(hi.z-lo.z)*z_frac
- center_x=(lo.x+hi.x)*.5
- candidates=[]
- for widen in (.035,.075,.14,.24):
-  candidates=[p for p in points
-     if abs(p[1]-ys)<=widen and abs(p[2]-zs)<=widen*.80
-     and (p[0]-center_x)*side>=.004]
-  if len(candidates)>=6:break
- if not candidates:
-  # Some large authored meshes (notably shotgun stocks) have their left-side
-  # face far outside the narrow z window. Never silently return a right-side
-  # point for a LEFT hand: broaden to the entire half of this actual mesh.
-  center_x=(lo.x+hi.x)*.5
-  candidates=[p for p in points if (p[0]-center_x)*side>=.002]
-  if not candidates:
-   raise ValueError("Cannot locate %s-hand weapon surface" %
-                    ("right" if side==1 else "left"))
-  candidates=sorted(candidates,key=lambda p:
-    (p[1]-ys)**2+(p[2]-zs)**2)[:120]
- # Find a point with a projected y/z close to the intended grip, while
- # favoring the visible side rather than a front/back optic component.
- candidates=sorted(candidates,key=lambda p:
-    abs(p[1]-ys)*1.15+abs(p[2]-zs)*.95-abs(p[0])*.12)
- good=candidates[:min(50,len(candidates))]
- # Far-side of receiver near selected cross-section = outside of solid gun.
- side_points=sorted(good,key=lambda p:side*p[0],reverse=True)
- surface=Vector(side_points[0])
- return surface
+ # First use the intended grip station, then broaden only if the asset has
+ # insufficient vertices in that longitudinal section.
+ section=[p for p in points if abs(p[1]-ys)<=.105]
+ if len(section)<20:
+  section=sorted(points,key=lambda p:abs(p[1]-ys))[:min(550,len(points))]
+ if len(section)<2:raise ValueError("Missing weapon grip geometry")
+ xs=sorted(p[0] for p in section)
+ lower=xs[int((len(xs)-1)*.28)]
+ upper=xs[int((len(xs)-1)*.72)]
+ if upper-lower<.009:
+  # Very narrow local tubes need a wider grip station so each side exists.
+  section=[p for p in points if abs(p[1]-ys)<.29]
+  if len(section)<20:section=points
+  xs=sorted(p[0] for p in section)
+  lower=xs[int((len(xs)-1)*.22)]
+  upper=xs[int((len(xs)-1)*.78)]
+ if side<0:eligible=[p for p in section if p[0]<=lower+.002]
+ else:eligible=[p for p in section if p[0]>=upper-.002]
+ if not eligible:
+  eligible=sorted(section,key=lambda p:side*p[0],reverse=True)[:20]
+ # Find a REAL surface vertex on the relevant side, preferring the measured
+ # handguard/grip vertical station over distant barrel ends and stocks.
+ target=min(eligible,key=lambda p:
+   (p[1]-ys)**2+0.65*(p[2]-zs)**2)
+ return Vector(target)
 
 def sculpt_hand(name,contact,side,is_pistol,is_support,materials,parent,pose):
  """Hand palm, slender connected forearm, differentiated jointed fingers and thumb.
