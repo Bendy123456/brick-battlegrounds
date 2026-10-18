@@ -1,0 +1,20 @@
+name: Quick Weapon Geometry QA
+on:
+  push:
+    branches: [main]
+    paths:
+      - client/public/assets/weapons/**
+      - tests/muzzle-assets.test.ts
+      - .github/workflows/quick-weapon-qa.yml
+  workflow_dispatch:
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npx vitest run tests/muzzle-assets.test.ts --reporter=verbose
