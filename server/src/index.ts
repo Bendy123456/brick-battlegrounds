@@ -196,18 +196,34 @@ function controlBot(p:Participant,dt:number,now:number){
  const other=p.room.players[0],a=p.actor,t=other.actor;
  if(!a.alive||!t.alive){p.input.fire=false;return}
  const dx=t.x-a.x,dz=t.z-a.z,range=Math.hypot(dx,dz);
- a.yaw=Math.atan2(-dx,-dz);a.pitch=Math.atan2((t.y+.20)-(a.y+.52),Math.max(.1,range));
+ const desiredYaw=Math.atan2(-dx,-dz);
+ const difficulty=p.room.difficulty;
+ // Track targets with finite turning speed and humanlike angular error.
+ const angleError=Math.atan2(Math.sin(desiredYaw-a.yaw),Math.cos(desiredYaw-a.yaw));
+ const tracking= Math.max(1.3,4.2-difficulty*2.4);
+ a.yaw+=Math.max(-tracking*dt,Math.min(tracking*dt,angleError));
+ const aimPitch=Math.atan2((t.y+.02)-(a.y+.52),Math.max(.1,range));
+ a.pitch+=(aimPitch-a.pitch)*Math.min(1,dt*(3.5-difficulty));
+ const rayDir={x:dx/Math.max(.1,range),y:0,z:dz/Math.max(.1,range)};
+ const ray=new RAPIER.Ray({x:a.x,y:a.y+.25,z:a.z},rayDir);
+ // A bot MUST NOT fire through crates, steel, and training cover.
+ const cover=p.room.world.castRay(ray,Math.max(.1,range-.6),true,RAPIER.QueryFilterFlags.EXCLUDE_KINEMATIC);
+ const visible=!cover;
  if(now>p.thinkAt){
-  const response=p.room.difficulty*1000;
-  p.thinkAt=now+response;
+  p.thinkAt=now+Math.max(150,difficulty*1000);
   p.decision=Math.sin(now*.0011+p.index*13)>0?1:-1;
-  p.input.fire=range<47&&Math.random()>(p.room.difficulty*.35);
+  // Three-second orientation window gives beginners time to take control.
+  const ready=now-p.room.started>3000;
+  const alignment=Math.abs(Math.atan2(Math.sin(desiredYaw-a.yaw),Math.cos(desiredYaw-a.yaw)))<.14;
+  const shootChance=difficulty>=.6?.27:difficulty>=.4?.43:difficulty>=.25?.62:.80;
+  p.input.fire=ready&&visible&&alignment&&range<45&&Math.random()<shootChance;
   p.input.reload=a.ammo<3;
  }
- p.input.f=range>18?1:range<9?-.55:0;
- p.input.s=p.decision*.47;p.input.sprint=range>27;p.input.crouch=range<17&&Math.random()<.03;
+ p.input.f=range>19?1:range<10?-.45:0;
+ p.input.s=p.decision*.42;p.input.sprint=range>30;p.input.crouch=range<17&&Math.random()<.015;
  p.input.yaw=a.yaw;p.input.pitch=a.pitch;
 }
+
 function move(p:Participant,dt:number,now:number){
  const a=p.actor,inp=p.input;
  if(!a.alive){if(p.deadUntil&&now>=p.deadUntil&&p.room.status==='playing')respawn(p);return}

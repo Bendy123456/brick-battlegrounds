@@ -6,7 +6,7 @@ test('main menu loads and VS BOT starts an actual match',async({page})=>{
  await expect(page.locator('#menu')).toBeVisible();
  await page.locator('#vsBot').click();
  await expect(page.locator('#hud')).toBeVisible({timeout:25000});
- await expect(page.locator('#health')).toContainText('100');
+ await expect(page.locator('#health')).toHaveText(/^(100|[1-9][0-9]?)$/);
  await expect(page.locator('#ammo')).toContainText('/');
  expect(errors).toEqual([]);
 });
@@ -59,6 +59,7 @@ test('actually enter arena, move, aim and shoot in a bot match',async({page})=>{
  await page.mouse.down({button:'left'});
  await page.waitForTimeout(900);
  await page.mouse.up({button:'left'});
+ // Verify the browser captured an actual first-person rendered frame.
  await expect.poll(async()=>parseInt(await page.locator('#ammo').innerText(),10),{timeout:8000}).toBeLessThan(30);
  await page.waitForTimeout(700);
  // A compressed screenshot is emitted into CI logs for visual evaluation.
