@@ -55,18 +55,21 @@ test('actually enter arena, move, aim and shoot in a bot match',async({page})=>{
  await page.keyboard.down('KeyW');
  await page.waitForTimeout(850);
  await page.keyboard.up('KeyW');
- await page.mouse.move(610,326);
+ // Keep the camera level during the firing test; excessive pointer movement looks at the ceiling.
  await page.mouse.down({button:'right'});
  await page.waitForTimeout(250);
  await page.mouse.up({button:'right'});
  await page.mouse.down({button:'left'});
  await page.waitForTimeout(2300);
  // Capture test state while fire is still held, not after all input is released.
- console.log('PLAYTEST_STATE='+JSON.stringify(await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.())));
+ const firingState=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
+ console.log('PLAYTEST_STATE='+JSON.stringify(firingState));
+ expect(firingState?.ready).toBe(true);
+ expect(firingState?.localAmmo).toBeLessThan(30);
  await page.mouse.up({button:'left'});
  const screenshot=await page.screenshot({type:'jpeg',quality:34,animations:'disabled'});
  console.log('AIRSOFT_VISUAL_JPEG_B64='+screenshot.toString('base64'));
  console.log('PLAYTEST_RENDER_STATS='+await page.locator('#debug').innerText());
- await expect.poll(async()=>parseInt(await page.locator('#ammo').innerText(),10),{timeout:12000}).toBeLessThan(30);
+ // Do not inspect ammo after screenshot capture: the bot may tag / respawn the player in between.
  expect(errors).toEqual([]);
 });
