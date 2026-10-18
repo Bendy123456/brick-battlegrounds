@@ -409,6 +409,39 @@ def pistol(kind,m):
  # One hand around grip; offhand bracing the trigger-side frame.
  hand_arm('MAIN',m,.10,-.25,.04,1,forearm=.37)
  hand_arm('SUPPORT',m,-.145,-.25,-.20,-1,forearm=.38)
+def premium_surface_detail(kind,m):
+ """Extra nonfunctional, game-only sculpt passes for premium FPS readability."""
+ is_sidearm=kind in ['echo','tempo']
+ if is_sidearm:
+  # Sidearm slide machining, subtle dimples and ergonomic grip seams.
+  for sign in [-1,1]:
+   x=sign*.091
+   for j in range(5):
+    z=-.15-j*.049
+    curve('Angled slide relief %s %d'%(sign,j),[(x,.091,z),(x,.06,z-.013),(x,.007,z-.018)],.0028,m['dark'],2)
+   for row in range(5):
+    for col in range(3):
+     sphere('Grip stipple', (sign*.083,-.241-row*.034,.015+col*.042),(.003,.005,.005),m['frame'])
+   tube('Frame assembly pin',(sign*.084,-.065,-.01),(sign*.097,-.065,-.01),.016,m['rail'],12)
+  return
+ # Rifles / carbines: receiver controls, fitted rail furniture, recessed
+ # pin heads and flush surface grooves. Purely decorative; no mechanics.
+ for sign in [-1,1]:
+  for z,y in [(-.15,.008),(-.42,-.014)]:
+   tube('Receiver pin bezel',(sign*.129,y,z),(sign*.135,y,z),.018,m['dark'],16)
+   tube('Receiver pin core',(sign*.136,y,z),(sign*.140,y,z),.010,m['rail'],12)
+  # Small panel seam, with recessed-looking routed edges.
+  curve('Upper receiver side seam',[(sign*.136,.097,-.06),(sign*.136,.115,-.28),(sign*.136,.086,-.43)],.0028,m['dark'],2)
+  curve('Lower receiver side seam',[(sign*.138,-.075,-.09),(sign*.138,-.104,-.24),(sign*.138,-.084,-.39)],.0035,m['dark'],2)
+  for j in range(5):
+   z=-.56-j*.078
+   curve('Handguard chamfer score',[(sign*.126,.056,z),(sign*.133,.028,z-.012),(sign*.127,-.024,z-.023)],.0035,m['dark'],2)
+  # Molded logo-safe BB marking, not copied from any manufacturer.
+  box('Stamped BB safety insert',(sign*.137,.041,-.27),(.006,.023,.078),m['accent'],.003)
+ # Display-only front lens flare band; readable in normal field of view.
+ for z in [-.60,-.82]:
+  ring('Handguard polished collar',(0,.005,z),.105,.091,.009,m['rail'],20)
+
 WEAPONS=[
  ('vanguard','d5d791'),('ranger','6caca7'),('specter','91adcf'),
  ('atlas','c0a56d'),('whisper','b0c68a'),('breacher','aa895f'),
@@ -419,6 +452,7 @@ for key,accent in WEAPONS:
  m=colors(accent)
  if key in ['echo','tempo']:pistol(key,m)
  else:gun_body(key,m)
+ premium_surface_detail(key,m)
  # Every variant has unmistakable proportions and separately modeled
  # round tube, grip and sight details (no shared clone/scaled placeholder).
  batch_export(key)
