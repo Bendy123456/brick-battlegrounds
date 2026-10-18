@@ -84,8 +84,16 @@ def contact_point(points,lo,hi,frac,z_frac,side,y_shift=0):
      and p[0]*side>=-.015]
   if len(candidates)>=6:break
  if not candidates:
-  candidates=sorted(points,key=lambda p:
-    (p[1]-ys)**2+(p[2]-zs)**2)[:100]
+  # Some large authored meshes (notably shotgun stocks) have their left-side
+  # face far outside the narrow z window. Never silently return a right-side
+  # point for a LEFT hand: broaden to the entire half of this actual mesh.
+  center_x=(lo.x+hi.x)*.5
+  candidates=[p for p in points if (p[0]-center_x)*side>=.002]
+  if not candidates:
+   raise ValueError("Cannot locate %s-hand weapon surface" %
+                    ("right" if side==1 else "left"))
+  candidates=sorted(candidates,key=lambda p:
+    (p[1]-ys)**2+(p[2]-zs)**2)[:120]
  # Find a point with a projected y/z close to the intended grip, while
  # favoring the visible side rather than a front/back optic component.
  candidates=sorted(candidates,key=lambda p:
@@ -210,6 +218,10 @@ def make_grips(weapon_id,kind,materials,weapon_meshes,lo,hi):
   root["left_surface_y"]=left.y
   root["left_surface_z"]=left.z
   assert abs(right.x)<.7 and abs(left.x)<.7
+ print("GRIP_BOUNDS",weapon_id,
+       "min",tuple(round(x,3) for x in lo),
+       "max",tuple(round(x,3) for x in hi),flush=True)
+ assert right.x>=(lo.x+hi.x)*.5-.02 and left.x<=(lo.x+hi.x)*.5+.02, "Wrong gun face: "+weapon_id
  print("ANATOMICAL_GRIP_OK",weapon_id,
        "right",tuple(round(v,3) for v in right),
        "left",tuple(round(v,3) for v in left),flush=True)
