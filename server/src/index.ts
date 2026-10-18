@@ -6,12 +6,13 @@ import {WebSocket,WebSocketServer} from 'ws';
 import RAPIER from '@dimforge/rapier3d-compat';
 import {WEAPONS,DIFFICULTIES,ROUND_KILLS,SPEED,canShoot,hitDamage,roundComplete,type Actor,type Input} from '../../shared/config.ts';
 import {MAP,SPAWNS} from '../../shared/map.ts';
+import {newMotion,stepMotion,type Motion} from '../../shared/movement.ts';
 await RAPIER.init();
 
 type Client=WebSocket & {participant?:Participant,lastPong?:number};
 type Pellet={id:number,owner:number,x:number,y:number,z:number,vx:number,vy:number,vz:number,age:number,bounces:number};
 type Participant={ws:Client|null,room:Room,index:number,token:string,actor:Actor,input:Input,body:any,collider:any,controller:any,
- lastFire:number,reloadAt:number,vy:number,grounded:boolean,deadUntil:number,heardAt:number,reconnectUntil:number,bot:boolean,thinkAt:number,decision:number};
+ motion:Motion,stance:'stand'|'crouch'|'slide'|'prone',lastFire:number,reloadAt:number,vy:number,grounded:boolean,deadUntil:number,heardAt:number,reconnectUntil:number,bot:boolean,thinkAt:number,decision:number};
 type Room={code:string,mode:'bot'|'online',players:Participant[],world:any,pellets:Pellet[],nextPellet:number,round:number,started:number,status:'waiting'|'playing'|'finished',score:[number,number],difficulty:number,lastSnapshot:number};
 const rooms=new Map<string,Room>(),queue:Client[]=[];
 const PORT=Number(process.env.PORT)||3000,dist=resolve('dist');
@@ -55,8 +56,8 @@ function createParticipant(room:Room,ws:Client|null,index:number,bot=false):Part
  controller.enableAutostep(.4,.24,true);
  controller.enableSnapToGround(.18);
  const actor:Actor={id:index?'BLUE':'RED',side:index,x:spawn.x,y:spawn.y,z:spawn.z,yaw:index?Math.PI/2:-Math.PI/2,pitch:0,
- hp:100,kills:0,deaths:0,ammo:WEAPONS[0].mag,mag:WEAPONS[0].mag,weapon:0,alive:true,ads:false,crouch:false,prone:false,velocity:0,reloadEnd:0};
- const p:Participant={ws,room,index,token:randomBytes(20).toString('hex'),actor,input:inputDefault(),body,collider,controller,lastFire:0,reloadAt:0,vy:0,grounded:true,deadUntil:0,heardAt:Date.now(),reconnectUntil:0,bot,thinkAt:0,decision:0};
+ hp:100,kills:0,deaths:0,ammo:WEAPONS[0].mag,mag:WEAPONS[0].mag,weapon:0,alive:true,ads:false,crouch:false,prone:false,sliding:false,sprinting:false,velocity:0,reloadEnd:0};
+ const p:Participant={ws,room,index,token:randomBytes(20).toString('hex'),actor,input:inputDefault(),body,collider,controller,motion:newMotion(),stance:'stand',lastFire:0,reloadAt:0,vy:0,grounded:true,deadUntil:0,heardAt:Date.now(),reconnectUntil:0,bot,thinkAt:0,decision:0};
  room.players.push(p);if(ws)ws.participant=p;return p;
 }
 function joinState(p:Participant){
@@ -115,7 +116,8 @@ function restore(ws:Client,code:string,token:string){
 function respawn(p:Participant){
  const spawn=SPAWNS[p.index],a=p.actor;
  a.x=spawn.x;a.y=spawn.y;a.z=spawn.z;a.hp=100;a.alive=true;a.ammo=WEAPONS[a.weapon].mag;
- p.deadUntil=0;p.reloadAt=0;p.vy=0;p.body.setTranslation({x:a.x,y:a.y,z:a.z},true);
+ p.deadUntil=0;p.reloadAt=0;p.vy=0;p.motion=newMotion();a.sliding=false;a.sprinting=false;a.crouch=false;a.prone=false;
+ setStance(p,'stand');p.body.setTranslation({x:a.x,y:a.y,z:a.z},true);
  send(p.ws,{type:'respawn'});
 }
 function swap(p:Participant,index:number){
@@ -231,25 +233,56 @@ function controlBot(p:Participant,dt:number,now:number){
  p.input.yaw=a.yaw;p.input.pitch=a.pitch;
 }
 
+// Capsule bottoms stay at the same ground level for standing / crouched slides.
+// A collision clearance check prevents standing through a low overhead catwalk.
+function setStance(p:Participant,stance:'stand'|'crouch'|'slide'|'prone'){
+ if(stance===p.stance)return;
+ const poses={stand:{half:.60,offset:0},crouch:{half:.35,offset:-.25},slide:{half:.21,offset:-.39},prone:{half:.14,offset:-.46}};
+ const next=poses[stance];
+ // When rising, verify headroom against fixed world colliders first.
+ if(next.half>poses[p.stance].half){
+  const pos=p.body.translation();
+  const ray=new RAPIER.Ray({x:pos.x,y:pos.y-.30,z:pos.z},{x:0,y:1,z:0});
+  const ceiling=p.room.world.castRay(ray,next.half+.65,true,RAPIER.QueryFilterFlags.EXCLUDE_KINEMATIC);
+  if(ceiling){p.actor.crouch=true;return}
+ }
+ p.room.world.removeCollider(p.collider,true);
+ p.collider=p.room.world.createCollider(RAPIER.ColliderDesc.capsule(next.half,.30)
+  .setTranslation(0,next.offset,0).setFriction(.8),p.body);
+ p.stance=stance;
+}
 function move(p:Participant,dt:number,now:number){
  const a=p.actor,inp=p.input;
  if(!a.alive){if(p.deadUntil&&now>=p.deadUntil&&p.room.status==='playing')respawn(p);return}
  if(p.bot)controlBot(p,dt,now);
- if(!p.bot&&now-p.heardAt>450){inp.f=0;inp.s=0;inp.fire=false}
+ if(!p.bot&&now-p.heardAt>450){inp.f=0;inp.s=0;inp.fire=false;inp.slide=false}
  a.yaw=valid(inp.yaw,-Math.PI*8,Math.PI*8);a.pitch=valid(inp.pitch,-1.4,1.4);
- a.crouch=!!inp.crouch;a.prone=!!inp.prone;a.ads=!!inp.ads;
- const sp=a.prone?SPEED.prone:a.crouch?SPEED.crouch:inp.sprint?SPEED.sprint:SPEED.walk;
- const f=valid(inp.f,-1,1),side=valid(inp.s,-1,1),scale=Math.max(1,Math.hypot(f,side));
- const moveX=(Math.cos(a.yaw)*side-Math.sin(a.yaw)*f)*sp/scale*dt;
- const moveZ=(-Math.sin(a.yaw)*side-Math.cos(a.yaw)*f)*sp/scale*dt;
- if(inp.jump&&p.grounded&&!a.prone&&!a.crouch){p.vy=Math.sqrt(2*20*1.2);p.grounded=false}
+ const result=stepMotion(p.motion,inp,dt,p.grounded);
+ a.sliding=result.sliding;
+ a.sprinting=result.sprinting;
+ a.crouch=!!inp.crouch||a.sliding;
+ a.prone=!!inp.prone&&!a.sliding;
+ a.ads=!!inp.ads&&!a.sprinting&&!a.sliding;
+ // Ground contact remains at y=-.9 relative to fighter center for all stances.
+ setStance(p,a.prone?'prone':a.sliding?'slide':a.crouch?'crouch':'stand');
+ if(p.stance!=='stand')a.crouch=true;
+ const moveX=p.motion.vx*dt,moveZ=p.motion.vz*dt;
+ if(inp.jump&&p.grounded&&!a.prone&&(!a.crouch||result.ended)){
+  p.vy=Math.sqrt(2*20*1.2);p.grounded=false;
+  if(p.stance==='slide'){p.motion.slideTime=0;a.sliding=false;setStance(p,'stand')}
+ }
  p.vy=Math.max(-25,p.vy-20*dt);
  p.controller.computeColliderMovement(p.collider,{x:moveX,y:p.vy*dt,z:moveZ});
  const change=p.controller.computedMovement(),current=p.body.translation();
+ // A full frontal collision ends the slide, rather than accumulating momentum
+ // behind an obstacle and launching out when the blocker disappears.
+ if(a.sliding&&Math.hypot(change.x,change.z)<Math.hypot(moveX,moveZ)*.22){
+  p.motion.slideTime=0;a.sliding=false;
+ }
  p.body.setNextKinematicTranslation({x:current.x+change.x,y:current.y+change.y,z:current.z+change.z});
  p.grounded=p.controller.computedGrounded();
  if(p.grounded&&p.vy<0)p.vy=0;
- // Snapshot is taken after world.step() in the room tick.
+ a.velocity=Math.min(1.5,result.speed/SPEED.sprint);
  if(inp.swap!==undefined){swap(p,inp.swap);inp.swap=undefined}
  if(inp.reload&&!p.reloadAt&&a.ammo<WEAPONS[a.weapon].mag){p.reloadAt=now+WEAPONS[a.weapon].reload*1000}
  if(p.reloadAt&&now>=p.reloadAt){a.ammo=WEAPONS[a.weapon].mag;p.reloadAt=0}
@@ -272,7 +305,7 @@ function tick(){
   room.world.step();
   for(const p of room.players){
    const pos=p.body.translation();p.actor.x=pos.x;p.actor.y=pos.y;p.actor.z=pos.z;
-   p.actor.velocity=Math.hypot(p.input.f,p.input.s);
+   // Actor velocity is computed from server-authoritative locomotion above.
   }
   updatePellets(room,dt);
   if(now-room.lastSnapshot>=50){
@@ -321,7 +354,7 @@ wss.on('connection',(sock:WebSocket)=>{
   if(msg.type==='input'){
    const x=msg.data;if(!x||typeof x!=='object')return;
    p.input={f:valid(x.f,-1,1),s:valid(x.s,-1,1),yaw:valid(x.yaw,-Math.PI*8,Math.PI*8),
-    pitch:valid(x.pitch,-1.4,1.4),jump:x.jump===true,crouch:x.crouch===true,sprint:x.sprint===true,prone:x.prone===true,
+    pitch:valid(x.pitch,-1.4,1.4),jump:x.jump===true,crouch:x.crouch===true,sprint:x.sprint===true,prone:x.prone===true,slide:x.slide===true,
     fire:x.fire===true,ads:x.ads===true,reload:x.reload===true,swap:Number.isInteger(x.swap)?x.swap:undefined,
     grenade:x.grenade===true,melee:x.melee===true,seq:valid(x.seq,0,1e9)};
    p.heardAt=Date.now();
