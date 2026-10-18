@@ -34,7 +34,7 @@ describe('hand contact and pose exports',()=>{
    expect(two).toContain('LEFT');
    expect(two).toContain('finger 4 articulated');
    expect(two).toContain('natural nail');
-   expect(two).toContain('BARE FOREARM'.toLowerCase().includes('forearm')?'forearm':'');
+   expect(two).toContain('bare anatomical forearm');
   });
  }
 });
