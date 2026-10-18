@@ -1,8 +1,11 @@
-# BRICK BATTLEGROUNDS — v0.8.25 CONTAINED SPINJITZU
+# BRICK BATTLEGROUNDS — v0.8.26 MOUNTAIN MONASTERY ARENA
 
-Online-ready browser fighting game prototype using original brick ninja fighters and a procedural dojo courtyard.
+Online-ready browser fighting game with original brick ninja fighters and a fully playable 3D mountain monastery courtyard.
 
 ## What's new
+
+- **v0.8.26 — Mountain Monastery Arena:** Replaced the dark blue sea/island combat backdrop with a bright, fully modeled mountainside monastery, built directly into the existing Three.js match scene. Retains the exact original eight-sided stone combat floor footprint and elevation. New scenery includes a two-tiered main shrine with curved roof geometry and warm gold eaves, two flanking halls, a monumental entrance gate, detailed latticed screens, mountain terraces, three 360-degree distant peak rings, procedural alpine sky and atmospheric fog, a GPU-instanced pine grove, blossoming trees, stone lanterns, banners, a staircase, aged parapets, and engraved courtyard flagstones. Static decorative geometry is baked into 16 shared-material batches for low draw-call overhead (simulation: 36 scene meshes versus 659 before batching; excludes combat fighters). New scenery is non-colliding and entirely outside the combat boundary. **Damage, hit detection, movement, arena boundaries, controller/keyboard inputs, character models, animations, dashes, Spinjitzu, online networking and camera framing are unchanged.** Automated scene-construction and preservation checks passed; on-site visual review remains to be done.
+
 
 - **v0.8.25 — Spinjitzu fighter containment:** Updated the playable 3D effect so the visible LEGO minifigure tucks arms/legs inward and eases down to 59% of its normal visual size, while lifting into the tornado's wide center. This prevents stray hands, head and feet from extending beyond the neon energy funnel. It grows back naturally as the tornado dissipates; interrupts and knockdowns restore normal visual scale, position and yaw. The gameplay root, hitboxes, 2-second duration, five-hit timing/damage, 8-second cooldown and online sync are not changed. Simulated intro/active/recovery/interruption transform checks passed.
 
