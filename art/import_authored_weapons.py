@@ -218,8 +218,14 @@ def fit_muzzle(meshes,lo,hi):
     """
     # Prioritize actual manufactured muzzle/barrel mesh components; imported
     # packs may also contain long iron sights or folded display attachments.
+    # Prefer the dedicated muzzle-device mesh rather than an optional
+    # suppressor or accessory that may be exported as a separate loose part.
     muzzle_meshes=[o for o in meshes if any(k in o.name.lower()
-                    for k in ('muzzledevice','muzzle_device','barrel','suppressor'))]
+                    for k in ('muzzledevice','muzzle_device','muzzleflash'))]
+    if not muzzle_meshes:
+        muzzle_meshes=[o for o in meshes if 'barrel' in o.name.lower()]
+    if not muzzle_meshes:
+        muzzle_meshes=[o for o in meshes if 'suppressor' in o.name.lower()]
     vertices=[v.co.copy() for ob in (muzzle_meshes or meshes)
               for v in ob.data.vertices]
     center_x=(lo.x+hi.x)*.5
