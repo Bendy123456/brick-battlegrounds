@@ -210,3 +210,37 @@ test('all nine distinct Blender weapons load and loadout selection uses selected
  console.log('AIRSOFT_TEMPO_JPEG_B64='+pistolFrame.toString('base64'));
  expect(errors).toEqual([]);
 });
+
+
+test('new menu illustrations load and every menu action has interactive hover styling',async({page})=>{
+ const errors:string[]=[];
+ page.on('pageerror',error=>errors.push(error.message));
+ await page.goto('/');
+ await expect(page.locator('#menu')).toBeVisible();
+ for(const id of ['vsBot','quick','private']){
+  const button=page.locator('#'+id);
+  await expect(button).toBeVisible();
+  const illustration=button.locator('img.bb-card-art');
+  await expect(illustration).toHaveJSProperty('complete',true);
+  expect(await illustration.evaluate((img:HTMLImageElement)=>img.naturalWidth)).toBeGreaterThan(0);
+  const before=await button.evaluate(el=>getComputedStyle(el).transform);
+  await button.hover();
+  await page.waitForTimeout(330);
+  const after=await button.evaluate(el=>getComputedStyle(el).transform);
+  expect(after).not.toBe(before);
+ }
+ for(const id of ['join','openSettings','openLoadout']){
+  const button=page.locator('#'+id);
+  await expect(button).toBeVisible();
+  await button.hover();
+  await expect(button).toHaveCSS('cursor','pointer');
+ }
+ await page.locator('#openLoadout').click();
+ await expect(page.locator('#loadout')).toBeVisible();
+ await page.locator('#loadoutBack').click();
+ await page.locator('#openSettings').click();
+ await expect(page.locator('#settings')).toBeVisible();
+ await page.locator('#settingsBack').click();
+ await expect(page.locator('#menu')).toBeVisible();
+ expect(errors).toEqual([]);
+});
