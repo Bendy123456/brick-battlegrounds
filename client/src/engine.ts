@@ -19,6 +19,8 @@ export class Engine{
  opponentYaw=0;playerSide=0;localPos=new THREE.Vector3(-18,1,0);
  motion:Motion=newMotion();stance:'stand'|'crouch'|'slide'|'prone'='stand';grounded=true;vy=0;
  cameraHeight=.52;cameraBank=0;strideSpeed=0;
+ measuredFPS=60;maxPixelRatio=Math.min(devicePixelRatio||1,1.20);
+ pixelRatio=this.maxPixelRatio;lastQualityChange=0;
  projectiles=new Map<number,THREE.Mesh>();props:{body:any,mesh:THREE.Mesh}[]=[];
  weapon=new THREE.Group();weaponCore=new THREE.Group();muzzle:THREE.PointLight;
  lastWeapon=-1; recoil=0;walkPhase=0;eyeBob=0;frame=0;lastStep=0;
@@ -33,7 +35,7 @@ export class Engine{
   this.scene.background=new THREE.Color(0x18252b);
   this.scene.fog=new THREE.FogExp2(0x192b31,.0065);
   this.renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-  this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.20)); // Keep GPU load stable during sprint and slide.
+  this.renderer.setPixelRatio(this.maxPixelRatio); // Cap retina rendering to avoid excess frame cost.
   this.renderer.setSize(innerWidth,innerHeight);this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.23;
   $('viewport').appendChild(this.renderer.domElement);
@@ -319,7 +321,26 @@ export class Engine{
   this.muzzle.intensity*=Math.exp(-dt*32);
   this.renderer.render(this.scene,this.camera);
   this.frame++;
-  if(this.frame%35===0)$('debug').textContent='DRAW CALLS '+this.renderer.info.render.calls+'  |  TRIANGLES '+this.renderer.info.render.triangles+'  |  '+this.assetState+'  |  SYNC '+this.lastServerError.toFixed(2)+'m';
+  if(this.frame%35===0)$('debug').textContent='DRAW CALLS '+this.renderer.info.render.calls+'  |  TRIANGLES '+this.renderer.info.render.triangles+'  |  FPS '+Math.round(this.measuredFPS)+'  |  '+this.assetState+'  |  SYNC '+this.lastServerError.toFixed(2)+'m';
+ }
+ adjustQuality(fps:number){
+  this.measuredFPS=fps;
+  if(this.assetState==='LOADING 3D ASSETS')return;
+  const now=performance.now();
+  if(now-this.lastQualityChange<4500)return;
+  // Software/WebGL and integrated GPUs can struggle with a giant arena GLB.
+  // Reduce internal shading resolution first; don't remove any Blender art.
+  if(fps<38&&this.pixelRatio>.72){
+   this.pixelRatio=Math.max(.72,this.pixelRatio-.18);
+   this.renderer.setPixelRatio(this.pixelRatio);
+   if(fps<25&&this.pixelRatio<=.90)this.renderer.shadowMap.enabled=false;
+   this.lastQualityChange=now;
+  }else if(fps>58&&this.pixelRatio<this.maxPixelRatio){
+   this.pixelRatio=Math.min(this.maxPixelRatio,this.pixelRatio+.12);
+   this.renderer.setPixelRatio(this.pixelRatio);
+   if(this.pixelRatio>=1.0)this.renderer.shadowMap.enabled=true;
+   this.lastQualityChange=now;
+  }
  }
  resize(){this.camera.aspect=innerWidth/innerHeight;this.camera.updateProjectionMatrix();this.renderer.setSize(innerWidth,innerHeight)}
 }

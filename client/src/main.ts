@@ -257,6 +257,7 @@ function frame(timestamp:number){
  fpsSamples++;
  if(timestamp-fpsWindow>=1100){
   measuredFPS=fpsSamples*1000/(timestamp-fpsWindow);
+  engine.adjustQuality(measuredFPS);
   fpsWindow=timestamp;fpsSamples=0;
  }
  if(mobile||!engine.world)return;
