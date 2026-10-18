@@ -4,7 +4,8 @@ import {CLASSIC_RELAXED} from './classic-combat.js';
 import {clearDashVisual} from './dash-poses.js';
 // CHANGED: Consecutive landed-hit rules and visual knockdown. This is a
 // procedural, ragdoll-style fall; Three.js has no rigid-body ragdoll solver here.
-export const HIT_STUN_SECONDS=1.0;
+export const HIT_STUN_SECONDS=.32;
+export const IMPACT_STUN={light:.32,heavy:.54,special:.27,guardBreak:.72};
 export const KNOCKDOWN_SECONDS=1.65;
 export const CHAIN_WINDOW_SECONDS=3.5;
 export const WAKEUP_IFRAMES_SECONDS=.25;
@@ -33,7 +34,7 @@ export function recordHitForKnockdown(att,attack,blocked=false){
  if(knock)clearHitChain(att);
  return knock;
 }
-export function startImpact(def,knockdown){
+export function startImpact(def,knockdown,kind='light'){
  // CHANGED: A hit interrupts the dash's visual-only translation and spin.
  if(def.dashKind){clearDashVisual(def);def.dashKind=null;}
  // The attacker cannot continue an attack during hitstun.
@@ -43,8 +44,10 @@ export function startImpact(def,knockdown){
  def.comboWindow=0;
  def.block=false;
  def.dodge=0;
- def.hitFlash=.19;
- def.stun=Math.max(def.stun||0,HIT_STUN_SECONDS);
+ def.reactionKind=kind;
+ def.reactionDuration=kind==='heavy'?.28:kind==='guardBreak'?.32:.20;
+ def.hitFlash=def.reactionDuration;
+ def.stun=Math.max(def.stun||0,IMPACT_STUN[kind]||HIT_STUN_SECONDS);
  if(knockdown){
   def.ragdoll=KNOCKDOWN_SECONDS;
   def.ragdollTotal=KNOCKDOWN_SECONDS;
@@ -66,29 +69,31 @@ export function tickImpact(f,dt){
 export function poseKnockdown(f){
  const total=f.ragdollTotal||KNOCKDOWN_SECONDS;
  const t=1-Math.max(0,f.ragdoll)/total;
- const collapsed=ease(t/.20)*(1-ease((t-.76)/.24));
- const wake=ease((t-.77)/.23);
- const sway=Math.sin(t*17)*Math.exp(-t*5)*collapsed;
+ const collapsed=ease(t/.23)*(1-ease((t-.73)/.27));
+ const wake=ease((t-.75)/.25);
+ const roll=ease((t-.35)/.25)*(1-ease((t-.70)/.15));
+ const sway=(t>.20?Math.sin((t-.20)*32)*Math.exp(-(t-.20)*9):0)*collapsed;
  const side=f.ragdollSide||1;
  const {arms,legs,body,head}=f.visual.userData;
- const mix=(down,guard)=>down*collapsed+guard*wake;
+ const mix=(down,guard)=>down*collapsed+guard*(1-collapsed);
  const rad=Math.PI/180;
  // CHANGED: Classic minifigures finish their get-up with their arms down.
  const classic=f.visual.name.startsWith('PLAIN_CLASSIC_MINIFIG_');
  const stance=classic?CLASSIC_RELAXED:null;
  const joint=(key,axis,fallback)=>classic?stance[key][axis]*rad:fallback;
  // Rotate the fighter's VISUAL only, not root, physics or hurtboxes.
- f.visual.rotation.x=-1.37*collapsed;
- f.visual.rotation.z=side*.16*collapsed;
- f.visual.position.y=.12*collapsed;
+ f.visual.rotation.x=-1.39*collapsed+.06*sway;
+ f.visual.rotation.z=side*(.16*collapsed+.24*roll);
+ f.visual.position.y=.19*collapsed+.035*sway;
  body.rotation.set(mix(-.15,joint('T',0,-3*rad)),mix(side*.13,joint('T',1,-7*rad)),mix(side*.18,joint('T',2,-2*rad)));
  head.rotation.set(mix(-.16,joint('H',0,1.7*rad)),mix(0,joint('H',1,5.25*rad)),mix(side*.11,joint('H',2,1.3*rad)));
- arms[0].rotation.set(mix(.67+sway*.35,joint('LS',0,57*rad)),mix(0,joint('LS',1,-4*rad)),mix(-1.04-sway*.2,joint('LS',2,16*rad)));
- arms[1].rotation.set(mix(1.05-sway*.25,joint('RS',0,66*rad)),mix(0,joint('RS',1,4*rad)),mix(.80-sway*.2,joint('RS',2,-16*rad)));
+ arms[0].rotation.set(mix(.67+sway*.35+wake*.25,joint('LS',0,57*rad)),mix(0,joint('LS',1,-4*rad)),mix(-1.04-sway*.2,joint('LS',2,16*rad)));
+ arms[1].rotation.set(mix(1.05-sway*.25+wake*.25,joint('RS',0,66*rad)),mix(0,joint('RS',1,4*rad)),mix(.80-sway*.2,joint('RS',2,-16*rad)));
  arms[0].userData.elbow.rotation.set(mix(-.95,joint('LE',0,104*rad)),0,0);
  arms[1].userData.elbow.rotation.set(mix(-.70,joint('RE',0,101*rad)),0,0);
  legs[0].rotation.set(mix(.30+sway*.2,joint('LH',0,-7*rad)),0,mix(-.12,joint('LH',2,0)));
  legs[1].rotation.set(mix(-.35-sway*.3,joint('RH',0,8*rad)),0,mix(.17,joint('RH',2,0)));
  legs[0].userData.knee.rotation.set(mix(-.45,joint('LK',0,6*rad)),0,0);
  legs[1].userData.knee.rotation.set(mix(-.65,joint('RK',0,-6*rad)),0,0);
+ for(const leg of legs)leg.userData.ankle?.rotation.set(0,0,0);
 }

@@ -1889,8 +1889,14 @@ export function sampleCombatPose(f,dt){
  if(data){
   if(st.attack!==attack){st.from=st.pose;st.attack=attack;}
   // CHANGED: Classic rigs use continuous authored channels; legacy rigs retain their sampler.
-  const desired=isClassicFighter(f)?atTimeClassic(data.frames,Math.min(data.len,f.attackTime)):
+  let desired=isClassicFighter(f)?atTimeClassic(data.frames,Math.min(data.len,f.attackTime)):
    atTime(data.frames,Math.min(data.len,f.attackTime));
+  // Blend the last 130ms of a queued strike toward the next move's preparation.
+  if(isClassicFighter(f)&&attack.kind==='light'&&f.queuedLight&&f.attackTime>data.len-.13){
+   const next=table.light[(attack.stage||1)%table.light.length];
+   const prep=atTimeClassic(next.frames,.10);
+   desired=interpolate(desired,prep,EASE.sine((f.attackTime-data.len+.13)/.13)*.88);
+  }
   st.pose=interpolate(st.from,desired,EASE.sine(f.attackTime/data.blend));
   return st.pose;
  }

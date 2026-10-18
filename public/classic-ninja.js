@@ -90,9 +90,12 @@ function makeLeg(visual,material,sx){
   lower.lineTo(.230,0);lower.lineTo(-.230,0);lower.closePath();
   const shin=put(knee,geometry(lower),material,0,0,-.226);
   shin.name='ClassicLowerLeg';
-  const foot=block(knee,material,.467,.154,.519,0,-.475,-.028);
+  // Same resting foot location, now with an independently rotating ankle.
+  const ankle=new THREE.Group();ankle.name='AnklePivot';
+  ankle.position.set(0,-.410,0);knee.add(ankle);
+  const foot=block(ankle,material,.467,.154,.519,0,-.065,-.028);
   foot.name='FlatToyFoot';
-  hip.userData.knee=knee;
+  hip.userData.knee=knee;hip.userData.ankle=ankle;hip.userData.foot=foot;
   return hip;
 }
 
