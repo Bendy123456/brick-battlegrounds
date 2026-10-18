@@ -11,6 +11,13 @@ test('artist-authored weapon pack loads and displays in real first-person play',
  },{timeout:90000,intervals:[500,1000,2000]}).toBe(9);
  const loaded=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
  expect(loaded.failedWeaponModels).toEqual([]);
+ await page.locator('#openLoadout').click();
+ await expect(page.locator('#gripChoices button')).toHaveCount(2);
+ await page.locator('#gripChoices button').first().click();
+ await expect(page.locator('#gripChoices button').first()).toHaveAttribute('aria-pressed','true');
+ await page.locator('#gripChoices button').last().click();
+ await expect(page.locator('#gripChoices button').last()).toHaveAttribute('aria-pressed','true');
+ await page.locator('#loadoutBack').click();
  await page.locator('#vsBot').click();
  await expect(page.locator('#hud')).toBeVisible({timeout:60000});
  await expect.poll(async()=>await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.()?.selectedViewmodel),
