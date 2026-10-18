@@ -234,8 +234,16 @@ export class Engine{
      gunParts.push(part);
     }
    });
+   // The previous rig scaled the gun while leaving hands behind: the
+   // gripping fingers could never stay on the grip. Keep both grip hierarchies
+   // under the SAME transform as the artist-authored weapon and orange tip.
+   const gripRoots:THREE.Object3D[]=[];
+   model.traverse(part=>{
+    if(part.name.startsWith('GRIP_ONE_HAND') ||
+       part.name.startsWith('GRIP_TWO_HAND'))gripRoots.push(part);
+   });
    for(const part of gunParts)weaponArt.attach(part);
-   // Fine-tune the last size pass by roughly another 8%; bare forearms stay unchanged.
+   for(const grip of gripRoots)weaponArt.attach(grip);
    weaponArt.scale.setScalar(index>=7?1.31:1.28);
    // Retain the proven first-person camera placement and weapon-specific scale.
    const scale=index===6?.62:index===5?.70:index>=7?.83:index===4?.76:.70;
