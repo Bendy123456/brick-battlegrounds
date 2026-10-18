@@ -76,6 +76,11 @@ M={
  'tarp':mat('16_THICK_NYLON_TARP','292f2f',.01,.96,pattern='rubber',seed=22),
  'yellow':mat('17_WARNING_STRIPE','c29c4b',.07,.59),
  'grill':mat('18_LED_BLUE_PANEL','214653',.36,.31,emiss=.55),
+ 'neon_red':mat('19_LED_RED_TEAM','fe4e43',.1,.38,emiss=3.8),
+ 'neon_blue':mat('20_LED_CYAN_TEAM','36cbff',.1,.38,emiss=3.8),
+ 'neon_orange':mat('21_ARENA_ORANGE_NEON','ffad45',.07,.38,emiss=4.2),
+ 'dark_floor':mat('22_ANTI_SLIP_BLACK_FLOOR','202729',0,.82,pattern='rubber',seed=23),
+ 'safety_white':mat('23_GLOWING_SAFETY_SIGN','f7efd3',0,.6,emiss=2.2),
 }
 def apply(obj,name,ma,bevel=0):
  obj.name=name;obj.data.materials.append(ma)
@@ -379,6 +384,124 @@ def support_frame():
    cube('ROLLUP_SERVICE_BAY',x,5.55,z,.09,3.75,6.5,M['steel'],.04)
    for y in [4.1,4.7,5.3,5.9,6.5,7.1]:
     cube('ROLLUP_DOOR_HORIZONTAL_SLAT',x-side*.08,y,z,.035,.055,6.28,M['edge'])
+
+def sign_facing_x(name,word,x,y,z,size,positive=False,ma=None):
+ # Custom airsoft arena text aligned in the Y-Z wall plane to face both
+ # teams running along the X axis. The old arena signs only faced Z, so
+ # neither spawn could actually read its title while looking forward.
+ if ma is None:ma=M['safety_white']
+ bpy.ops.object.text_add(location=coords(x,y,z))
+ obj=bpy.context.object;obj.name=name;obj.data.body=word
+ obj.data.size=size;obj.data.extrude=.0025;obj.data.bevel_depth=.0004
+ obj.data.align_x='CENTER';obj.data.materials.append(ma)
+ obj.rotation_euler=(math.pi/2,0,math.pi/2 if positive else -math.pi/2)
+ bpy.context.view_layer.objects.active=obj;bpy.ops.object.convert(target='MESH')
+ return bpy.context.object
+
+def elevated_team_gateway(x,team):
+ """Suspended competition entrance with vivid angular steel canopy.
+ All elements are above y=4m, outside the player's collider and aiming path;
+ no client/server collision disparity or invisible blocking.
+ """
+ color=M['neon_red'] if team=='red' else M['neon_blue']
+ paint=M['red'] if team=='red' else M['blue']
+ for zz in [-12,12]:
+  # Beam hangers grow from roof, not from floor and cannot trap a player.
+  tube('ARENA_SUSPENDED_TRUSS', (x,11.5,zz),(x,6.65,zz),.13,M['steel'],12)
+  cube('GATEWAY_VERTICAL_TEAM_RIB',x,6.8,zz,.50,4.5,.66,paint,.045)
+  cube('TEAM_NEON_VERTICAL_TUBE',x,6.8,zz+(.365 if zz>0 else -.365),
+   .22,4.0,.09,color,.025)
+  cube('UPPER_BRACED_KNEE',x,10.0,zz,.70,.50,1.55,M['edge'],.05)
+ # Top horizontal span creates a dramatic iconic frame and visible point
+ # of interest from the exact first-person spawn direction.
+ cube('PANORAMIC_TEAM_GATEWAY_HEADER',x,9.3,0,.64,1.40,26,paint,.065)
+ cube('FRONT_TEAM_GATEWAY_NEON',x-.39 if team=='red' else x+.39,
+  9.9,0,.09,.14,24.4,color,.028)
+ cube('BASE_GATEWAY_ORANGE_CROWN',x,10.23,0,.48,.12,24.8,M['neon_orange'],.025)
+ # Reinforced diagonal X panel geometry evokes professional arena scaffolds.
+ for side in [-1,1]:
+  z=side*12
+  tube('GATEWAY_X_HERITAGE_BRACE',(x,7.3,z),
+    (x,9.9,side*9.0),.094,M['edge'],10)
+  tube('GATEWAY_X_REVERSE_BRACE',(x,9.9,z),
+    (x,7.3,side*9.0),.094,M['steel'],10)
+ # A true 3D geometry logo rather than another 2D generated picture.
+ cube('GATEWAY_ICON_BACKPLATE',x,8.5,0,.34,1.4,8.7,M['black'],.04)
+ for k in [-1,1]:
+  at=x-.21 if team=='red' else x+.21
+  sign_facing_x('GATEWAY_BASE_SIGN_'+team,'RED BASE' if team=='red'
+   else 'BLUE BASE',at,8.28,k*.0, .73,positive=(team=='blue'))
+ # Dangerous in-game platforms are never implied: access is only on
+ # physically matched mezzanines, central stairs and raised container roof.
+
+def center_command_pavilion():
+ """Iconic competition centerpiece visible from both spawn directions.
+ High hanging panels, orange neon ribbon and four-sided arena identities.
+ """
+ # Two rows of central suspended outriggers, far above playable head room.
+ for sx in [-7.0,7.0]:
+  for zz in [-10.0,10.0]:
+   tube('COMMAND_PAVILION_ROOF_HANGER',(sx,11.5,zz),
+    (sx,7.5,zz),.12,M['edge'],10)
+ for z in [-10,10]:
+  cube('CENTRAL_LED_RIB',0,8.0,z,18,.38,.62,M['neon_orange'],.035)
+  cube('CENTRAL_RIB_INNER_STEEL',0,7.7,z,17.3,.28,.40,M['steel'],.025)
+ for x in [-8,8]:
+  cube('CENTRAL_BRANDED_BULKHEAD',x,8.10,0,.34,2.8,18.2,M['shade'],.06)
+  cube('CENTRAL_BULKHEAD_TOP_LIGHT',x,9.56,0,.36,.15,17.8,
+   M['neon_orange'],.04)
+  cube('CENTRAL_BULKHEAD_LOWER_STRIPE',x,6.69,0,.36,.08,17.8,
+   M['neon_orange'],.018)
+ # The huge illuminated title is readable by the players approaching
+ # the center from either side of the warehouse.
+ for face in [-1,1]:
+  x=face*8.22
+  sign_facing_x('MAIN_CENTRAL_TITLE', 'THE ARENA',x,8.10,-5.1,
+   .90,positive=face>0,ma=M['safety_white'])
+  sign_facing_x('MAIN_CENTRAL_VERSION', 'INDUSTRIAL V2',x,7.16,-5.0,
+   .30,positive=face>0,ma=M['neon_orange'])
+ # Distinctive overhead cross-rib bridge frame connecting the original
+ # mezzanine towers without adding falsely walkable surfaces.
+ for z in [-8,8]:
+  tube('DISTANT_CENTRAL_ANGLE_BRACE',(-31,9.4,z),
+   (0,7.1,z),.11,M['edge'],10)
+  tube('DISTANT_CENTRAL_ANGLE_BRACE',(31,9.4,z),
+   (0,7.1,z),.11,M['edge'],10)
+
+def dramatic_floor_zones():
+ """Oversized angular tournament lane floor treatment, unique to Arena V2.
+ Decals are only 1cm high: visual, not simulation collision obstacles.
+ """
+ # Distinct asphalt-black competition lanes replace a sea of bare concrete.
+ cube('CENTRAL_BATTLE_FLOOR_BLACK',0,.024,0,20,.021,40,M['dark_floor'],.012)
+ for side in [-1,1]:
+  teamColor=M['red'] if side==-1 else M['blue']
+  neon=M['neon_red'] if side==-1 else M['neon_blue']
+  cube('TEAM_DARK_RUBBER_RUNNING_LANE',side*35,.023,0,38,.015,12,
+   M['dark_floor'],.012)
+  cube('GLOWING_TEAM_SPRINT_TRACK',side*33,.041,-6.2,44,.020,.18,
+   neon,.01)
+  cube('TEAM_TRACK_PAIRED_BORDER',side*33,.041,6.2,44,.020,.18,
+   neon,.01)
+  for pos in range(4):
+   x=side*(17+pos*9)
+   for z in [-4.0,4.0]:
+    cube('TEAM_SPEED_STENCIL',x,.041,z,1.5,.014,1.1,teamColor,.05)
+  # Approaching the center players see the large color-coded capture
+  # thresholds even at low graphics settings.
+  cube('GATEWAY_TOUCHLINE',side*15,.052,0,.35,.020,31,neon,.011)
+ for z in [-17,17]:
+  cube('MIDFIELD_BRIGHT_ORANGE_HAZARD_BORDER',0,.055,z,20,.021,.22,
+   M['neon_orange'],.011)
+ for x in [-9,9]:
+  cube('MIDFIELD_BRIGHT_ORANGE_HAZARD_BORDER',x,.055,0,.22,.021,34,
+   M['neon_orange'],.011)
+ # Perforated-looking decals to denote the raised central objective.
+ for dx in [-1,0,1]:
+  for zz in [-24,-21,21,24]:
+   cube('CONCRETE_INSET_WARNING_RAIL',dx*2.7,.040,zz,2.4,.016,.10,
+    M['yellow'],.009)
+
 # Generate all shared collider visuals (no separate collision objects in GLB).
 count=0
 for b in LAYOUT['obstacles']:
@@ -402,6 +525,11 @@ for b in LAYOUT['obstacles']:
   cube(ident+'_PAINTED_STEEL',b['x'],b['y'],b['z'],b['w'],b['h'],b['d'],M['steel'],.032)
  count+=1
 wear_floor();cargo_detail();safety_details();brand_environment();support_frame()
+# Three unmistakable architectural landmarks replace the old flat vista.
+dramatic_floor_zones()
+elevated_team_gateway(-34,'red')
+elevated_team_gateway(34,'blue')
+center_command_pavilion()
 # Oversized branded steel roof beams and a few painted safety stencils.
 for xx in [-41,41]:
  for zz in [-26,0,26]:
