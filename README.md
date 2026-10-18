@@ -1,3 +1,9 @@
+### Lightweight two-layer Blender export
+
+The 82-cover addition also has a dedicated Blender source layer `art/cover_circuit.blend` and runtime overlay `client/public/assets/cover_circuit.glb`. The original industrial architecture stays in `art/the_arena_v2.blend` / `client/public/assets/arena.glb`. Both layers are original Blender models, positioned in world coordinates from one shared collision JSON. The client loads both models and only hides the debugging placeholder colliders once both load successfully; if either fails, it shows the collision blockout instead of leaving invisible barricades.
+
+To regenerate the cover layer without needlessly remodelling the entire warehouse, run `blender --background --python art/build_cover_layer.py`. This improves maintainability and keeps the cover geometry separately editable for future field redesigns.
+
 ## Arena V2: Cover Circuit C — original Blender airsoft cover rebuild
 
 **Selected aesthetic: realistic plywood + inflatable tournament bunkers (Option C).**

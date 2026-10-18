@@ -137,12 +137,13 @@ export class Engine{
   // Nine original airsoft models are independently authored/exported in
   // Blender; none is a scaled clone of another weapon.
   const requests=[
-   loader.loadAsync('/assets/arena.glb?scene=ARENA_COVER_CIRCUIT_C_03'),
+   loader.loadAsync('/assets/arena.glb?scene=THE_ARENA_V2_LANDMARK_02'),
+   loader.loadAsync('/assets/cover_circuit.glb?scene=COVER_CIRCUIT_C_03'),
    ...WEAPONS.map(w=>loader.loadAsync('/assets/weapons/'+w.id+'.glb'))
   ];
   const results=await Promise.allSettled(requests);
-  const stage=results[0];
-  if(stage.status==='fulfilled'){
+  const stage=results[0],cover=results[1];
+  if(stage.status==='fulfilled'&&cover.status==='fulfilled'){
    this.blenderArena=stage.value.scene;
    this.blenderArena.traverse(node=>{
     if((node as THREE.Mesh).isMesh){
@@ -151,6 +152,14 @@ export class Engine{
     }
    });
    this.scene.add(this.blenderArena);
+   const coverLayer=cover.value.scene;
+   coverLayer.traverse(node=>{
+    if((node as THREE.Mesh).isMesh){
+     const mesh=node as THREE.Mesh;
+     mesh.receiveShadow=true;mesh.castShadow=false;mesh.frustumCulled=true;
+    }
+   });
+   this.scene.add(coverLayer);
    for(const placeholder of this.oldBlockout)placeholder.visible=false;
    for(const decor of this.oldDecor)decor.visible=false;
    // Keep only the shared level collision geometry. Local-only prop
@@ -161,10 +170,11 @@ export class Engine{
    }
    this.props.length=0;
    this.renderer.shadowMap.enabled=false;
-  }else console.warn('Blender arena unavailable; keeping original collision blockout',stage.reason);
+  }else console.warn('Arena base or Blender cover layer missing; keeping matching collision blockout visible',
+   stage.status==='rejected'?stage.reason:null,cover.status==='rejected'?cover.reason:null);
   this.weaponModels.clear();this.failedWeaponModels=[];this.weaponModelIds=[];
   for(let i=0;i<WEAPONS.length;i++){
-   const res=results[i+1];
+   const res=results[i+2];
    if(res.status==='fulfilled'){
     const model=res.value.scene;
     model.traverse(o=>{
@@ -183,7 +193,7 @@ export class Engine{
    }
   }
   this.lastWeapon=-1;this.setWeapon(0);
-  this.assetState=stage.status==='fulfilled'&&this.weaponModels.size===WEAPONS.length
+  this.assetState=stage.status==='fulfilled'&&cover.status==='fulfilled'&&this.weaponModels.size===WEAPONS.length
    ?'BLENDER ASSETS READY'
    :`ART ${this.weaponModels.size}/${WEAPONS.length} REPLICAS`;
   return this.assetState;
