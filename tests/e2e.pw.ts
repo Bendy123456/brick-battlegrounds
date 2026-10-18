@@ -29,7 +29,7 @@ test('private online match connects two browsers',async({browser})=>{
  try{
   await a.goto('/');await b.goto('/');
   await a.locator('#private').click();
-  await expect(a.locator('#waitTitle')).toContainText('ROOM', {timeout:15000});
+  await expect(a.locator('#waitTitle')).toHaveText(/^ROOM [A-Z0-9]{6}$/, {timeout:15000});
   const match=(await a.locator('#waitTitle').textContent())?.match(/[A-Z0-9]{6}$/);
   expect(match).toBeTruthy();
   await b.locator('#roomCode').fill(match![0]);
