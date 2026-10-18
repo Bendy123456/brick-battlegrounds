@@ -44,12 +44,20 @@ jobs:
           npm run build
       - name: Publish authored replacement Blender and GLB files
         run: |
+          set -eu
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # Preserve locally generated binaries; take the newest main BEFORE staging.
+          # Parallel rebuilds must never rebase a binary-file commit.
+          mkdir -p /tmp/new-blends /tmp/new-glbs
+          cp art/weapons/*.blend /tmp/new-blends/
+          cp client/public/assets/weapons/*.glb /tmp/new-glbs/
+          git fetch origin main
+          git reset --hard origin/main
+          cp /tmp/new-blends/*.blend art/weapons/
+          cp /tmp/new-glbs/*.glb client/public/assets/weapons/
           git add art/weapons/*.blend client/public/assets/weapons/*.glb
           if ! git diff --cached --quiet; then
-            git commit -m 'Replace nine procedural block weapons with licensed authored FPS meshes'
-            git fetch origin main
-            git rebase origin/main
+            git commit -m 'Publish nine authored licensed gun meshes with bare-skin FPS viewmodels'
             git push origin HEAD:main
           fi
