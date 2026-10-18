@@ -503,6 +503,18 @@ function animate(){
  const input=pollInput();
  if(frozen)bufferInput(input);else restoreInput(input);
  if(!frozen&&input.target){lock=!lock;$('reticle').style.display=lock?'block':'none'}
+ // Continue sending lightweight position snapshots while network-paused.
+ // If each peer pauses because the other stopped sending frames, these packets
+ // break the deadlock and let a recovered connection restart both simulations.
+ if(running&&gameMode==='online'&&networkPaused){
+  netTick+=realDt;
+  if(netTick>=.10){
+   netTick=0;
+   gameEvents.onState?.({x:p.root.position.x,y:p.root.position.y,z:p.root.position.z,
+    rot:p.root.rotation.y,hp:p.hp,guard:p.guard,
+    dashKind:p.dodge>0?p.dashKind:null,dashProgress:p.dodge>0?1-p.dodge/p.dashDuration:1});
+  }
+ }
  if(running&&!frozen&&!(gameMode==='online'&&networkPaused)){
   time=Math.max(0,time-dt);
   updateFighter(p,cpu,dt,input);
