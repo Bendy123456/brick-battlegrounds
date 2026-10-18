@@ -1,7 +1,7 @@
 import * as THREE from '/vendor/three.module.js';
 // CHANGED v0.8.26: 3D mountain monastery built separately from combat/gameplay.
 import {buildMountainMonastery} from './mountain-monastery.js';
-import {initCombatAudio,playCombatSound} from './combat-audio.js';
+import {initCombatAudio,playCombatSound,stopSpinjitzuWind} from './combat-audio.js';
 import {buildClassicNinja} from './classic-ninja.js';
 import {setupTouchControls} from './touch-controls.js';
 // CHANGED: Visual-only combat poses live independently of hit detection.
@@ -77,7 +77,7 @@ export function setCharacters(local,opponent){
  $('p1name').textContent=local[0];$('p2name').textContent=opponent[0];
 }
 export function startFight(){startGame()}
-export function stopFight(){running=false;finished=false;roundWait=0;hitStopRemaining=0;clearBufferedInputs();stopSpinjitzu(p);stopSpinjitzu(cpu);mobileTouch.reset()}
+export function stopFight(){running=false;finished=false;roundWait=0;hitStopRemaining=0;clearBufferedInputs();stopSpinjitzuWind(p);stopSpinjitzuWind(cpu);stopSpinjitzu(p);stopSpinjitzu(cpu);mobileTouch.reset()}
 export function receivePeerState(state){remoteState=state}
 export function receivePeerAttack(kind){if(gameMode==='online')tryAttack(cpu,kind)}
 // CHANGED: Multiplayer reuses the original damage event with stun/knockdown flags.
@@ -167,8 +167,8 @@ function resetFighter(f,x){
  f.specialCooldown=0;f.hitFlash=0;f.block=false;f.visual.position.set(0,0,0);
  f.visual.rotation.set(0,0,0);f.runTime=0;
 }
-function startGame(){p.score=cpu.score=0;round=1;finished=false;hitStopRemaining=0;shakeRemaining=0;clearBufferedInputs();newRound();running=true}
-function newRound(){resetFighter(p,gameMode==='online'&&playerSlot===1?3.8:-3.8);resetFighter(cpu,gameMode==='online'&&playerSlot===1?-3.8:3.8);time=120;showToast('ROUND '+round,1.2);updateHUD()}
+function startGame(){stopSpinjitzuWind(p);stopSpinjitzuWind(cpu);p.score=cpu.score=0;round=1;finished=false;hitStopRemaining=0;shakeRemaining=0;clearBufferedInputs();newRound();running=true}
+function newRound(){stopSpinjitzuWind(p);stopSpinjitzuWind(cpu);resetFighter(p,gameMode==='online'&&playerSlot===1?3.8:-3.8);resetFighter(cpu,gameMode==='online'&&playerSlot===1?-3.8:3.8);time=120;showToast('ROUND '+round,1.2);updateHUD()}
 let toastT=0;function showToast(txt,secs){$('toast').textContent=txt;toastT=secs}
 function aimAt(f,op){const d=new THREE.Vector3().subVectors(op.root.position,f.root.position);f.face=Math.atan2(-d.x,-d.z);f.root.rotation.y=f.face}
 // CHANGED: Four separately pressed light attacks. Heavy remains a two-hit combo.
@@ -202,7 +202,7 @@ function tryAttack(f,kind){
  if(!base)return;
  f.attack={kind,stage:kind==='light'?f.combo:0,...base,hitIndex:0};
  f.attackTime=0;f.attackCooldown=base.len+.065;
- playCombatSound(kind==='special'?'spinStart':kind==='heavy'?'heavySwing':'lightSwing');
+ playCombatSound(kind==='special'?'spinStart':kind==='heavy'?'heavySwing':'lightSwing',f);
  if(kind==='special')f.specialCooldown=SPIN_COOLDOWN;
  if(f===p&&gameMode==='online')gameEvents.onAttack?.(kind);
 }
@@ -298,7 +298,7 @@ function poseFighter(f,dt=0){
  const {arms,legs,body,head}=f.visual.userData;
  const stride=Math.sin(f.runTime),walk=Math.min(1,f.moving),idle=Math.sin(performance.now()*.0028)*.026;
  // CHANGED: Hide the tornado instantly if interrupted, knocked down or finished.
- if(f.attack?.kind!=='special'||f.ragdoll>0)stopSpinjitzu(f);
+ if(f.attack?.kind!=='special'||f.ragdoll>0){stopSpinjitzu(f);stopSpinjitzuWind(f)}
  // CHANGED: Procedural limp-body fall takes priority over attack and idle poses.
  if(f.ragdoll>0){poseKnockdown(f);return;}
   // CHANGED: Dash animation overrides ordinary walking/attacking poses for its short duration.
@@ -480,6 +480,7 @@ function updateHUD(){
  $('sc2').textContent='○ '.repeat(2-cpu.score)+'● '.repeat(cpu.score);
 }
 function endRound(){
+ stopSpinjitzuWind(p);stopSpinjitzuWind(cpu);
  running=false;const winner=p.hp===cpu.hp?(p.guard>=cpu.guard?p:cpu):(p.hp>cpu.hp?p:cpu);
  winner.score++;showToast(winner===p?'ROUND WON':'ROUND LOST',2);updateHUD();roundWait=2.4;
 }

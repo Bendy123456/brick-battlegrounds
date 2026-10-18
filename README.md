@@ -1,4 +1,10 @@
-# BRICK BATTLEGROUNDS — v0.8.27 COMBAT FEEL PASS
+# BRICK BATTLEGROUNDS — v0.8.28 LEGO-STYLE AUDIO PASS
+
+- Replaced generic bass-heavy punches with dry, layered, slightly randomized plastic clicks and hollow LEGO-like clacks for clean light strikes, heavier double impacts, blocks, guard breaks and knockdowns.
+- Replaced the short synth Spinjitzu cue with sustained two-layer rushing wind, softly modulated to swirl while the actual 2-second ability is active; it fades immediately when the move finishes, is interrupted, a round ends, or a match is exited.
+- Kept hits during Spinjitzu quiet beneath the dominant wind effect. No samples or additional downloads. Sound toggle and M mute remain.
+- Changes are audio-only; fighters, map, effects, 2s Spinjitzu duration, 8s cooldown, hit timing, movement and online networking remain untouched.
+
 
 - Procedural Web Audio sound design for light/heavy swings, impacts, block, guard break, jumps, directional dashes, elemental Spinjitzu and knockdowns (no downloaded samples).
 - Glowing hit rings, restrained decaying camera shake, and 20–80 ms solo-only hit-stop to make impacts readable.
