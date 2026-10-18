@@ -1,5 +1,7 @@
 ## Arena V2 — landmark visual overhaul
 
+**Verified Blender export:** `art/the_arena_v2.blend` (~46 MB), `client/public/assets/arena.glb` (~29 MB), 122 synchronized world colliders, 22 material-batched render meshes. Updated public map URL is versioned; actual hardware FPS still needs user playtesting.
+
 The industrial warehouse model now has clearly identifiable suspended **red/blue team entry gateways** at x=-34m and x=34m, a giant central overhead neon command pavilion visible from both spawn directions, a tournament-style black anti-slip lane floor with glowing color-coded routes, and readable **THE ARENA / INDUSTRIAL V2** signage. These are original 3D Blender meshes, not an image, and are high enough not to alter player/BB collision shapes. The 120 × 80m collision map and movement remain synchronized across client/server.
 
 The client now requests the map with a versioned GLB URL to prevent stale browser/CDN cache reuse. During a match, a HUD tag explicitly says **THE ARENA V2 · INDUSTRIAL SHOWDOWN** only after the Blender model has loaded; otherwise it warns **MAP: LOADING / OLD BLOCKOUT** so players can detect failures instead of silently seeing the old map. This tag does not substitute for the visual art.
