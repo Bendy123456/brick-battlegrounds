@@ -1,10 +1,6 @@
-name: Model All Nine Airsoft Replicas in Blender
+name: Legacy Procedural Weapon Backup (Manual Only)
 on:
-  push:
-    branches: [main]
-    paths:
-      - art/build_airsoft_weapons.py
-      - .github/workflows/blender-weapons.yml
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:
