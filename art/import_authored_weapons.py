@@ -8,9 +8,11 @@ Run with Blender 3.4+ from repo root after downloading source GLBs:
 """
 import bpy
 import os
+import sys
 import math
 import re
 from mathutils import Vector, Matrix
+sys.path.insert(0, os.path.dirname(__file__))
 from anatomical_grips import make_grips
 
 ROOT=os.getcwd()
