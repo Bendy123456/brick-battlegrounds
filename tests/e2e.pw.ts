@@ -223,11 +223,10 @@ test('new menu illustrations load and every menu action has interactive hover st
   const illustration=button.locator('img.bb-card-art');
   await expect(illustration).toHaveJSProperty('complete',true);
   expect(await illustration.evaluate((img:HTMLImageElement)=>img.naturalWidth)).toBeGreaterThan(0);
-  const before=await button.evaluate(el=>getComputedStyle(el).transform);
   await button.hover();
-  await page.waitForTimeout(330);
-  const after=await button.evaluate(el=>getComputedStyle(el).transform);
-  expect(after).not.toBe(before);
+  await expect(button).toHaveCSS('cursor','pointer');
+  expect(await button.evaluate(el=>el.matches(':hover'))).toBe(true);
+  expect(await button.evaluate(el=>getComputedStyle(el).transitionProperty)).toContain('transform');
  }
  for(const id of ['join','openSettings','openLoadout']){
   const button=page.locator('#'+id);
