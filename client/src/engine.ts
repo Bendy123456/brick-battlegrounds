@@ -24,13 +24,16 @@ export class Engine{
  lastWeapon=-1; recoil=0;walkPhase=0;eyeBob=0;frame=0;lastStep=0;
  readonly temp=new THREE.Object3D();
  readonly oldBlockout:THREE.Object3D[]=[];
+ readonly oldDecor:THREE.Object3D[]=[];
+ renderPos=new THREE.Vector3(-18,1,0);
+ lastServerError=0;
  blenderArena:THREE.Group|null=null;blenderViewmodel:THREE.Group|null=null;
  assetState='LOADING 3D ASSETS';
  constructor(){
   this.scene.background=new THREE.Color(0x18252b);
   this.scene.fog=new THREE.FogExp2(0x192b31,.0065);
   this.renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-  this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));
+  this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.20)); // Keep GPU load stable during sprint and slide.
   this.renderer.setSize(innerWidth,innerHeight);this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.23;
   $('viewport').appendChild(this.renderer.domElement);
@@ -74,28 +77,28 @@ export class Engine{
   }
   // Industrial lamps, light shafts, painted lane strips, and steel roof beams.
   const stripe=new THREE.MeshStandardMaterial({color:0xb6c75a,emissive:0x405522,emissiveIntensity:.24});
-  for(let i=0;i<7;i++){
+  for(let i=0;i<5;i++){
    const z=-32+i*10.7;
    const light=new THREE.PointLight(0xc4dcb9,26,17,2.6);
-   light.position.set((i%2?1:-1)*17,10.4,z);this.scene.add(light);
+   light.position.set((i%2?1:-1)*17,10.4,z);this.scene.add(light);this.oldDecor.push(light);
    const panel=new THREE.Mesh(new THREE.BoxGeometry(5,.055,.65),new THREE.MeshBasicMaterial({color:0xa6dfc4}));
-   panel.position.copy(light.position);this.scene.add(panel);
+   panel.position.copy(light.position);this.scene.add(panel);this.oldDecor.push(panel);
   }
   for(const z of [-28,0,28]){
    for(const side of [-1,1]){
     const line=new THREE.Mesh(new THREE.BoxGeometry(.10,.012,11),stripe);
-    line.position.set(side*9,.03,z);this.scene.add(line);
+    line.position.set(side*9,.03,z);this.scene.add(line);this.oldDecor.push(line);
    }
   }
   const trussMat=new THREE.MeshStandardMaterial({color:0x394b54,roughness:.49,metalness:.6});
   for(let z=-35;z<=35;z+=10){
    const truss=new THREE.Mesh(new THREE.BoxGeometry(119,.23,.27),trussMat);
-   truss.position.set(0,11.45,z);this.scene.add(truss);
+   truss.position.set(0,11.45,z);this.scene.add(truss);this.oldDecor.push(truss);
   }
   const grate=new THREE.MeshStandardMaterial({color:0x8cab94,roughness:.65,transparent:true,opacity:.28,side:THREE.DoubleSide});
   for(const x of [-33,33]){
    const fence=new THREE.Mesh(new THREE.PlaneGeometry(30,2),grate);
-   fence.rotation.y=Math.PI/2;fence.position.set(x,2,0);this.scene.add(fence);
+   fence.rotation.y=Math.PI/2;fence.position.set(x,2,0);this.scene.add(fence);this.oldDecor.push(fence);
   }
   // Small original destructible-looking practice carts (Rapier dynamics).
   const cratemat=new THREE.MeshStandardMaterial({color:0x775d40,roughness:.83});
@@ -110,6 +113,7 @@ export class Engine{
  createLocal(side:number){
   this.playerSide=side;const spawn=SPAWNS[side];this.localPos.set(spawn.x,spawn.y,spawn.z);
   this.motion=newMotion();this.stance='stand';this.grounded=true;this.vy=0;this.cameraHeight=.52;
+  this.renderPos.set(spawn.x,spawn.y,spawn.z);this.lastServerError=0;
   if(this.body){this.world.removeRigidBody(this.body)}
   this.body=this.world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(spawn.x,spawn.y,spawn.z));
   this.collider=this.world.createCollider(RAPIER.ColliderDesc.capsule(.60,.30),this.body);
@@ -137,6 +141,9 @@ export class Engine{
    });
    this.scene.add(this.blenderArena);
    for(const placeholder of this.oldBlockout)placeholder.visible=false;
+   // The Blender model already includes its own floor markings, rails and lamps.
+   // Drawing legacy decorations over them creates z-fighting and unnecessary lighting work.
+   for(const decor of this.oldDecor)decor.visible=false;
   }else console.warn('Blender arena unavailable; preserving playable collision blockout.',stage.reason);
   if(viewmodel.status==='fulfilled'){
    this.blenderViewmodel=viewmodel.value.scene;
@@ -184,11 +191,24 @@ export class Engine{
   const local=s.players.find(p=>p.side===side),remote=s.players.find(p=>p.side!==side);
   if(local){
    if(this.lastWeapon!==local.weapon)this.setWeapon(local.weapon);
-   const pos=this.body.translation(),delta=new THREE.Vector3(local.x-pos.x,local.y-pos.y,local.z-pos.z);
-   // Server remains final authority. Keep close predictions smooth but pull
-   // away instantly from impossible/stale positions after respawn.
-   if(delta.length()>5)this.body.setTranslation({x:local.x,y:local.y,z:local.z},true);
-   else if(delta.length()>.27)this.body.setTranslation({x:pos.x+delta.x*.20,y:pos.y+delta.y*.20,z:pos.z+delta.z*.20},true);
+   const pos=this.body.translation();
+   const dx=local.x-pos.x,dy=local.y-pos.y,dz=local.z-pos.z;
+   const error=Math.hypot(dx,dy,dz);
+   this.lastServerError=error;
+   // The server snapshot is 30-100ms behind the already-predicted browser
+   // position. Pulling the body 20% backwards every 50ms at sprint speed
+   // made both the floor and camera appear to jump. Only hard-correct large
+   // divergences; otherwise apply a very small correction when not sprinting.
+   // Keep the physics root authoritative on a true respawn/large desync.
+   if(error>3.5||(!local.alive&&error>1.5)){
+    this.body.setTranslation({x:local.x,y:local.y,z:local.z},true);
+    this.localPos.set(local.x,local.y,local.z);
+    this.renderPos.set(local.x,local.y,local.z);
+    this.motion=newMotion();
+   }else if(error>.85&&this.motion.slideTime<=0&&this.strideSpeed<5){
+    const correction=.055;
+    this.body.setTranslation({x:pos.x+dx*correction,y:pos.y+dy*correction,z:pos.z+dz*correction},true);
+   }
   }
   if(remote&&this.enemy){
    this.enemy.visible=remote.alive;
@@ -267,7 +287,19 @@ export class Engine{
    const sprinting=!sliding&&input.sprint&&input.f>.28&&!input.ads&&!input.crouch;
    const targetEye=sliding?-.01:local?.prone?-.20:local?.crouch?.27:.52;
    this.cameraHeight=THREE.MathUtils.damp(this.cameraHeight,targetEye,sliding?18:12,dt);
-   this.camera.position.set(this.localPos.x,this.localPos.y+this.cameraHeight+this.eyeBob*(sliding?.12:1),this.localPos.z);
+   // Smooth sub-frame motion independently from the fixed-step Rapier state,
+   // avoiding stair-step flicker when the monitor draws faster than 60fps.
+   const separation=this.renderPos.distanceTo(this.localPos);
+   if(separation>3)this.renderPos.copy(this.localPos);
+   else this.renderPos.lerp(this.localPos,1-Math.exp(-dt*33));
+   let eyeY=this.renderPos.y+this.cameraHeight+this.eyeBob*(sliding?.12:1);
+   // Use the collision floor (rather than visual paint strips) as camera
+   // clearance so the near plane never passes through flooring on a slide.
+   const origin={x:this.renderPos.x,y:this.renderPos.y+.55,z:this.renderPos.z};
+   const ray=new RAPIER.Ray(origin,{x:0,y:-1,z:0});
+   const ground=this.world.castRay(ray,2.4,true,RAPIER.QueryFilterFlags.EXCLUDE_KINEMATIC);
+   if(ground)eyeY=Math.max(eyeY,origin.y-ground.timeOfImpact+.21);
+   this.camera.position.set(this.renderPos.x,eyeY,this.renderPos.z);
    const lean=sliding?.045:(input.s-.1)*.012;
    this.cameraBank=THREE.MathUtils.damp(this.cameraBank,lean,sliding?12:9,dt);
    this.camera.rotation.z=this.cameraBank;
@@ -280,12 +312,14 @@ export class Engine{
    this.weapon.rotation.x=THREE.MathUtils.lerp(this.weapon.rotation.x,-this.recoil-sprint*.33+(sliding?-.16:0),Math.min(1,dt*14));
    this.weapon.rotation.z=THREE.MathUtils.lerp(this.weapon.rotation.z,sprint*-.32+(sliding?.15:0),Math.min(1,dt*10));
    this.weapon.position.y+=Math.sin(this.walkPhase)*Math.hypot(input.f,input.s)*(sliding?.003:.012);
-   this.camera.fov=THREE.MathUtils.lerp(this.camera.fov,aim?Math.max(55,settings.fov-18):settings.fov+(sliding?9:sprinting?6:0),Math.min(1,dt*8));this.camera.updateProjectionMatrix();
+   const requestedFov=aim?Math.max(55,settings.fov-18):settings.fov+(sliding?7:sprinting?5:0);
+   const nextFov=THREE.MathUtils.lerp(this.camera.fov,requestedFov,Math.min(1,dt*7));
+   if(Math.abs(nextFov-this.camera.fov)>.002){this.camera.fov=nextFov;this.camera.updateProjectionMatrix();}
   }
   this.muzzle.intensity*=Math.exp(-dt*32);
   this.renderer.render(this.scene,this.camera);
   this.frame++;
-  if(this.frame%35===0)$('debug').textContent='DRAW CALLS '+this.renderer.info.render.calls+'  |  TRIANGLES '+this.renderer.info.render.triangles+'  |  '+this.assetState;
+  if(this.frame%35===0)$('debug').textContent='DRAW CALLS '+this.renderer.info.render.calls+'  |  TRIANGLES '+this.renderer.info.render.triangles+'  |  '+this.assetState+'  |  SYNC '+this.lastServerError.toFixed(2)+'m';
  }
  resize(){this.camera.aspect=innerWidth/innerHeight;this.camera.updateProjectionMatrix();this.renderer.setSize(innerWidth,innerHeight)}
 }
