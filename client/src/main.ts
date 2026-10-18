@@ -279,9 +279,12 @@ if(new URLSearchParams(location.search).has('debug')){
   controller.yaw=-Math.PI/2;
  };
  (window as any).__AIRSOFT_QA_EQUIP__=(index:number)=>{
-  send({type:'input',data:{f:0,s:0,yaw:controller.yaw,pitch:controller.pitch,
-   jump:false,crouch:false,sprint:false,prone:false,fire:false,ads:false,
-   reload:false,swap:index}});
+  // Isolate visual QA from server-side loadout rules. This changes only the
+  // local viewmodel for screenshots; a real match still uses authoritative
+  // server weapon selection and all combat remains unchanged.
+  if(!Number.isInteger(index)||index<0||index>=WEAPONS.length)throw Error('Invalid QA weapon');
+  engine.qaWeaponOverride=index;
+  engine.setWeapon(index);
  };
  (window as any).__AIRSOFT_DEBUG__=()=>({
   screen,ready,paused,room,localHP:local?.hp,localAmmo:local?.ammo,
