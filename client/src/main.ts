@@ -232,12 +232,15 @@ if(new URLSearchParams(location.search).has('debug')){
   screen,ready,paused,room,localHP:local?.hp,localAmmo:local?.ammo,
   socket:ws?.readyState,pointerLocked:!!document.pointerLockElement,
   frames:engine.frame,assetState:engine.assetState,lastInput:controller.lastInput,
+   playerX:engine.localPos.x,playerY:engine.localPos.y,playerZ:engine.localPos.z,
+   cameraY:engine.camera.position.y,serverError:engine.lastServerError,renderFPS:Math.round(measuredFPS),
    slideTime:engine.motion.slideTime,slideCooldown:engine.motion.cooldown,velocity:engine.strideSpeed,serverSlide:local?.sliding,serverSprint:local?.sprinting
  });
 }
 const mobile=/Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(navigator.userAgent);
 if(mobile)goto('mobile');else goto('menu');
-let last=performance.now(),frameDelta=0,sendClock=0,stepClock=0,seq=0,pendingSlide=false;
+let last=performance.now(),sendClock=0,stepClock=0,seq=0,pendingSlide=false,localSlideQueued=false;
+let measuredFPS=60,fpsSamples=0,fpsWindow=performance.now();
 async function start(){
  try{await engine.init();status('Ready. Pick a match mode to begin.')}
  catch(err){console.error('Arena initialization failed',err);status('3D physics could not load. Refresh with WebGL enabled.')}
@@ -245,20 +248,37 @@ async function start(){
 }
 function frame(timestamp:number){
  requestAnimationFrame(frame);
- const dt=Math.min(.045,(timestamp-last)/1000||.016);last=timestamp;
+ const elapsed=Math.max(.001,(timestamp-last)/1000||.016);last=timestamp;
+ const dt=Math.min(.05,elapsed);
+ // Use real elapsed time for physics, separately from animation's safe visual
+ // clamp. Dropping 55ms of every 100ms frame made sprint prediction run at half
+ // server speed and caused repeated correction jumps through the floor.
+ const physicsElapsed=Math.min(.116,elapsed);
+ fpsSamples++;
+ if(timestamp-fpsWindow>=1100){
+  measuredFPS=fpsSamples*1000/(timestamp-fpsWindow);
+  fpsWindow=timestamp;fpsSamples=0;
+ }
  if(mobile||!engine.world)return;
  const active=screen==='game'&&!paused&&ready,inp=controller.sample(dt,active);
  if(anyPadConnected()&&!padHasActivity())$('gamepadPrompt').classList.remove('hidden');
  else $('gamepadPrompt').classList.add('hidden');
  if(active){
-  if(inp.slide)pendingSlide=true;
-  stepClock+=dt;sendClock+=dt;
-  while(stepClock>=1/60){engine.predict(1/60,inp);stepClock-=1/60}
+  if(inp.slide){pendingSlide=true;localSlideQueued=true}
+  stepClock+=physicsElapsed;sendClock+=elapsed;
+  let steps=0;
+  while(stepClock>=1/60&&steps<7){
+   const simInput=localSlideQueued?{...inp,slide:true}:{...inp,slide:false};
+   engine.predict(1/60,simInput);
+   localSlideQueued=false;stepClock-=1/60;steps++;
+  }
+  // Never build an unlimited backlog after changing windows / tab throttling.
+  if(steps===7)stepClock=Math.min(stepClock,1/60);
   if(sendClock>=1/30){
    sendClock=0;send({type:'input',data:{...inp,slide:pendingSlide,seq:++seq,swap:inp.swap??(seq===1?preferred:undefined)}});
    pendingSlide=false;
   }
- }else{stepClock=0;sendClock=0;pendingSlide=false}
+ }else{stepClock=0;sendClock=0;pendingSlide=false;localSlideQueued=false}
  if(local&&lastSnap){const me=lastSnap.players.find(p=>p.side===side);if(me)local=me}
  engine.frameDraw(dt,active?inp:controller.lastInput,local,side);
  if(open()&&timestamp-lastPing>3300){lastPing=timestamp;send({type:'ping',at:Date.now()})}
