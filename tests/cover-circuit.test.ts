@@ -49,6 +49,19 @@ describe('C-cover mixed plywood and inflatables with playable movement',()=>{
   expect(red.size).toBeGreaterThan(3500);
   expect(blue.size).toBeGreaterThan(3500);
  });
+ it('blocks direct chest-height BB lines from either spawn using solid plywood',()=>{
+  for(const side of [-1,1]){
+   const originX=side*53,z=1,rayHeight=1.4;
+   const inRay=cover.filter(o=>o.material!=='net'&&
+     Math.abs(z-o.z)<o.d/2&&
+     rayHeight>=o.y-o.h/2&&rayHeight<=o.y+o.h/2&&
+     Math.sign(o.x)===side&&Math.abs(o.x)<Math.abs(originX));
+   const nearest=inRay.sort((a,b)=>Math.abs(originX-a.x)-Math.abs(originX-b.x))[0];
+   expect(nearest).toBeDefined();
+   expect(nearest.id).toBe('cover-panel-'+side+'-0');
+   expect(nearest.h).toBeGreaterThan(2);
+  }
+ });
  it('provides solid BB-blocking full walls, partial slide cover, and upper cover',()=>{
   for(const side of [-1,1]){
    const wall=cover.find(o=>o.id==='cover-panel-'+side+'-0')!;
