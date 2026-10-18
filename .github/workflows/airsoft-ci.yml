@@ -1,7 +1,7 @@
 name: Airsoft Arena CI
 on:
   push:
-    branches: [airsoft-v1, airsoft-blender-art, fix-sprint-floor-stutter, fix-input-sync-raf, airsoft-nine-blender-weapons, airsoft-black-barearms-noattachments, arena-v2-blender-professional, arena-v2-visual-overhaul, main]
+    branches: [airsoft-v1, airsoft-blender-art, fix-sprint-floor-stutter, fix-input-sync-raf, airsoft-nine-blender-weapons, airsoft-black-barearms-noattachments, arena-v2-blender-professional, arena-v2-visual-overhaul, arena-v3-cover-circuit, main]
   workflow_dispatch:
 jobs:
   build-and-test:

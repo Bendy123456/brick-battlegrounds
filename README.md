@@ -2,6 +2,8 @@
 
 **Selected aesthetic: realistic plywood + inflatable tournament bunkers (Option C).**
 
+**Blender build verified:** imported the completed industrial warehouse GLB and added 82 original editable detailed cover models. Final source is approximately 95 MB and the playable GLB is approximately 38 MB, with 30 material-based render meshes. The enlarged asset needs real-hardware load time and FPS verification.
+
 This update adds **82 new gameplay-synchronized airsoft cover obstacles** on top of the industrial warehouse map: 64 detailed plywood / OSB tournament barricades and pallet stacks, and 18 molded soft-bunker inflatables. The plywood includes factory aluminum framing, braces, fasteners, painted safety caps and rental-field markings; the foam bunkers include stitched/welded sections, recessed patches and inflation fittings. Every obstacle is placed using the same `shared/arena-layout.json` model consumed by Blender and the server's Rapier collision.
 
 The cover network has staggered full-height plywood walls to interrupt long firing lanes, low waist-height cover for sliding/crouching, L-shaped corners for peeking, a few pallet stacks, two protected spawn approaches and eight extra upper-mezzanine barriers. Layout tests use a player-radius flood fill across a 1m floor grid and confirm both teams can still reach each other, that the opening sprint lane has several metres of clearance, and that the cover is mirrored. Additional solid cover blocks BB paths; netting remains BB-permeable. **Cover reduces exposure rather than providing guaranteed immunity from being hit.**
