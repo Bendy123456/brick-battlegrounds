@@ -1,4 +1,11 @@
-# BRICK BATTLEGROUNDS — v0.8.29 ONLINE CONNECTION RECOVERY
+# BRICK BATTLEGROUNDS — v0.8.30 FOLEY REWORK
+
+- Replaced electronic-sounding pitched combat beeps with buffer-rendered toy-plastic clacks: inharmonic shell resonances, hard-edge transients, short rattle patterns and five natural variations per hit type.
+- Light hits, heavy hits, blocking, guard breaks, Spinjitzu contact and knockdowns have distinct plastic sounds. Swings, dodges and jumping now use low-key broadband air movements, not descending musical tones.
+- Rebuilt the 2-second Spinjitzu sound as a wide-band, continuously swirling wind vortex with independent slow gusts, quick swirls, swept air bands, and gentle stereo motion when available. Abrupt interruption or match exit fades it safely.
+- Pre-generated one-shots are cached for performance; one shared 4-second noise buffer feeds both possible fighters' vortices. A soft dynamics compressor tames piled-up effects.
+- No recorded LEGO audio is claimed: these are original procedural sound approximations requiring no external asset licenses or network downloads. Game mechanics, hit detection, online networking and controls stay unchanged.
+
 
 - Fixes matches silently freezing when a WebSocket dies: both browsers now show a clear reconnecting/waiting message and pause game time instead of letting attacks occur against a frozen opponent.
 - Each room slot has a unique ephemeral recovery token; a player can automatically resume the exact same player slot within 30 seconds after a dropped connection. Other player sees pause/resume status.
