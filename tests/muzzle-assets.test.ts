@@ -11,6 +11,9 @@ describe('visible barrel muzzle and projectile effects',()=>{
    const size=buf.readUInt32LE(12);
    const gltf=JSON.parse(buf.subarray(20,20+size).toString('utf8'));
    const nodes=(gltf.nodes||[]) as {name?:string;translation?:number[];mesh?:number}[];
+   // The authored M4A1 previously exported SpareMagazineGeometry outside
+   // the receiver: keep the real magazine but never export its loose duplicate.
+   expect(nodes.some(n=>/spare.?magazine|spare.?mag|loose.?magazine/i.test(n.name||''))).toBe(false);
    const sockets=nodes.filter(n=>n.name==='FPS_MUZZLE_SOCKET');
    expect(sockets).toHaveLength(1);
    const socket=sockets[0];
