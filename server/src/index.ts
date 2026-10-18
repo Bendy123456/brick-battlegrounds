@@ -12,10 +12,14 @@ await RAPIER.init();
 type Client=WebSocket & {participant?:Participant,lastPong?:number};
 type Pellet={id:number,owner:number,x:number,y:number,z:number,vx:number,vy:number,vz:number,age:number,bounces:number};
 type Participant={ws:Client|null,room:Room,index:number,token:string,actor:Actor,input:Input,body:any,collider:any,controller:any,
- motion:Motion,stance:'stand'|'crouch'|'slide'|'prone',lastFire:number,reloadAt:number,vy:number,grounded:boolean,deadUntil:number,heardAt:number,reconnectUntil:number,bot:boolean,thinkAt:number,decision:number};
+ motion:Motion,stance:'stand'|'crouch'|'slide'|'prone',lastFire:number,reloadAt:number,vy:number,grounded:boolean,deadUntil:number,heardAt:number,reconnectUntil:number,bot:boolean,thinkAt:number,decision:number,ackSeq:number,inputAgeMs:number};
 type Room={code:string,mode:'bot'|'online',players:Participant[],world:any,pellets:Pellet[],nextPellet:number,round:number,started:number,status:'waiting'|'playing'|'finished',score:[number,number],difficulty:number,lastSnapshot:number};
 const rooms=new Map<string,Room>(),queue:Client[]=[];
 const PORT=Number(process.env.PORT)||3000,dist=resolve('dist');
+// Browser render frames can stall for >450ms under WebGL load; network input is
+// now pumped independently, but transient stalls must not make the server
+// alternate between stopping and sprinting. Disconnect/blur send zero instantly.
+const INPUT_STALE_MS=1800;
 const mime:Record<string,string>={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.wasm':'application/wasm','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.ico':'image/x-icon'};
 const app=http.createServer(async(req,res)=>{
  if(req.url?.split('?')[0]==='/health'){res.writeHead(200,{'Content-Type':'application/json'}).end('{"ok":true,"game":"airsoft-arena"}');return}
@@ -57,7 +61,7 @@ function createParticipant(room:Room,ws:Client|null,index:number,bot=false):Part
  controller.enableSnapToGround(.18);
  const actor:Actor={id:index?'BLUE':'RED',side:index,x:spawn.x,y:spawn.y,z:spawn.z,yaw:index?Math.PI/2:-Math.PI/2,pitch:0,
  hp:100,kills:0,deaths:0,ammo:WEAPONS[0].mag,mag:WEAPONS[0].mag,weapon:0,alive:true,ads:false,crouch:false,prone:false,sliding:false,sprinting:false,velocity:0,reloadEnd:0};
- const p:Participant={ws,room,index,token:randomBytes(20).toString('hex'),actor,input:inputDefault(),body,collider,controller,motion:newMotion(),stance:'stand',lastFire:0,reloadAt:0,vy:0,grounded:true,deadUntil:0,heardAt:Date.now(),reconnectUntil:0,bot,thinkAt:0,decision:0};
+ const p:Participant={ws,room,index,token:randomBytes(20).toString('hex'),actor,input:inputDefault(),body,collider,controller,motion:newMotion(),stance:'stand',lastFire:0,reloadAt:0,vy:0,grounded:true,deadUntil:0,heardAt:Date.now(),reconnectUntil:0,bot,thinkAt:0,decision:0,ackSeq:0,inputAgeMs:0};
  room.players.push(p);if(ws)ws.participant=p;return p;
 }
 function joinState(p:Participant){
@@ -255,9 +259,14 @@ function move(p:Participant,dt:number,now:number){
  const a=p.actor,inp=p.input;
  if(!a.alive){if(p.deadUntil&&now>=p.deadUntil&&p.room.status==='playing')respawn(p);return}
  if(p.bot)controlBot(p,dt,now);
- if(!p.bot&&now-p.heardAt>450){inp.f=0;inp.s=0;inp.fire=false;inp.slide=false}
+ if(!p.bot&&now-p.heardAt>INPUT_STALE_MS){
+  inp.f=0;inp.s=0;inp.fire=false;inp.sprint=false;inp.slide=false;inp.jump=false;
+ }
+ p.inputAgeMs=p.bot?0:Math.max(0,now-p.heardAt);
  a.yaw=valid(inp.yaw,-Math.PI*8,Math.PI*8);a.pitch=valid(inp.pitch,-1.4,1.4);
  const result=stepMotion(p.motion,inp,dt,p.grounded);
+ // One-shot slide input must not retrigger when the client runs slowly.
+ inp.slide=false;
  a.sliding=result.sliding;
  a.sprinting=result.sprinting;
  a.crouch=!!inp.crouch||a.sliding;
@@ -310,13 +319,26 @@ function tick(){
   updatePellets(room,dt);
   if(now-room.lastSnapshot>=50){
    room.lastSnapshot=now;
-   const msg={type:'snapshot',players:room.players.map(p=>p.actor),pellets:room.pellets.map(b=>({id:b.id,x:b.x,y:b.y,z:b.z})),timer:Math.max(0,180-Math.floor((now-room.started)/1000)),score:room.score,status:room.status,round:room.round};
+   const msg={type:'snapshot',players:room.players.map(p=>({
+    ...p.actor,ackSeq:p.ackSeq,inputAgeMs:p.inputAgeMs
+   })),serverTime:now,pellets:room.pellets.map(b=>({id:b.id,x:b.x,y:b.y,z:b.z})),timer:Math.max(0,180-Math.floor((now-room.started)/1000)),score:room.score,status:room.status,round:room.round};
    announce(room,'snapshot',msg);
    if(room.mode==='online'&&now-room.started>180000){room.status='finished';announce(room,'matchEnd',{winner:room.score[0]>=room.score[1]?0:1,score:room.score})}
   }
  }
 }
-setInterval(tick,1000/60).unref?.();
+// Node timers are not guaranteed to fire at exactly 60Hz under load. Drive
+// fixed Rapier physics ticks from a monotonic accumulator rather than treating
+// every delayed timer as only 16.7ms. Bound catch-up to avoid a spiral of death.
+let lastTick=performance.now(),serverAccum=0;
+setInterval(()=>{
+ const now=performance.now();
+ const elapsed=Math.max(0,Math.min(.12,(now-lastTick)/1000));
+ lastTick=now;serverAccum=Math.min(.12,serverAccum+elapsed);
+ let steps=0;
+ while(serverAccum>=1/60&&steps<7){tick();serverAccum-=1/60;steps++}
+ if(steps===7)serverAccum=Math.min(serverAccum,1/60);
+},1000/60).unref?.();
 setInterval(()=>{
  for(const ws of wss.clients as Set<Client>){
   if(ws.readyState!==WebSocket.OPEN)continue;
@@ -353,11 +375,15 @@ wss.on('connection',(sock:WebSocket)=>{
   }
   if(msg.type==='input'){
    const x=msg.data;if(!x||typeof x!=='object')return;
+   // Out-of-order packets should never overwrite a newer movement command.
+   const incoming=valid(x.seq,0,1e9);
+   if(incoming&&incoming<p.ackSeq)return;
    p.input={f:valid(x.f,-1,1),s:valid(x.s,-1,1),yaw:valid(x.yaw,-Math.PI*8,Math.PI*8),
     pitch:valid(x.pitch,-1.4,1.4),jump:x.jump===true,crouch:x.crouch===true,sprint:x.sprint===true,prone:x.prone===true,slide:x.slide===true,
     fire:x.fire===true,ads:x.ads===true,reload:x.reload===true,swap:Number.isInteger(x.swap)?x.swap:undefined,
     grenade:x.grenade===true,melee:x.melee===true,seq:valid(x.seq,0,1e9)};
    p.heardAt=Date.now();
+    p.ackSeq=p.input.seq||p.ackSeq;
   }
  });
  ws.on('close',()=>endParticipant(ws,false));
