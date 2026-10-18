@@ -216,11 +216,17 @@ def fit_muzzle(meshes,lo,hi):
     """Measure the front barrel's cross-section, not scope/stock bounding maxima.
     Blender barrel points toward +Y; exporter turns this into Three.js -Z.
     """
-    vertices=[v.co.copy() for ob in meshes for v in ob.data.vertices]
+    # Prioritize actual manufactured muzzle/barrel mesh components; imported
+    # packs may also contain long iron sights or folded display attachments.
+    muzzle_meshes=[o for o in meshes if any(k in o.name.lower()
+                    for k in ('muzzledevice','muzzle_device','barrel','suppressor'))]
+    vertices=[v.co.copy() for ob in (muzzle_meshes or meshes)
+              for v in ob.data.vertices]
     center_x=(lo.x+hi.x)*.5
-    front=[p for p in vertices if p.y>=hi.y-.085 and abs(p.x-center_x)<.10]
+    max_forward=max(p.y for p in vertices)
+    front=[p for p in vertices if p.y>=max_forward-.065 and abs(p.x-center_x)<.10]
     if len(front)<4:
-        front=[p for p in vertices if p.y>=hi.y-.12]
+        front=[p for p in vertices if p.y>=max_forward-.10]
     assert front,"No forward barrel vertices"
     front.sort(key=lambda p:p.y)
     # The orange guard attaches at the outer end of the visible barrel,
@@ -283,6 +289,15 @@ def make(id,src,length,klass):
     bpy.ops.import_scene.gltf(filepath=path)
     all_meshes=[o for o in bpy.data.objects if o.type=="MESH"]
     assert all_meshes,"Source is empty: "+path
+    # Upstream packs include an unmounted spare magazine displayed BESIDE the
+    # firearm. This is the floating black bar in the player's screenshot.
+    # Keep MagazineGeometry seated in the receiver; strip only spare copies.
+    loose=[o for o in all_meshes if any(term in o.name.lower().replace("_","")
+           for term in ("sparemagazine","sparemag","extramagazine","loosemagazine"))]
+    for ob in loose:
+        print("REMOVED_FLOATING_SPARE_MAG",id,ob.name,flush=True)
+        bpy.data.objects.remove(ob,do_unlink=True)
+    all_meshes=[o for o in all_meshes if o not in loose]
     # Imported upstream fallback files contain gun geometry but no skinned gloves.
     # Freeze hierarchy into mesh data while retaining ORIGINAL artist-authored geometry,
     # original UVs, and original material textures.
