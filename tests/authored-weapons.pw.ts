@@ -15,6 +15,18 @@ test('artist-authored weapon pack loads and displays in real first-person play',
  await expect(page.locator('#hud')).toBeVisible({timeout:60000});
  await expect.poll(async()=>await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.()?.selectedViewmodel),
   {timeout:14000}).toBe(0);
+ // Each gun has individual Blender-authored one/two-hand pose hierarchies.
+ await expect.poll(async()=>await page.evaluate(
+  ()=>(window as any).__AIRSOFT_DEBUG__?.()?.gripTwoHanded
+ ),{timeout:10000}).toBe(true);
+ await page.keyboard.press('KeyH');
+ await expect.poll(async()=>await page.evaluate(
+  ()=>(window as any).__AIRSOFT_DEBUG__?.()?.gripTwoHanded
+ ),{timeout:10000}).toBe(false);
+ await page.keyboard.press('KeyH');
+ await expect.poll(async()=>await page.evaluate(
+  ()=>(window as any).__AIRSOFT_DEBUG__?.()?.gripTwoHanded
+ ),{timeout:10000}).toBe(true);
  const image=await page.screenshot({type:'jpeg',quality:24,animations:'disabled'});
  console.log('AUTHORED_FPS_SCREENSHOT_JPEG_BASE64='+image.toString('base64'));
  expect(errors).toEqual([]);
