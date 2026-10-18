@@ -248,8 +248,9 @@ def tip(material,meshes,lo,hi,weapon_id):
     for i in range(segments):
         j=(i+1)%segments
         faces.extend(((i,j,j+segments,i+segments),
+                      (i+2*segments,i+3*segments,j+3*segments,j+2*segments),
                       (i+segments,j+segments,j+3*segments,i+3*segments),
-                      (i+2*segments,i+2*segments+j-i,j+3*segments,i+3*segments)))
+                      (i,j,j+2*segments,i+2*segments)))
     mesh=bpy.data.meshes.new('Hollow orange replica tip geometry')
     mesh.from_pydata(verts,[],faces);mesh.update()
     o=bpy.data.objects.new('AIRSOFT_ORANGE_TIP_07 - fitted hollow muzzle sleeve',mesh)
