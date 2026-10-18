@@ -16,7 +16,7 @@ export const DIFFICULTIES={Easy:.60,Normal:.40,Hard:.25,Nightmare:.15} as const;
 export {MOVE as SPEED} from './movement.ts';
 export type Input={f:number,s:number,yaw:number,pitch:number,jump:boolean,crouch:boolean,sprint:boolean,prone:boolean,slide?:boolean,fire:boolean,ads:boolean,reload:boolean,swap?:number,grenade?:boolean,melee?:boolean,seq?:number};
 export type Actor={id:string,side:number,x:number,y:number,z:number,yaw:number,pitch:number,hp:number,kills:number,deaths:number,ammo:number,mag:number,weapon:number,alive:boolean,ads:boolean,crouch:boolean,prone:boolean,sliding:boolean,sprinting:boolean,velocity:number,reloadEnd:number,ackSeq?:number,inputAgeMs?:number};
-export type Snapshot={type:'snapshot',players:Actor[],pellets:{id:number,x:number,y:number,z:number}[],timer:number,score:[number,number],status:string,round:number,ping?:number,serverTime?:number};
+export type Snapshot={type:'snapshot',players:Actor[],pellets:{id:number,x:number,y:number,z:number,owner:number,age:number}[],timer:number,score:[number,number],status:string,round:number,ping?:number,serverTime?:number};
 export function hitDamage(zone:'head'|'torso'|'limb',base:number){return zone==='head'?100:zone==='torso'?base:25}
 export function canShoot(ammo:number,last:number,now:number,rate:number){return ammo>0&&now-last>=60000/rate}
 export function reloadAmmo(mag:number,capacity:number){return Math.max(0,capacity-mag)}
