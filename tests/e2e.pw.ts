@@ -40,3 +40,31 @@ test('private online match connects two browsers',async({browser})=>{
   await expect(b.locator('#score')).toContainText('0');
  }finally{await c1.close();await c2.close()}
 });
+
+test('actually enter arena, move, aim and shoot in a bot match',async({page})=>{
+ const errors:string[]=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.setViewportSize({width:1100,height:680});
+ await page.goto('/');
+ await page.locator('#vsBot').click();
+ await expect(page.locator('#hud')).toBeVisible({timeout:30000});
+ // Simulate actual player controls and allow server to advance authoritative ticks.
+ await page.keyboard.down('KeyW');
+ await page.waitForTimeout(850);
+ await page.keyboard.up('KeyW');
+ await page.mouse.move(610,326);
+ await page.mouse.down({button:'right'});
+ await page.waitForTimeout(250);
+ await page.mouse.up({button:'right'});
+ await page.mouse.down({button:'left'});
+ await page.waitForTimeout(900);
+ await page.mouse.up({button:'left'});
+ await expect.poll(async()=>await page.locator('#ammo').innerText(),{timeout:8000}).not.toMatch(/^30\\s*\\/\\s*30/);
+ await page.waitForTimeout(700);
+ // A compressed screenshot is emitted into CI logs for visual evaluation.
+ const screenshot=await page.screenshot({type:'jpeg',quality:32,animations:'disabled'});
+ console.log('AIRSOFT_VISUAL_JPEG_B64='+screenshot.toString('base64'));
+ const debug=await page.locator('#debug').innerText();
+ console.log('PLAYTEST_RENDER_STATS='+debug);
+ expect(errors).toEqual([]);
+});

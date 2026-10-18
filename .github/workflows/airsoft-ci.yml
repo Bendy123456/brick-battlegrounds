@@ -1,7 +1,7 @@
 name: Airsoft Arena CI
 on:
   push:
-    branches: [airsoft-v1, main]
+    branches: [airsoft-v1, airsoft-blender-art, main]
   workflow_dispatch:
 jobs:
   build-and-test:
