@@ -87,42 +87,127 @@ def capsule_between(name,a,b,radius,material,verts=14):
     smooth_obj(ob)
     return ob
 
-def shaped_hands(klass,m):
-    """Continuous dark bare arms; distinct palm, thumb, knuckles and individual fingers."""
-    small=klass=="pistol"
-    right_x=.205 if not small else .11
-    left_x=-.18 if not small else -.105
-    hand_depth=.08 if not small else .10
-    support_depth=.50 if not small else .22
-    for side,x,depth in [("RIGHT",right_x,hand_depth),("LEFT",left_x,support_depth)]:
-        side_sign=1 if side=="RIGHT" else -1
-        end_y=depth
-        # Forearms enter from below and behind the camera. Low profile and no sleeve.
-        start_x=x+side_sign*(.12 if not small else .075)
-        organic_tube(side+" BARE FOREARM",[
-            (start_x,-.48,-.52,.145,.120),
-            (start_x-side_sign*.035,-.29,-.45,.130,.105),
-            (x+side_sign*.025,-.08,-.34,.106,.093),
-            (x,end_y-.11,-.24,.082,.073),
-            (x,end_y-.03,-.205,.075,.070)],m["arm"],20)
-        # Individual palm shaped around the replica grip and fore-end.
-        ellipsoid(side+" exposed hand palm",(x,end_y,-.195),(.100,.112,.064),m["skin"])
-        ellipsoid(side+" thumb pad",(x-side_sign*.045,end_y+.045,-.155),(.040,.078,.044),m["skin"])
-        for i in range(4):
-            fx=x+(-.055+i*.034)
-            curve_sign=1 if side=="RIGHT" else -1
-            root=(fx,end_y+.058,-.172)
-            mid=(fx+curve_sign*.007,end_y+.099,-.205)
-            tip=(fx+curve_sign*.012,end_y+.075,-.243)
-            capsule_between(side+" finger%d proximal"%i,root,mid,.018,m["skin"],12)
-            capsule_between(side+" finger%d curved tip"%i,mid,tip,.016,m["skin"],12)
-            ellipsoid(side+" natural fingernail%d"%i,
-                (fx+curve_sign*.013,end_y+.079,-.240),(.012,.017,.0055),m["nail"])
-        # Anatomical thumb wraps toward the back of the weapon.
-        capsule_between(side+" bent thumb", (x-side_sign*.063,end_y+.044,-.166),
-                        (x-side_sign*.017,end_y+.108,-.185),.025,m["skin"])
-        ellipsoid(side+" thumb nail",(x-side_sign*.017,end_y+.106,-.176),
-                  (.014,.017,.006),m["nail"])
+def taper_limb(name,points,radii,material,sides=20):
+    """Smooth tapered organic arm / finger following a curved 3D centerline."""
+    center=[Vector(p) for p in points]
+    vertices=[];faces=[]
+    for i,c in enumerate(center):
+        direction=(center[min(i+1,len(center)-1)]-center[max(0,i-1)]).normalized()
+        ref=Vector((0,0,1)) if abs(direction.z)<.90 else Vector((1,0,0))
+        u=direction.cross(ref).normalized();v=direction.cross(u).normalized()
+        for k in range(sides):
+            angle=math.tau*k/sides
+            vertex=c+u*math.cos(angle)*radii[i][0]+v*math.sin(angle)*radii[i][1]
+            vertices.append(tuple(vertex))
+    for i in range(len(center)-1):
+        for k in range(sides):
+            j=(k+1)%sides
+            faces.append((i*sides+k,i*sides+j,(i+1)*sides+j,(i+1)*sides+k))
+    faces.extend((tuple(range(sides-1,-1,-1)),
+                  tuple((len(center)-1)*sides+k for k in range(sides))))
+    mesh=bpy.data.meshes.new(name);mesh.from_pydata(vertices,[],faces);mesh.update()
+    ob=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(ob)
+    ob.data.materials.append(material);smooth_obj(ob)
+    return ob
+
+# Different weapons actually put the trigger and support hand at different
+# positions. Fractions are measured relative to each adapted mesh's length.
+GRIP_FRACTIONS={
+    "vanguard":(.31,.72),"ranger":(.31,.74),"specter":(.44,.67),
+    "atlas":(.31,.74),"whisper":(.35,.72),"breacher":(.31,.75),
+    "watcher":(.34,.74),"echo":(.43,.47),"tempo":(.44,.48),
+}
+
+def build_grip_hand(label,anchor,side,style,m,group,secondary=False):
+    """Pose a wrist/palm/knuckles/four articulated fingers ON the replica.
+    Generated parts are separate named, sculpted meshes for subsequent Blender edits.
+    """
+    x,y,z=anchor
+    sign=1 if side=="RIGHT" else -1
+    start=len(bpy.context.scene.objects)
+    before=set(bpy.context.scene.objects)
+    # Narrow anatomical forearm tapers into the wrist; unlike the old sausages,
+    # forearms are less than half as thick and emerge naturally from below.
+    reach=.19 if style=="pistol" else .27
+    base=(x+sign*(.13 if not secondary else .12), y-reach, z-.24)
+    taper_limb(label+" bare anatomical forearm",
+      [base,(x+sign*.082,y-reach*.79,z-.19),
+       (x+sign*.041,y-reach*.47,z-.125),
+       (x+sign*.019,y-.065,z-.058),
+       (x,y-.028,z-.015)],
+      [(.054,.059),(.061,.067),(.057,.060),(.046,.046),(.038,.041)],
+      m["arm"],24)
+    # Wrist / thenar eminence / cupped palm. These shapes join organically.
+    ellipsoid(label+" wrist",(x,y-.029,z-.026),(.046,.046,.043),m["skin"])
+    ellipsoid(label+" sculpted palm",(x-sign*.008,y+.008,z+.008),
+              (.052,.072,.045),m["skin"])
+    ellipsoid(label+" thumb mound",(x-sign*.036,y+.015,z+.018),
+              (.036,.043,.034),m["skin"])
+    # Index through pinky curl inward around the grip; each finger has a
+    # distinct first/second phalanx and a rounded contact fingertip.
+    for i in range(4):
+        fy=y-.045+i*.027
+        knuckle=(x-sign*.024,fy,z+.020)
+        mid=(x-sign*(.055+i*.001),fy+.017,z-.009)
+        fingertip=(x-sign*(.071-i*.003),fy+.009,z-.041)
+        sizes=[(.019,.019),(.020,.020),(.017,.017)]
+        taper_limb(label+" finger %d articulated"%(i+1),
+          [knuckle,mid,fingertip],
+          sizes,m["skin"],12)
+        ellipsoid(label+" fingertip %d"%(i+1),fingertip,
+                  (.016,.016,.016),m["skin"])
+        ellipsoid(label+" natural nail %d"%(i+1),
+                  (fingertip[0],fingertip[1]+.007,fingertip[2]+.011),
+                  (.011,.012,.0035),m["nail"])
+        # Subtle knuckle raised contour prevents the palm from looking like a claw.
+        ellipsoid(label+" knuckle %d"%(i+1),knuckle,
+                  (.017,.019,.015),m["skin"])
+    taper_limb(label+" opposing bent thumb",
+      [(x+sign*.027,y-.020,z+.027),
+       (x-sign*.001,y+.030,z+.046),
+       (x-sign*.033,y+.054,z+.014)],
+      [(.027,.028),(.024,.025),(.017,.018)],m["skin"],16)
+    ellipsoid(label+" thumb nail",(x-sign*.033,y+.054,z+.024),
+              (.012,.015,.0035),m["nail"])
+    # Group the parts into a real hierarchy for live switching in Three.js.
+    for obj in set(bpy.context.scene.objects)-before:
+        if obj.type=="MESH":
+            original=obj.matrix_world.copy()
+            obj.parent=group
+            obj.matrix_world=original
+
+def shaped_hands(id,klass,m,lo,hi):
+    """Give each of nine guns its own grip anchors and both selectable poses."""
+    length=max(.35,hi.y-lo.y)
+    height=max(.12,hi.z-lo.z)
+    width=max(.11,hi.x-lo.x)
+    grip_t,support_t=GRIP_FRACTIONS[id]
+    gun_size=1.31 if klass=="pistol" else 1.28
+    # Asset render scaling happens only to guns at runtime. Bake the *same
+    # position scaling*, not size scaling, into the hand pose anchor positions.
+    gun_center=(hi.z+lo.z)*.5
+    grip_z=(lo.z+height*.38)*gun_size
+    support_z=(lo.z+height*.55)*gun_size
+    reach_x=min(.12,max(.069,width*.42))
+    right=(reach_x*gun_size,(lo.y+length*grip_t)*gun_size,grip_z)
+    if klass=="pistol":
+        left=(-reach_x*.53*gun_size,
+              (lo.y+length*(support_t+.025))*gun_size,
+              grip_z-.015)
+    else:
+        left=(-reach_x*gun_size,
+              (lo.y+length*support_t)*gun_size,
+              support_z)
+    for mode in ("ONE_HAND","TWO_HAND"):
+        parent=bpy.data.objects.new("GRIP_"+mode,None)
+        bpy.context.collection.objects.link(parent)
+        parent["weapon"]=id
+        parent["grip_mode"]=mode
+        build_grip_hand(id+" "+mode+" RIGHT",right,"RIGHT",klass,m,parent)
+        if mode=="TWO_HAND":
+            build_grip_hand(id+" "+mode+" LEFT",left,"LEFT",klass,m,parent,secondary=True)
+    print("GRIP_CONTACTS",id,"right",tuple(round(x,3) for x in right),
+          "left",tuple(round(x,3) for x in left),flush=True)
 
 def tip(material,muzzle_y,z):
     """Bright orange, visible hollow airsoft muzzle guard."""
@@ -192,7 +277,7 @@ def make(id,src,length,klass):
         "nail":mat("NATURAL_DARK_FINGERNAIL_11","49312b",0,.68),
         "orange":mat("AIRSOFT_ORANGE_TIP_07","f66511",0,.48),
     }
-    shaped_hands(klass,m)
+    shaped_hands(id,klass,m,lo,hi)
     tip(m["orange"],hi.y,hi.z-.07 if klass=="pistol" else hi.z-.095)
     bpy.ops.file.pack_all()
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(BLENDS,id+".blend"))
