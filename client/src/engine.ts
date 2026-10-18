@@ -22,6 +22,7 @@ export class Engine{
  measuredFPS=60;lowFpsMode=false;maxPixelRatio=Math.min(devicePixelRatio||1,1.20);
  pixelRatio=this.maxPixelRatio;lastQualityChange=0;
  projectiles=new Map<number,THREE.Mesh>();props:{body:any,mesh:THREE.Mesh}[]=[];
+ muzzleSocket:THREE.Object3D|null=null;muzzleFlash:THREE.Mesh;flashRemaining=0;
  weapon=new THREE.Group();weaponCore=new THREE.Group();muzzle:THREE.PointLight;
  lastWeapon=-1; recoil=0;walkPhase=0;eyeBob=0;frame=0;lastStep=0;
  // Grip preference is individual for each gun, not global.
@@ -52,7 +53,10 @@ export class Engine{
   const lamp=new THREE.DirectionalLight(0xffe7c2,2.2);lamp.position.set(-26,35,18);lamp.castShadow=true;
   lamp.shadow.mapSize.set(1024,1024);lamp.shadow.camera.left=-70;lamp.shadow.camera.right=70;lamp.shadow.camera.top=55;lamp.shadow.camera.bottom=-55;
   this.scene.add(lamp);
-  this.muzzle=new THREE.PointLight(0xf2f4c0,0,5);this.muzzle.position.set(.4,-.24,-1.15);this.camera.add(this.muzzle);
+  this.muzzle=new THREE.PointLight(0xffe0a0,0,2.5);
+  this.muzzleFlash=new THREE.Mesh(new THREE.SphereGeometry(.020,10,8),new THREE.MeshBasicMaterial({color:0xffd488,depthWrite:false}));
+  this.muzzleFlash.visible=false;
+  this.weapon.add(this.muzzle);this.weapon.add(this.muzzleFlash);
   this.camera.add(this.weapon);this.weapon.add(this.weaponCore);this.scene.add(this.camera);
   // Spawn at the final near-hip position to avoid clipping on the first frame.
   this.weapon.position.set(.30,-.36,-.96);
@@ -216,6 +220,7 @@ export class Engine{
  setWeapon(index:number){
   if(this.lastWeapon===index)return;this.lastWeapon=index;
   this.weaponCore.clear();
+  this.muzzleSocket=null;
   const w=WEAPONS[index]||WEAPONS[0],compact=w.role.includes('PISTOL'),long=w.role.includes('BOLT');
   const original=this.weaponModels.get(index);
   if(original){
@@ -238,12 +243,26 @@ export class Engine{
    // gripping fingers could never stay on the grip. Keep both grip hierarchies
    // under the SAME transform as the artist-authored weapon and orange tip.
    const gripRoots:THREE.Object3D[]=[];
+   let barrelSocket:THREE.Object3D|null=null;
    model.traverse(part=>{
+    if(part.name==='FPS_MUZZLE_SOCKET')barrelSocket=part;
     if(part.name.startsWith('GRIP_ONE_HAND') ||
        part.name.startsWith('GRIP_TWO_HAND'))gripRoots.push(part);
    });
    for(const part of gunParts)weaponArt.attach(part);
    for(const grip of gripRoots)weaponArt.attach(grip);
+   if(barrelSocket){
+    const attachedSocket=barrelSocket as THREE.Object3D;
+    weaponArt.attach(attachedSocket);
+    this.muzzleSocket=attachedSocket;
+    attachedSocket.add(this.muzzle);
+    attachedSocket.add(this.muzzleFlash);
+    this.muzzle.position.set(0,0,0);
+    this.muzzleFlash.position.set(0,0,0);
+   }else{
+    this.weapon.add(this.muzzle);this.weapon.add(this.muzzleFlash);
+    this.muzzle.position.set(0,0,-.85);this.muzzleFlash.position.copy(this.muzzle.position);
+   }
    // Closer, fuller COD-style first-person framing, including both grip rigs.
    weaponArt.scale.setScalar(index>=7?1.48:1.42);
    // Preserve the weapon-type tuning while moving the whole assembly toward the camera.
@@ -331,11 +350,18 @@ export class Engine{
    current.add(b.id);
    let mesh=this.projectiles.get(b.id);
    if(!mesh){mesh=new THREE.Mesh(sphereGeom,new THREE.MeshBasicMaterial({color:0xf3f0a4}));this.scene.add(mesh);this.projectiles.set(b.id,mesh)}
-   mesh.position.set(b.x,b.y,b.z);
+   // Keep authoritative shot direction and hitboxes fixed at the reticle;
+   // the visual BB visibly launches at the modeled muzzle, not screen center.
+   const actual=new THREE.Vector3(b.x,b.y,b.z);
+   if(b.owner===side&&b.age<.14&&this.muzzleSocket){
+    this.camera.updateMatrixWorld(true);
+    const from=this.muzzleSocket.getWorldPosition(new THREE.Vector3());
+    mesh.position.copy(from).lerp(actual,Math.max(0,Math.min(1,b.age/.14)));
+   }else mesh.position.copy(actual);
   }
-  for(const [id,m] of this.projectiles)if(!current.has(id)){this.scene.remove(m);this.projectiles.delete(id)}
+    for(const [id,m] of this.projectiles)if(!current.has(id)){this.scene.remove(m);this.projectiles.delete(id)}
  }
- flash(){this.recoil+=.11;this.muzzle.intensity=7}
+ flash(){this.recoil+=.11;this.muzzle.intensity=5;this.flashRemaining=.075;this.muzzleFlash.visible=true}
  setLocalStance(kind:'stand'|'crouch'|'slide'|'prone'){
   if(kind===this.stance)return;
   const poses={stand:[.60,0],crouch:[.35,-.25],slide:[.21,-.39],prone:[.14,-.46]};
@@ -423,6 +449,8 @@ export class Engine{
    if(Math.abs(nextFov-this.camera.fov)>.002){this.camera.fov=nextFov;this.camera.updateProjectionMatrix();}
   }
   this.muzzle.intensity*=Math.exp(-dt*32);
+  this.flashRemaining=Math.max(0,this.flashRemaining-dt);
+  this.muzzleFlash.visible=this.flashRemaining>0;
   this.renderer.render(this.scene,this.camera);
   this.frame++;
   if(this.frame%35===0)$('debug').textContent='DRAW CALLS '+this.renderer.info.render.calls+'  |  TRIANGLES '+this.renderer.info.render.triangles+'  |  FPS '+Math.round(this.measuredFPS)+'  |  '+this.assetState+'  |  SYNC '+this.lastServerError.toFixed(2)+'m'+(this.lowFpsMode?'  |  SERVER MOTION':'')+'  |  NET LAG '+this.lastAckLag;
