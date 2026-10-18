@@ -28,7 +28,7 @@ export class Engine{
  readonly oldBlockout:THREE.Object3D[]=[];
  readonly oldDecor:THREE.Object3D[]=[];
  renderPos=new THREE.Vector3(-18,1,0);
- lastServerError=0;
+ lastServerError=0;lastAckLag=0;
  blenderArena:THREE.Group|null=null;blenderViewmodel:THREE.Group|null=null;
  assetState='LOADING 3D ASSETS';
  constructor(){
@@ -201,7 +201,7 @@ export class Engine{
   piece(.19,.17,.43,-.20,-.31,.16,armMat);
   piece(.17,.17,.14,-.19,-.22,-.12,handMat);
  }
- applySnapshot(s:Snapshot,side:number){
+ applySnapshot(s:Snapshot,side:number,latestSeq=0){
   this.playerSide=side;
   const local=s.players.find(p=>p.side===side),remote=s.players.find(p=>p.side!==side);
   if(local){
@@ -210,6 +210,7 @@ export class Engine{
    const dx=local.x-pos.x,dy=local.y-pos.y,dz=local.z-pos.z;
    const error=Math.hypot(dx,dy,dz);
    this.lastServerError=error;
+   this.lastAckLag=Math.max(0,latestSeq-(local.ackSeq||latestSeq));
    // On slow GPUs fixed-step client prediction cannot keep up with 60Hz
    // server motion. Trust authoritative snapshots directly instead of
    // teleporting the FPS camera after every delayed render frame.
@@ -218,7 +219,7 @@ export class Engine{
     this.localPos.set(local.x,local.y,local.z);
     this.strideSpeed=Math.max(0,local.velocity)*11.5;
     this.motion.slideTime=local.sliding ? .20 : 0;
-   }else if(error>4.5){
+   }else if(error>Math.max(5,Math.min(12,2+this.lastAckLag*.36))){
     // Large desync / respawn: restore server position without resetting the
     // current velocity each time (that reset created repeated sprint stalls).
     this.body.setTranslation({x:local.x,y:local.y,z:local.z},true);
@@ -311,7 +312,7 @@ export class Engine{
    // Smooth sub-frame motion independently from the fixed-step Rapier state,
    // avoiding stair-step flicker when the monitor draws faster than 60fps.
    const separation=this.renderPos.distanceTo(this.localPos);
-   if(separation>3)this.renderPos.copy(this.localPos);
+   if(this.lowFpsMode||separation>3)this.renderPos.copy(this.localPos);
    else this.renderPos.lerp(this.localPos,1-Math.exp(-dt*33));
    let eyeY=this.renderPos.y+this.cameraHeight+this.eyeBob*(sliding?.12:1);
    // Use the collision floor (rather than visual paint strips) as camera
@@ -340,7 +341,7 @@ export class Engine{
   this.muzzle.intensity*=Math.exp(-dt*32);
   this.renderer.render(this.scene,this.camera);
   this.frame++;
-  if(this.frame%35===0)$('debug').textContent='DRAW CALLS '+this.renderer.info.render.calls+'  |  TRIANGLES '+this.renderer.info.render.triangles+'  |  FPS '+Math.round(this.measuredFPS)+'  |  '+this.assetState+'  |  SYNC '+this.lastServerError.toFixed(2)+'m'+(this.lowFpsMode?'  |  SERVER MOTION':'');
+  if(this.frame%35===0)$('debug').textContent='DRAW CALLS '+this.renderer.info.render.calls+'  |  TRIANGLES '+this.renderer.info.render.triangles+'  |  FPS '+Math.round(this.measuredFPS)+'  |  '+this.assetState+'  |  SYNC '+this.lastServerError.toFixed(2)+'m'+(this.lowFpsMode?'  |  SERVER MOTION':'')+'  |  NET LAG '+this.lastAckLag;
  }
  adjustQuality(fps:number){
   this.measuredFPS=fps;
