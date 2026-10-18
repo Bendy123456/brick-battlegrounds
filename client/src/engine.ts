@@ -6,6 +6,8 @@ import {WEAPONS,type Input,type Snapshot} from '../../shared/config.ts';
 import {buildClassicNinja} from './classic-ninja.js';
 import {$} from './screen.ts';
 import {settings} from './controls.ts';
+import {newMotion,stepMotion,type Motion} from '../../shared/movement.ts';
+import {sfx} from './audio.ts';
 
 const COLORS:Record<string,number>={concrete:0x56636a,metal:0x485969,wood:0x846848,net:0x496b63,foam:0x71884d};
 const toV=(p:any)=>new THREE.Vector3(p.x,p.y,p.z);
@@ -14,7 +16,9 @@ export class Engine{
  camera=new THREE.PerspectiveCamera(88,innerWidth/innerHeight,.08,190);
  renderer:THREE.WebGLRenderer;
  world:any;body:any;collider:any;controller:any;enemy:THREE.Group|null=null;
- opponentYaw=0;playerSide=0;localPos=new THREE.Vector3(-48,1,0);
+ opponentYaw=0;playerSide=0;localPos=new THREE.Vector3(-18,1,0);
+ motion:Motion=newMotion();stance:'stand'|'crouch'|'slide'|'prone'='stand';grounded=true;vy=0;
+ cameraHeight=.52;cameraBank=0;strideSpeed=0;
  projectiles=new Map<number,THREE.Mesh>();props:{body:any,mesh:THREE.Mesh}[]=[];
  weapon=new THREE.Group();weaponCore=new THREE.Group();muzzle:THREE.PointLight;
  lastWeapon=-1; recoil=0;walkPhase=0;eyeBob=0;frame=0;lastStep=0;
@@ -105,6 +109,7 @@ export class Engine{
  }
  createLocal(side:number){
   this.playerSide=side;const spawn=SPAWNS[side];this.localPos.set(spawn.x,spawn.y,spawn.z);
+  this.motion=newMotion();this.stance='stand';this.grounded=true;this.vy=0;this.cameraHeight=.52;
   if(this.body){this.world.removeRigidBody(this.body)}
   this.body=this.world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(spawn.x,spawn.y,spawn.z));
   this.collider=this.world.createCollider(RAPIER.ColliderDesc.capsule(.60,.30),this.body);
@@ -211,39 +216,71 @@ export class Engine{
   for(const [id,m] of this.projectiles)if(!current.has(id)){this.scene.remove(m);this.projectiles.delete(id)}
  }
  flash(){this.recoil+=.11;this.muzzle.intensity=7}
+ setLocalStance(kind:'stand'|'crouch'|'slide'|'prone'){
+  if(kind===this.stance)return;
+  const poses={stand:[.60,0],crouch:[.35,-.25],slide:[.21,-.39],prone:[.14,-.46]};
+  const next=poses[kind];
+  if(next[0]>poses[this.stance][0]){
+   const pos=this.body.translation();
+   const ceiling=this.world.castRay(new RAPIER.Ray({x:pos.x,y:pos.y-.30,z:pos.z},{x:0,y:1,z:0}),
+    next[0]+.65,true,RAPIER.QueryFilterFlags.EXCLUDE_KINEMATIC);
+   if(ceiling)return;
+  }
+  this.world.removeCollider(this.collider,true);
+  this.collider=this.world.createCollider(RAPIER.ColliderDesc.capsule(next[0],.30)
+   .setTranslation(0,next[1],0),this.body);
+  this.stance=kind;
+ }
  predict(dt:number,input:Input){
   if(!this.world||!this.body)return;
-  const speed=input.prone?1.4:input.crouch?3:input.sprint?8.7:5.8;
-  const f=input.f,s=input.s;
-  this.controller.computeColliderMovement(this.collider,{
-   x:(Math.cos(input.yaw)*s-Math.sin(input.yaw)*f)*speed*dt,
-   y:-.20*dt,
-   z:(-Math.sin(input.yaw)*s-Math.cos(input.yaw)*f)*speed*dt
-  });
-  const movement=this.controller.computedMovement(),pos=this.body.translation();
-  this.body.setNextKinematicTranslation({x:pos.x+movement.x,y:pos.y+movement.y,z:pos.z+movement.z});
+  const movement=stepMotion(this.motion,input,dt,this.grounded);
+  if(movement.started)sfx('slide');
+  const sliding=movement.sliding;
+  const stance=input.prone&&!sliding?'prone':sliding?'slide':input.crouch?'crouch':'stand';
+  this.setLocalStance(stance);
+  if(input.jump&&this.grounded&&!input.prone&&(!input.crouch||movement.ended)){
+   this.vy=Math.sqrt(2*20*1.2);this.grounded=false;
+  }
+  this.vy=Math.max(-25,this.vy-20*dt);
+  const wantX=this.motion.vx*dt,wantZ=this.motion.vz*dt;
+  this.controller.computeColliderMovement(this.collider,{x:wantX,y:this.vy*dt,z:wantZ});
+  const delta=this.controller.computedMovement(),pos=this.body.translation();
+  if(sliding&&Math.hypot(delta.x,delta.z)<Math.hypot(wantX,wantZ)*.22)this.motion.slideTime=0;
+  this.body.setNextKinematicTranslation({x:pos.x+delta.x,y:pos.y+delta.y,z:pos.z+delta.z});
+  this.grounded=this.controller.computedGrounded();
+  if(this.grounded&&this.vy<0)this.vy=0;
   this.world.step();this.localPos.copy(toV(this.body.translation()));
+  this.strideSpeed=movement.speed;
  }
+
  frameDraw(dt:number,input:Input|null,local:any,side:number){
   if(!this.world)return;
   for(const p of this.props){const t=p.body.translation();p.mesh.position.set(t.x,t.y,t.z);
    const q=p.body.rotation();p.mesh.quaternion.set(q.x,q.y,q.z,q.w)}
   if(input){
    const speed=Math.hypot(input.f,input.s);
-   this.walkPhase+=dt*speed*(input.sprint?15:10);
-   this.eyeBob+=((speed>0?.026*Math.sin(this.walkPhase*2):0)-this.eyeBob)*Math.min(1,dt*12);
+   this.walkPhase+=dt*speed*(input.sprint?19:12);
+   this.eyeBob+=((this.motion.slideTime>0?0:speed>0?.022*Math.sin(this.walkPhase*2):0)-this.eyeBob)*Math.min(1,dt*12);
    this.camera.rotation.order='YXZ';
    this.camera.rotation.y=input.yaw;this.camera.rotation.x=input.pitch;this.camera.rotation.z=0;
-   const height=local?.prone?-.30:local?.crouch?-.15:0;
-   this.camera.position.set(this.localPos.x,this.localPos.y+.52+height+this.eyeBob,this.localPos.z);
-   const aim=input.ads?1:0,sprint=input.sprint&&!aim?1:0;
-   const targetX=aim?0:.33,targetY=aim?-.24:-.38,targetZ=aim?-.44:-.68;
+   const sliding=this.motion.slideTime>0||local?.sliding===true;
+   const sprinting=!sliding&&input.sprint&&input.f>.28&&!input.ads&&!input.crouch;
+   const targetEye=sliding?-.01:local?.prone?-.20:local?.crouch?.27:.52;
+   this.cameraHeight=THREE.MathUtils.damp(this.cameraHeight,targetEye,sliding?18:12,dt);
+   this.camera.position.set(this.localPos.x,this.localPos.y+this.cameraHeight+this.eyeBob*(sliding?.12:1),this.localPos.z);
+   const lean=sliding?.045:(input.s-.1)*.012;
+   this.cameraBank=THREE.MathUtils.damp(this.cameraBank,lean,sliding?12:9,dt);
+   this.camera.rotation.z=this.cameraBank;
+   const aim=input.ads&&!sliding&&!sprinting?1:0,sprint=sprinting?1:0;
+   const targetX=aim?0:sprint?.40:.33;
+   const targetY=aim?-.24:sliding?-.57:sprint?-.49:-.38;
+   const targetZ=aim?-.44:sliding?-.55:sprint?-.77:-.68;
    this.weapon.position.lerp(new THREE.Vector3(targetX,targetY,targetZ),Math.min(1,dt*(aim?17:12)));
    this.recoil=Math.max(0,this.recoil-dt*.83);
-   this.weapon.rotation.x=THREE.MathUtils.lerp(this.weapon.rotation.x,-this.recoil-sprint*.25,Math.min(1,dt*14));
-   this.weapon.rotation.z=THREE.MathUtils.lerp(this.weapon.rotation.z,sprint*-.32,Math.min(1,dt*10));
-   this.weapon.position.y+=Math.sin(this.walkPhase)*Math.hypot(input.f,input.s)*.012;
-   this.camera.fov=THREE.MathUtils.lerp(this.camera.fov,input.ads?Math.max(55,settings.fov-18):settings.fov,Math.min(1,dt*9));this.camera.updateProjectionMatrix();
+   this.weapon.rotation.x=THREE.MathUtils.lerp(this.weapon.rotation.x,-this.recoil-sprint*.33+(sliding?-.16:0),Math.min(1,dt*14));
+   this.weapon.rotation.z=THREE.MathUtils.lerp(this.weapon.rotation.z,sprint*-.32+(sliding?.15:0),Math.min(1,dt*10));
+   this.weapon.position.y+=Math.sin(this.walkPhase)*Math.hypot(input.f,input.s)*(sliding?.003:.012);
+   this.camera.fov=THREE.MathUtils.lerp(this.camera.fov,aim?Math.max(55,settings.fov-18):settings.fov+(sliding?9:sprinting?6:0),Math.min(1,dt*8));this.camera.updateProjectionMatrix();
   }
   this.muzzle.intensity*=Math.exp(-dt*32);
   this.renderer.render(this.scene,this.camera);
