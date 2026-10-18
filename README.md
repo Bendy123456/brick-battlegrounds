@@ -1,4 +1,12 @@
-# BRICK BATTLEGROUNDS — v0.8.30 FOLEY REWORK
+# BRICK BATTLEGROUNDS — v0.8.31 ANIMATION POLISH
+
+- Buffered four-hit combos ease into the next strike's windup rather than returning both hands to neutral.
+- Impact-sensitive stagger lengths: light 0.32 seconds, heavy 0.54, Spinjitzu 0.27, guard-break 0.72; 1.65-second knockdowns remain unchanged. Multiplayer relays the attack kind for matching victim reactions.
+- Classic figures have a real ankle pivot for cosmetic level-foot stabilization, gait/strike support-foot weighting and limited floor correction while the gameplay root and hitboxes stay unchanged.
+- Procedural knockdowns feature a progressive collapse, settling motion, sideways roll, hand push-off and smoother easing back to relaxed stance. These are authored procedural poses, not physics-simulated ragdolls.
+- Online fighter rotation now follows the shortest arc, and walking cycles respond to the movement actually received from the other player.
+- Combat inputs, damage, attack hitframes, Spinjitzu durations/cooldowns, stage, and reconnect recovery are preserved. Browser play-testing is still recommended.
+
 
 - Replaced electronic-sounding pitched combat beeps with buffer-rendered toy-plastic clacks: inharmonic shell resonances, hard-edge transients, short rattle patterns and five natural variations per hit type.
 - Light hits, heavy hits, blocking, guard breaks, Spinjitzu contact and knockdowns have distinct plastic sounds. Swings, dodges and jumping now use low-key broadband air movements, not descending musical tones.

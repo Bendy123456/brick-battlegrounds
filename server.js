@@ -141,7 +141,7 @@ wss.on('connection',ws=>{
    ws.lastHit=now();
    const damage=Math.min(24,Math.max(0,Number(m.damage)||0));
    send(peer.ws,{type:'damage',damage,knockdown:m.knockdown===true,
-    stun:m.stun===true,spinjitzuFinisher:m.spinjitzuFinisher===true&&m.knockdown===true});
+    stun:m.stun===true,impactKind:['light','heavy','special','guardBreak'].includes(m.impactKind)?m.impactKind:'light',spinjitzuFinisher:m.spinjitzuFinisher===true&&m.knockdown===true});
    return;
   }
   if(m.type==='roundEnd')send(peer?.ws,{type:'roundEnd',winner:m.winner});
