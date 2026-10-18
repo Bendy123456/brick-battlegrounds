@@ -176,8 +176,8 @@ def make(id,src,length,klass):
         lo,hi=mesh_extents(all_meshes);span=hi-lo
     assert span.y>.01,"Bad weapon length in "+src
     factor=length/span.y
-    shift=Vector((-(lo.x+hi.x)/2, -lo.y-.20, -(lo.z+hi.z)/2 + .035))
-    transform=Matrix.Scale(factor,4) @ Matrix.Translation(shift)
+    shift=Vector((-(lo.x+hi.x)*factor/2, -lo.y*factor-.18, -(lo.z+hi.z)*factor/2 + .035))
+    transform=Matrix.Translation(shift) @ Matrix.Scale(factor,4)
     # Rebase in destination coordinates, keeping expected 1m-class weapon length.
     for ob in all_meshes:
         ob.data.transform(transform)
@@ -187,8 +187,8 @@ def make(id,src,length,klass):
     source_vertices=sum(len(o.data.vertices) for o in all_meshes)
     assert source_vertices>150, "Source too sparse for "+id
     m={
-        "skin":mat("DEEP_EBONY_BARE_SKIN_09","301a17",0,.76),
-        "arm":mat("BARE_DARK_SKIN_FOREARMS_10","2b1815",0,.78),
+        "skin":mat("DEEP_EBONY_BARE_SKIN_09","140a08",0,.76),
+        "arm":mat("BARE_DARK_SKIN_FOREARMS_10","160b08",0,.78),
         "nail":mat("NATURAL_DARK_FINGERNAIL_11","49312b",0,.68),
         "orange":mat("AIRSOFT_ORANGE_TIP_07","f66511",0,.48),
     }
