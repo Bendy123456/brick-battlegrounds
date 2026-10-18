@@ -4,7 +4,7 @@ All nine original Blender base weapons were regenerated using `art/rebuild_black
 
 **No mounted optics, scopes, flashlight, laser, bipod or angled foregrip attachments.** Factory iron sights and built-in rails are retained so a future dedicated attachments menu can equip actual add-on meshes without rebuilding the weapon. The sniper can be used with iron sights in this version; a scope can be offered later.
 
-First-person bare forearms extend from the lower camera region into the actual gun's grip positions. Each palm has separate modeled fingers, fingertips, a curved opposing thumb and natural nails. The model is made with Blender meshes and procedural materials; it is not photoreal skin scanning. Source files are fully editable. Per-weapon reload animation clips remain future work.
+First-person bare forearms use dark near-black skin shading and smoothed elliptical anatomical mesh lofts, extending from the lower camera region into the actual gun's grip positions. Each palm has separate modeled fingers, fingertips, a curved opposing thumb and natural nails. The model is made with Blender meshes and procedural materials; it is not photoreal skin scanning. Source files are fully editable. Per-weapon reload animation clips remain future work.
 
 # Nine original Blender airsoft replicas
 

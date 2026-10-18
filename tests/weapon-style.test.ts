@@ -23,6 +23,11 @@ describe('bare-arm no-attachment airsoft visual contract',()=>{
    expect(mats).toContain('AIRSOFT_ORANGE_TIP_07');
    expect(nodes).not.toMatch(/Scope optic|Scope clamp|Optic QD|Dark glass emitter|Folded bipod|Accessory training light|Wide accessory light|Angled airsoft foregrip/i);
    expect(mats).not.toMatch(/YELLOW_MINIFIG_HAND|TEAM_UNIFORM_SLEEVE/);
+   // The source uses near-black linear skin values: look dark in actual
+   // PBR rendering, not tan after GLB material color conversion.
+   const skin=(json.materials||[]).find((m:any)=>(m.name||'').includes('DEEP_EBONY_BARE_SKIN_09'));
+   expect(skin).toBeTruthy();
+   expect(skin.pbrMetallicRoughness.baseColorFactor[0]).toBeLessThan(.35);
    const tip=(json.materials||[]).find((m:any)=>(m.name||'').includes('AIRSOFT_ORANGE_TIP_07'));
    expect(tip).toBeTruthy();
    const rgb=tip.pbrMetallicRoughness.baseColorFactor as number[];
