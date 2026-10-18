@@ -2,7 +2,9 @@
 
 A replacement for the old rectangular blockout, modeled from scratch in Blender, influenced by the user-approved industrial arena layout. Built-in features include the balanced red and blue team bases, central raised cargo objective with stairs, alpha/bravo routes, side mezzanines with navigable stairs, plywood tactical dividers, industrial containers, realistic inflatable cover, safety netting, industrial trusses/fixtures, factory doors, painted floor markings and room signage.
 
-**Editable project:** `art/the_arena_v2.blend` (all original named geometry and packed textures). **Game asset:** `client/public/assets/arena.glb`. **Source:** `art/build_arena_v2.py`, generated through `.github/workflows/blender-arena-v2.yml`.
+**Editable project:** `art/the_arena_v2.blend` (all original named geometry and packed textures). **Game asset:** `client/public/assets/arena.glb`.
+
+**Blender build verified:** 122 authored collision volumes, 17 material-batched meshes, original packed surface textures. The detailed GLB is currently about 27 MB; further LOD/texture optimization is still a follow-up, not a claimed performance benchmark. **Source:** `art/build_arena_v2.py`, generated through `.github/workflows/blender-arena-v2.yml`.
 
 **Important synchronization rule:** `shared/arena-layout.json` is the single source of the **122+ world obstacle bounding boxes** for both Rapier collision engines AND the Blender geometry generator. The client hides collision placeholders when its GLB loads, but the colliders remain in place. Invisible player-specific dynamic props are removed as before. Visual tiny nuts, seams, sign details, truss elements and rail decoration remain non-collidable; gameplay-sized obstacles match the server colliders. Netting is deliberately BB-permeable.
 
