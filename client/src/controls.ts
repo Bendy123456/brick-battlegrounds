@@ -50,6 +50,7 @@ export class Controls{
   const rY=pad?axis(pad.axes[3]||0,settings.deadzone,settings.response):0;
   if(inGame){
    this.yaw-=dx*settings.sensitivity*.008+rX*settings.padSensitivity*dt;
+   this.yaw=Math.atan2(Math.sin(this.yaw),Math.cos(this.yaw));
    this.pitch-=dy*settings.sensitivity*.008+rY*settings.padSensitivity*dt;
    this.pitch=Math.max(-1.25,Math.min(1.25,this.pitch));
    this.lean+=( ((down('leanRight')?1:0)-(down('leanLeft')?1:0))*.16-this.lean )*Math.min(1,dt*9);

@@ -36,7 +36,7 @@ for(let i=0;i<8;i++){
 box('center-platform',0,2.5,0,8,.45,8,'metal');
 box('nest-platform',0,5.35,-32,13,.35,6,'metal');
 for(let i=0;i<10;i++)box('nest-step-'+i,0,.18+i*.5,-18-i*1.35,2.4,.36+i,1.8,'wood');
-export const SPAWNS=[{x:-48,y:1,z:0},{x:48,y:1,z:0}];
+export const SPAWNS=[{x:-18,y:1,z:0},{x:18,y:1,z:0}];
 export function zoneName(x:number,z:number){
  if(Math.abs(x)<10&&Math.abs(z)<12)return 'CENTER COURT';
  if(z< -19&&Math.abs(x)<20)return 'NORTH CORRIDOR';

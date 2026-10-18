@@ -4,6 +4,7 @@ import {MAP,SPAWNS,type Obstacle} from '../../shared/map.ts';
 import {WEAPONS,type Input,type Snapshot} from '../../shared/config.ts';
 import {buildClassicNinja} from './classic-ninja.js';
 import {$} from './screen.ts';
+import {settings} from './controls.ts';
 
 const COLORS:Record<string,number>={concrete:0x56636a,metal:0x485969,wood:0x846848,net:0x496b63,foam:0x71884d};
 const toV=(p:any)=>new THREE.Vector3(p.x,p.y,p.z);
@@ -192,7 +193,7 @@ export class Engine{
    this.walkPhase+=dt*speed*(input.sprint?15:10);
    this.eyeBob+=((speed>0?.026*Math.sin(this.walkPhase*2):0)-this.eyeBob)*Math.min(1,dt*12);
    this.camera.rotation.order='YXZ';
-   this.camera.rotation.y=input.yaw;this.camera.rotation.x=-input.pitch;this.camera.rotation.z=0;
+   this.camera.rotation.y=input.yaw;this.camera.rotation.x=input.pitch;this.camera.rotation.z=0;
    const height=local?.prone?-.30:local?.crouch?-.15:0;
    this.camera.position.set(this.localPos.x,this.localPos.y+.52+height+this.eyeBob,this.localPos.z);
    const aim=input.ads?1:0,sprint=input.sprint&&!aim?1:0;
@@ -202,7 +203,7 @@ export class Engine{
    this.weapon.rotation.x=THREE.MathUtils.lerp(this.weapon.rotation.x,-this.recoil-sprint*.25,Math.min(1,dt*14));
    this.weapon.rotation.z=THREE.MathUtils.lerp(this.weapon.rotation.z,sprint*-.32,Math.min(1,dt*10));
    this.weapon.position.y+=Math.sin(this.walkPhase)*Math.hypot(input.f,input.s)*.012;
-   this.camera.fov=THREE.MathUtils.lerp(this.camera.fov,input.ads?68:88,Math.min(1,dt*9));this.camera.updateProjectionMatrix();
+   this.camera.fov=THREE.MathUtils.lerp(this.camera.fov,input.ads?Math.max(55,settings.fov-18):settings.fov,Math.min(1,dt*9));this.camera.updateProjectionMatrix();
   }
   this.muzzle.intensity*=Math.exp(-dt*32);
   this.renderer.render(this.scene,this.camera);
