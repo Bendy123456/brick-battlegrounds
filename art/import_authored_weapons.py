@@ -11,6 +11,7 @@ import os
 import math
 import re
 from mathutils import Vector, Matrix
+from anatomical_grips import make_grips
 
 ROOT=os.getcwd()
 INPUT=os.path.join(ROOT,"art","upstream_weapon_sources")
@@ -277,7 +278,8 @@ def make(id,src,length,klass):
         "nail":mat("NATURAL_DARK_FINGERNAIL_11","49312b",0,.68),
         "orange":mat("AIRSOFT_ORANGE_TIP_07","f66511",0,.48),
     }
-    shaped_hands(id,klass,m,lo,hi)
+    # Custom thin-forearm sculpture with nine unique gun-mesh surface contacts.
+    make_grips(id,klass,m,all_meshes,lo,hi)
     tip(m["orange"],hi.y,hi.z-.07 if klass=="pistol" else hi.z-.095)
     bpy.ops.file.pack_all()
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(BLENDS,id+".blend"))
