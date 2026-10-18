@@ -1,20 +1,28 @@
+## Weapon visual style — bare skin and no attachments (October 2026)
+
+All nine original Blender base weapons were regenerated using `art/rebuild_black_barearms.py` with an identical approved visual direction: matte/satin **black airsoft gun parts**, **bright orange airsoft safety tip on every muzzle**, natural **deep ebony skin on bare hands and forearms**, **no gloves**, **no sleeves**, and individual contacts on the trigger grip/supporting handguard, pump or pistol frame. Each weapon has its own native Blender source (`art/weapons/<id>.blend`) and game-ready GLB (`client/public/assets/weapons/<id>.glb`).
+
+**No mounted optics, scopes, flashlight, laser, bipod or angled foregrip attachments.** Factory iron sights and built-in rails are retained so a future dedicated attachments menu can equip actual add-on meshes without rebuilding the weapon. The sniper can be used with iron sights in this version; a scope can be offered later.
+
+First-person bare forearms extend from the lower camera region into the actual gun's grip positions. Each palm has separate modeled fingers, fingertips, a curved opposing thumb and natural nails. The model is made with Blender meshes and procedural materials; it is not photoreal skin scanning. Source files are fully editable. Per-weapon reload animation clips remain future work.
+
 # Nine original Blender airsoft replicas
 
 All nine selectable replicas now have independent editable Blender source scenes in art/weapons/ and exported GLB models in client/public/assets/weapons/. Blender generator: art/build_airsoft_weapons.py.
 
 | Replica | Distinct first-person silhouette |
 | --- | --- |
-| Vanguard | Lightweight ergonomic AEG carbine, vented handguard, red-dot sight |
+| Vanguard | Lightweight ergonomic AEG carbine, vented handguard, factory iron sights |
 | Ranger | Extended vented AEG, skeleton stock and angled foregrip |
 | Specter | Compact bullpup AEG, integrated carry handle, rear magazine |
 | Atlas | Larger tactical AEG with winding BB drum and broad accessories |
 | Whisper | SMG with folding stock, straight BB magazine and compact barrel |
 | Breacher | Pump-style airsoft shotgun, tubular assembly and ribbed fore-end |
-| Watcher | Long airsoft bolt-action silhouette with scope and folded bipod |
+| Watcher | Long airsoft bolt-action silhouette with factory iron sights |
 | Echo | Compact GBB pistol with rounded slide and stippled grip |
-| Tempo | Extended competition-style GBB airsoft pistol with optic |
+| Tempo | Extended competition-style GBB airsoft pistol with iron sights |
 
-The game now loads the specific model for each weapon slot, rather than stretching one rifle model. Each viewmodel is scaled and placed far enough forward to prevent the rear stock from clipping through the camera, with ADS sight alignment adjusted by weapon type. All feature original first-person LEGO-yellow hands and orange airsoft-only muzzle details. GLBs are merged by material for render efficiency; native .blend files retain named parts. These are procedural Blender-modeled game assets, not photographs or high-poly organic sculpts. Reload animations and physically-based texture baking remain future work.
+The game now loads the specific model for each weapon slot, rather than stretching one rifle model. Each viewmodel is scaled and placed far enough forward to prevent the rear stock from clipping through the camera, with ADS sight alignment adjusted by weapon type. All feature original first-person bare dark-skinned hands and orange airsoft-only muzzle details. GLBs are merged by material for render efficiency; native .blend files retain named parts. These are procedural Blender-modeled game assets, not photographs or high-poly organic sculpts. Reload animations and physically-based texture baking remain future work.
 
 ---
 ## Input synchronization repair (2026-10-18)
