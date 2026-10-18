@@ -212,21 +212,56 @@ def shaped_hands(id,klass,m,lo,hi):
     print("GRIP_CONTACTS",id,"right",tuple(round(x,3) for x in right),
           "left",tuple(round(x,3) for x in left),flush=True)
 
-def tip(material,muzzle_y,z):
-    """Bright orange, visible hollow airsoft muzzle guard."""
-    bpy.ops.mesh.primitive_cylinder_add(vertices=28,radius=.036,depth=.085,
-        location=(0,muzzle_y+.030,z))
-    ob=bpy.context.object;ob.name="AIRSOFT_ORANGE_TIP_07 - fitted protective orange guard"
-    ob.rotation_euler[0]=math.pi/2
-    ob.data.materials.append(material)
-    bevel=ob.modifiers.new("Rounded muzzle shroud","BEVEL")
-    bevel.width=.006;bevel.segments=3
-    smooth_obj(ob)
-    bpy.ops.mesh.primitive_cylinder_add(vertices=28,radius=.014,depth=.088,
-        location=(0,muzzle_y+.031,z))
-    bore=bpy.context.object;bore.name="Orange tip / black inset bore"
-    bore.rotation_euler[0]=math.pi/2
-    bore.data.materials.append(mat("Dark replica bore","090c10",0,.80))
+def fit_muzzle(meshes,lo,hi):
+    """Measure the front barrel's cross-section, not scope/stock bounding maxima.
+    Blender barrel points toward +Y; exporter turns this into Three.js -Z.
+    """
+    vertices=[v.co.copy() for ob in meshes for v in ob.data.vertices]
+    center_x=(lo.x+hi.x)*.5
+    front=[p for p in vertices if p.y>=hi.y-.085 and abs(p.x-center_x)<.10]
+    if len(front)<4:
+        front=[p for p in vertices if p.y>=hi.y-.12]
+    assert front,"No forward barrel vertices"
+    front.sort(key=lambda p:p.y)
+    # The orange guard attaches at the outer end of the visible barrel,
+    # while the cross-sectional median ignores the top rail and sights.
+    face=[p for p in front if p.y>=front[-1].y-.045]
+    muzzle_x=sorted(p.x for p in face)[len(face)//2]
+    muzzle_z=sorted(p.z for p in face)[len(face)//2]
+    muzzle_y=front[-1].y
+    return Vector((muzzle_x,muzzle_y,muzzle_z))
+
+def tip(material,meshes,lo,hi,weapon_id):
+    """Real hollow orange airsoft barrel sleeve with a gameplay muzzle socket."""
+    center=fit_muzzle(meshes,lo,hi)
+    radius=.020 if weapon_id in ('echo','tempo','whisper') else .024
+    inner=radius*.62
+    length=.052
+    segments=28
+    # Tube instead of the old opaque capped cylinder/orange ball.
+    verts=[];faces=[]
+    for y,r in ((center.y-.014,radius),(center.y+length,radius),
+                (center.y-.014,inner),(center.y+length,inner)):
+        for i in range(segments):
+            a=2*math.pi*i/segments
+            verts.append((center.x+r*math.cos(a),y,center.z+r*math.sin(a)))
+    for i in range(segments):
+        j=(i+1)%segments
+        faces.extend(((i,j,j+segments,i+segments),
+                      (i+segments,j+segments,j+3*segments,i+3*segments),
+                      (i+2*segments,i+2*segments+j-i,j+3*segments,i+3*segments)))
+    mesh=bpy.data.meshes.new('Hollow orange replica tip geometry')
+    mesh.from_pydata(verts,[],faces);mesh.update()
+    o=bpy.data.objects.new('AIRSOFT_ORANGE_TIP_07 - fitted hollow muzzle sleeve',mesh)
+    bpy.context.collection.objects.link(o)
+    o.data.materials.append(material)
+    for poly in o.data.polygons:poly.use_smooth=True
+    # A named empty is exported in GLB and transformed with gun and recoil.
+    socket=bpy.data.objects.new('FPS_MUZZLE_SOCKET',None)
+    bpy.context.collection.objects.link(socket)
+    socket.location=(center.x,center.y+length+.005,center.z)
+    socket['weapon']=weapon_id
+    print('MUZZLE_FIT',weapon_id,tuple(round(v,3) for v in socket.location),flush=True)
 
 def mesh_extents(meshes):
     """Calculate actual vertex bounds, never Blender's sometimes stale bound_box
@@ -300,7 +335,13 @@ def make(id,src,length,klass):
     }
     # Custom thin-forearm sculpture with nine unique gun-mesh surface contacts.
     make_grips(id,klass,m,all_meshes,lo,hi)
-    tip(m["orange"],hi.y,hi.z-.07 if klass=="pistol" else hi.z-.095)
+    if id=='vanguard':
+        for ob in all_meshes:
+            vlo,vhi=mesh_extents([ob])
+            print('SOURCE_PART',id,ob.name,'verts',len(ob.data.vertices),
+                  'center',tuple(round((vlo[i]+vhi[i])*0.5,3) for i in range(3)),
+                  'span',tuple(round(vhi[i]-vlo[i],3) for i in range(3)),flush=True)
+    tip(m["orange"],all_meshes,lo,hi,id)
     bpy.ops.file.pack_all()
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(BLENDS,id+".blend"))
     bpy.ops.object.select_all(action="SELECT")
