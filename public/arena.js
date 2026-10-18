@@ -1,4 +1,6 @@
 import * as THREE from '/vendor/three.module.js';
+// CHANGED v0.8.26: 3D mountain monastery built separately from combat/gameplay.
+import {buildMountainMonastery} from './mountain-monastery.js';
 import {buildClassicNinja} from './classic-ninja.js';
 import {setupTouchControls} from './touch-controls.js';
 // CHANGED: Visual-only combat poses live independently of hit detection.
@@ -12,8 +14,9 @@ import {createSpinjitzu,setSpinjitzuColor,poseSpinjitzu,stopSpinjitzu,SPIN_DURAT
 
 const $ = id => document.getElementById(id);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x142637);
-scene.fog = new THREE.FogExp2(0x142637,0.0095);
+// CHANGED: daylight mountain palette, distant atmospheric perspective.
+scene.background = new THREE.Color(0xcbd7ca);
+scene.fog = new THREE.FogExp2(0xb4c7bd,0.0055);
 const renderer = new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
 const phoneBrowser=Boolean(navigator.userAgentData?.mobile)||/iPhone|iPod|Android.*Mobile|Windows Phone|webOS|BlackBerry|Opera Mini/i.test(navigator.userAgent||'');
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,phoneBrowser?1.1:1.4));
@@ -25,85 +28,17 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.34;
 $('game').appendChild(renderer.domElement);
 const camera = new THREE.PerspectiveCamera(50,innerWidth/innerHeight,.1,260);
-scene.add(new THREE.HemisphereLight(0xa3c8e8,0x392920,2.3));
-const sun=new THREE.DirectionalLight(0xffd1a1,3.0);
-sun.position.set(-15,26,12);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);
-sun.shadow.camera.left=-28;sun.shadow.camera.right=28;
-sun.shadow.camera.top=28;sun.shadow.camera.bottom=-28;sun.shadow.bias=-.0003;
+// CHANGED: Natural soft daylight with warm mountain sunrise highlights.
+scene.add(new THREE.HemisphereLight(0xcfe1e2,0x5a6d53,2.0));
+const sun=new THREE.DirectionalLight(0xffe0ac,2.65);
+sun.position.set(-31,43,-22);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);
+sun.shadow.camera.left=-31;sun.shadow.camera.right=31;
+sun.shadow.camera.top=31;sun.shadow.camera.bottom=-31;sun.shadow.bias=-.0003;
 scene.add(sun);
-const mat=(c,r=.65,m=.02,em=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m,emissive:em,emissiveIntensity:em?.2:0});
-const stone=mat(0x74818a,.92), tileA=mat(0x819397,.91),tileB=mat(0x78898f,.91), tileDark=mat(0x53676d,.93);
-const oxblood=mat(0x8e2929,.64), beamDark=mat(0x322728,.74), roof=mat(0x203b43,.72), gold=mat(0xd8a85c,.45,.5), lacquer=mat(0x9d4a30,.6), lanternPaper=mat(0xffce8b,.46,0,0xffb34f), water=mat(0x183b56,.41,.12);
-function mesh(parent,geo,m,x=0,y=0,z=0,cast=true){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=cast;o.receiveShadow=true;parent.add(o);return o}
-function box(parent,w,h,d,x,y,z,m,cast=true){return mesh(parent,new THREE.BoxGeometry(w,h,d),m,x,y,z,cast)}
-function cyl(parent,rt,rb,h,x,y,z,m,seg=16){return mesh(parent,new THREE.CylinderGeometry(rt,rb,h,seg),m,x,y,z)}
-function sphere(parent,r,x,y,z,m,w=16,h=12){return mesh(parent,new THREE.SphereGeometry(r,w,h),m,x,y,z)}
-// NEW DOJO COURTYARD: octagonal raised platform with a framed, tiled combat zone.
-cyl(scene,21.2,22.5,2.4,0,-1.35,0,tileDark,8);
-cyl(scene,20.4,20.5,.2,0,-.07,0,stone,8);
-const arenaTiles=new THREE.Group();scene.add(arenaTiles);
-const tileGeo=new THREE.BoxGeometry(2.65,.06,2.65);
-for(let ix=-6;ix<=6;ix++)for(let iz=-6;iz<=6;iz++){
- const x=ix*2.79,z=iz*2.79;if(Math.hypot(x,z)>17.6)continue;
- mesh(arenaTiles,tileGeo,(ix+iz)%2?tileA:tileB,x,.064,z,false);
-}
-const ring=new THREE.Mesh(new THREE.TorusGeometry(17.95,.19,8,96),gold);ring.rotation.x=Math.PI/2;ring.position.y=.15;scene.add(ring);
-const smaller=new THREE.Mesh(new THREE.TorusGeometry(5.3,.07,6,70),tileDark);smaller.rotation.x=Math.PI/2;smaller.position.y=.125;scene.add(smaller);
-// Geometric flower crest under the fighters, engraved rather than a flat blank arena.
-const crestGroup=new THREE.Group();scene.add(crestGroup);
-for(let i=0;i<8;i++){const a=i*Math.PI/4;const petal=box(crestGroup,.26,.025,3.1,Math.sin(a)*2.5,.14,Math.cos(a)*2.5,gold,false);petal.rotation.y=a}
-cyl(crestGroup,.72,.72,.034,0,.16,0,gold,16);
-const sea=mesh(scene,new THREE.PlaneGeometry(380,380),water,0,-2.7,0,false);sea.rotation.x=-Math.PI/2;
-// Full roofline/gate shapes, not the placeholder forest of featureless pillars.
-function torii(x,z,rot=0){const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=rot;scene.add(g);
- for(const dx of [-3.4,3.4]){
-  box(g,.64,6.8,.72,dx,3.4,0,oxblood);
-  cyl(g,.49,.49,.3,dx,6.65,0,gold,12);
-  box(g,1.02,.3,1.05,dx,.35,0,stone);
- }
- box(g,8.7,.64,1.32,0,6.7,0,oxblood);
- box(g,10,.31,1.55,0,7.15,0,roof);
- box(g,8.2,.36,.8,0,5.45,0,beamDark);
- box(g,3,.68,.22,0,5.85,.5,gold);
- return g}
-torii(0,-22.1,0);torii(0,22.1,0);
-function dojo(x,z,rot=0){
- const g=new THREE.Group();g.position.set(x,-.18,z);g.rotation.y=rot;scene.add(g);
- box(g,10,1.1,7.2,0,.5,0,stone);
- box(g,10.5,.42,7.7,0,1.2,0,tileDark);
- for(const dx of [-4.2,0,4.2])for(const dz of [-2.7,2.7]){
-  cyl(g,.25,.27,4.55,dx,3.45,dz,oxblood,12);
-  box(g,.75,.35,.75,dx,5.65,dz,gold);
- }
- box(g,10,3.9,.23,0,3.3,3,beamDark);
- // Layered sloping roof, tuned to read as Japanese-inspired temple architecture.
- for(const side of [-1,1]){
-  const slope=box(g,11.7,.4,5.25,0,6.45,side*1.32,roof);slope.rotation.x=side*.22;
- }
- box(g,12.3,.3,.72,0,7.0,0,gold);
- for(let j=-2;j<=2;j++)box(g,.08,3.25,.11,j*1.75,3.25,3.15,gold,false);
- for(let j=-2;j<=2;j++)box(g,1.4,1.5,.08,j*1.75,3.2,-3.04,oxblood,false);
-}
-dojo(-25,-24,Math.PI/4);dojo(25,-24,-Math.PI/4);
-function lamp(x,z){const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
- cyl(g,.24,.33,3.6,0,1.8,0,oxblood,10);
- box(g,1.2,.22,1.22,0,3.58,0,roof);
- const paper=box(g,.88,1,.88,0,4.1,0,lanternPaper);
- box(g,1.35,.23,1.35,0,4.68,0,roof);
- for(const dx of [-.44,.44])for(const dz of [-.44,.44])box(g,.055,1,.055,dx,4.1,dz,beamDark,false);
- // Only a few real point lights to limit the 60 FPS cost.
- if(Math.abs(x)>16){const light=new THREE.PointLight(0xffa14c,3.5,13);light.position.set(x,4.3,z);scene.add(light)}
-}
-for(let i=0;i<8;i++){const a=(i+.5)*Math.PI/4;lamp(Math.sin(a)*19.4,Math.cos(a)*19.4)}
-function flag(x,z,color){const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
- cyl(g,.11,.11,6,0,3,0,beamDark,8);
- const cloth=box(g,1.6,2.5,.08,.85,4.5,0,mat(color,.95),false);cloth.rotation.z=-.08;
- box(g,1.88,.12,.13,.81,5.83,0,gold,false)}
-for(const a of [Math.PI/4,3*Math.PI/4,5*Math.PI/4,7*Math.PI/4])flag(Math.sin(a)*24,Math.cos(a)*24,0x8d3d3a);
-for(let i=0;i<18;i++){
- const a=i*2*Math.PI/18,x=Math.sin(a)*25,z=Math.cos(a)*25;
- cyl(scene,.72,.92,2.5+(i%3)*.55,x,1.1,z,tileDark,8);
-}
+// CHANGED: Replace the old blue water platform, sparse gates and box dojos.
+ // This call adds only static environment meshes. The gameplay radius, ground y=0,
+ // player positions, camera tracking, input, collisions and damage stay untouched.
+buildMountainMonastery(scene);
 // Combat stage contains no obstacles; all architecture is outside the fighting boundary.
 // CHANGED: All nine playable characters now use the exact same classic LEGO
 // CHANGED: minifigure body, rounded shoulders, hinged elbows, knees and waist.
