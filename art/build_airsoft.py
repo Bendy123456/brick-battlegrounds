@@ -69,10 +69,24 @@ def set_scene():
  bpy.context.scene.render.engine='CYCLES';bpy.context.scene.cycles.samples=16
 def save_and_export(fname,blend,objects=None):
  bpy.ops.wm.save_as_mainfile(filepath=os.path.join(ART,blend))
- bpy.ops.object.select_all(action='DESELECT')
+ # Keep individually editable, clearly named objects in the .blend source,
+ # then join identical-material objects only for the exported runtime GLB.
  targets=objects if objects is not None else [o for o in bpy.context.scene.objects if o.type=='MESH']
+ by_material={}
+ for obj in targets:
+  key=obj.active_material.name if obj.active_material else '_unpainted'
+  by_material.setdefault(key,[]).append(obj)
+ for mat_name,part_set in by_material.items():
+  if len(part_set)<2:continue
+  bpy.ops.object.select_all(action='DESELECT')
+  for item in part_set:item.select_set(True)
+  bpy.context.view_layer.objects.active=part_set[0]
+  bpy.ops.object.join()
+  bpy.context.object.name='BATCH_'+mat_name
+ targets=[o for o in bpy.context.scene.objects if o.type=='MESH']
+ bpy.ops.object.select_all(action='DESELECT')
  for o in targets:o.select_set(True)
- bpy.context.view_layer.objects.active=next(iter(targets))
+ bpy.context.view_layer.objects.active=targets[0]
  bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,fname),export_format='GLB',use_selection=True,
   export_yup=True,export_apply=True,export_normals=True,export_materials='EXPORT')
  bpy.ops.object.select_all(action='DESELECT')
