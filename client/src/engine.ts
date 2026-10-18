@@ -196,8 +196,8 @@ export class Engine{
   // Hide the unused posed mesh hierarchy, not a single hand mesh: all fingers,
   // knuckles and forearm pieces change together without touching shooting logic.
   this.weaponCore.traverse(object=>{
-   if(object.name==='GRIP_ONE_HAND')object.visible=!twoHanded;
-   if(object.name==='GRIP_TWO_HAND')object.visible=twoHanded;
+   if(object.name.startsWith('GRIP_ONE_HAND'))object.visible=!twoHanded;
+   if(object.name.startsWith('GRIP_TWO_HAND'))object.visible=twoHanded;
   });
  }
  toggleGrip(){
