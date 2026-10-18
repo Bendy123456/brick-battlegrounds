@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - art/import_authored_weapons.py
+      - art/anatomical_grips.py
       - .github/workflows/import-authored-weapons.yml
 permissions:
   contents: write
@@ -32,6 +33,8 @@ jobs:
       - name: Convert and export 9 individual game-ready Blender viewmodels
         run: |
           blender --background --python art/import_authored_weapons.py > /tmp/authored-weapons.log 2>&1 || { tail -160 /tmp/authored-weapons.log; exit 1; }
+          grep ANATOMICAL_GRIP_OK /tmp/authored-weapons.log
+          test "$(grep -c ANATOMICAL_GRIP_OK /tmp/authored-weapons.log)" -eq 9
           grep HAND_AUTHORED_SOURCE_IMPORTED /tmp/authored-weapons.log
           test "$(grep -c HAND_AUTHORED_SOURCE_IMPORTED /tmp/authored-weapons.log)" -eq 9
           test "$(find art/weapons -maxdepth 1 -name '*.blend' | wc -l)" -eq 9
