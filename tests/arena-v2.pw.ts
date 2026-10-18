@@ -6,7 +6,7 @@ test('The Arena V2 Blender environment loads with both bases, exact Rapier colli
  page.on('console',msg=>{if(msg.type()==='error')console.log('ARENA_CONSOLE_ERROR='+msg.text())});
  await page.goto('/?debug=1',{waitUntil:'domcontentloaded',timeout:60000});
  await expect(page.locator('#menu')).toBeVisible({timeout:30000});
- await expect.poll(async()=>await page.evaluate(()=> (window as any).__AIRSOFT_DEBUG__?.assetState),{
+ await expect.poll(async()=>await page.evaluate(()=> (window as any).__AIRSOFT_DEBUG__?.()?.assetState),{
   timeout:90000,intervals:[700,1200,1700]
  }).toBe('BLENDER ASSETS READY');
  const initial=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
