@@ -1,0 +1,41 @@
+name: Model All Nine Airsoft Replicas in Blender
+on:
+  push:
+    branches: [airsoft-nine-blender-weapons]
+    paths:
+      - art/build_airsoft_weapons.py
+      - .github/workflows/blender-weapons.yml
+permissions:
+  contents: write
+jobs:
+  weapons:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Install native Blender modeler and glTF export dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y blender python3-numpy
+          blender --version
+      - name: Build all nine distinct sculpted airsoft model sources and GLBs
+        run: |
+          blender --background --python art/build_airsoft_weapons.py > /tmp/airsoft-blender.log 2>&1 || { tail -120 /tmp/airsoft-blender.log; exit 1; }
+          grep 'AIRSOFT_WEAPON_MODEL_OK' /tmp/airsoft-blender.log
+          test "$(grep -c 'AIRSOFT_WEAPON_MODEL_OK' /tmp/airsoft-blender.log)" = 9
+          test "$(find art/weapons -maxdepth 1 -name '*.blend' | wc -l)" = 9
+          test "$(find client/public/assets/weapons -maxdepth 1 -name '*.glb' | wc -l)" = 9
+          du -h client/public/assets/weapons/*.glb
+      - name: Commit editable Blender models and optimized runtime GLBs
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add art/weapons/*.blend client/public/assets/weapons/*.glb
+          if ! git diff --cached --quiet; then
+            git commit -m 'Generate nine original professional airsoft Blender replicas and GLB viewmodels'
+            git fetch origin airsoft-nine-blender-weapons
+            git rebase origin/airsoft-nine-blender-weapons
+            git push origin HEAD:airsoft-nine-blender-weapons
+          fi
