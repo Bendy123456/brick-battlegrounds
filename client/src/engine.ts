@@ -137,7 +137,7 @@ export class Engine{
   // Nine original airsoft models are independently authored/exported in
   // Blender; none is a scaled clone of another weapon.
   const requests=[
-   loader.loadAsync('/assets/arena.glb?scene=THE_ARENA_V2_LANDMARK_02'),
+   loader.loadAsync('/assets/arena.glb?scene=ARENA_COVER_CIRCUIT_C_03'),
    ...WEAPONS.map(w=>loader.loadAsync('/assets/weapons/'+w.id+'.glb'))
   ];
   const results=await Promise.allSettled(requests);

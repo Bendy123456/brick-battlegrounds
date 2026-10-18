@@ -1,3 +1,17 @@
+## Arena V2: Cover Circuit C — original Blender airsoft cover rebuild
+
+**Selected aesthetic: realistic plywood + inflatable tournament bunkers (Option C).**
+
+This update adds **82 new gameplay-synchronized airsoft cover obstacles** on top of the industrial warehouse map: 64 detailed plywood / OSB tournament barricades and pallet stacks, and 18 molded soft-bunker inflatables. The plywood includes factory aluminum framing, braces, fasteners, painted safety caps and rental-field markings; the foam bunkers include stitched/welded sections, recessed patches and inflation fittings. Every obstacle is placed using the same `shared/arena-layout.json` model consumed by Blender and the server's Rapier collision.
+
+The cover network has staggered full-height plywood walls to interrupt long firing lanes, low waist-height cover for sliding/crouching, L-shaped corners for peeking, a few pallet stacks, two protected spawn approaches and eight extra upper-mezzanine barriers. Layout tests use a player-radius flood fill across a 1m floor grid and confirm both teams can still reach each other, that the opening sprint lane has several metres of clearance, and that the cover is mirrored. Additional solid cover blocks BB paths; netting remains BB-permeable. **Cover reduces exposure rather than providing guaranteed immunity from being hit.**
+
+Rebuild by running `blender --background --python art/build_arena_v2.py` and export `client/public/assets/arena.glb`; editable source `art/the_arena_v2.blend`. The client cache-busts the model with `ARENA_COVER_CIRCUIT_C_03`, and the top-left HUD displays **THE ARENA V2 · COVER CIRCUIT C** only after all Blender assets load.
+
+Limitations: bot AI remains heuristic, and real-PC performance needs testing with the denser map. These pieces are modelled procedural Blender game geometry rather than scanned photographs or handcrafted film-quality sculpts.
+
+---
+
 ## Arena V2 — landmark visual overhaul
 
 **Verified Blender export:** `art/the_arena_v2.blend` (~46 MB), `client/public/assets/arena.glb` (~29 MB), 122 synchronized world colliders, 22 material-batched render meshes. Updated public map URL is versioned; actual hardware FPS still needs user playtesting.

@@ -3,6 +3,7 @@
 import scene from './arena-layout.json';
 export type Obstacle={id:string,x:number,y:number,z:number,w:number,h:number,d:number,material:'concrete'|'metal'|'wood'|'net'|'foam',zone?:string};
 export const ARENA_VERSION=scene.version;
+export const COVER_EDITION=scene.coverEdition;
 export const MAP:Obstacle[]=scene.obstacles.map(v=>({...v,material:v.material as Obstacle['material']}));
 export const SPAWNS=scene.spawns;
 export function zoneName(x:number,z:number){

@@ -2,7 +2,7 @@ import {Engine} from './engine.ts';
 import {Controls,settings,binds,defaultBinds,resetBinds,rebind,saveSettings,updateSetting,anyPadConnected,padHasActivity} from './controls.ts';
 import {sfx,unlockAudio,setAudioVolume} from './audio.ts';
 import {WEAPONS,type Actor,type Input,type Snapshot} from '../../shared/config.ts';
-import {ARENA_VERSION,zoneName} from '../../shared/map.ts';
+import {ARENA_VERSION,COVER_EDITION,zoneName} from '../../shared/map.ts';
 import {$,show,notify} from './screen.ts';
 
 const controller=new Controls(),engine=new Engine();
@@ -25,7 +25,7 @@ const goto=(page:string)=>{
  if(page!=='game'&&document.pointerLockElement)document.exitPointerLock();
 };
 const status=(text:string)=>{$('menuMessage').textContent=text};
-const expectedArenaLabel='THE ARENA V2 · INDUSTRIAL SHOWDOWN';
+const expectedArenaLabel='THE ARENA V2 · COVER CIRCUIT C';
 function refreshArenaLabel(){
  const label=engine.assetState==='BLENDER ASSETS READY'
   ? expectedArenaLabel : 'MAP: LOADING / OLD BLOCKOUT';
@@ -258,7 +258,7 @@ if(new URLSearchParams(location.search).has('debug')){
  (window as any).__AIRSOFT_DEBUG__=()=>({
   screen,ready,paused,room,localHP:local?.hp,localAmmo:local?.ammo,
   socket:ws?.readyState,pointerLocked:!!document.pointerLockElement,
-  frames:engine.frame,assetState:engine.assetState,arenaVersion:ARENA_VERSION,arenaLabel:$('arenaBuild').textContent,lastInput:controller.lastInput,
+  frames:engine.frame,assetState:engine.assetState,arenaVersion:ARENA_VERSION,coverEdition:COVER_EDITION,arenaLabel:$('arenaBuild').textContent,lastInput:controller.lastInput,
    playerX:engine.localPos.x,playerY:engine.localPos.y,playerZ:engine.localPos.z,
    cameraY:engine.camera.position.y,serverError:engine.lastServerError,renderFPS:Math.round(measuredFPS),
    slideTime:engine.motion.slideTime,slideCooldown:engine.motion.cooldown,velocity:engine.strideSpeed,serverSlide:local?.sliding,serverSprint:local?.sprinting,

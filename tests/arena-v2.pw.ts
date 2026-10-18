@@ -11,7 +11,8 @@ test('The Arena V2 Blender environment loads with both bases, exact Rapier colli
  }).toBe('BLENDER ASSETS READY');
  const initial=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
  expect(initial.arenaVersion).toBe('THE_ARENA_V2');
- expect(initial.arenaLabel).toContain('INDUSTRIAL SHOWDOWN');
+ expect(initial.arenaLabel).toContain('COVER CIRCUIT C');
+ expect(initial.coverEdition).toBe('COVER_CIRCUIT_C_03');
  expect(initial.clientOnlyProps).toBe(0);
  expect(initial.weaponModelCount).toBe(9);
  await page.locator('#vsBot').click();
