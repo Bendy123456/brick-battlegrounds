@@ -3,7 +3,7 @@ on:
   push:
     branches: [arena-v3-cover-circuit]
     paths:
-      - 'art/build_arena_v2.py'
+      - 'art/build_cover_circuit.py'
       - 'shared/arena-layout.json'
       - '.github/workflows/blender-arena-v2.yml'
 permissions:
@@ -11,7 +11,7 @@ permissions:
 jobs:
   blender-model:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,11 +21,11 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y blender python3-numpy
           blender --version
-      - name: Build real detailed Blender map with PBR textures
+      - name: Add detailed airsoft cover to existing Blender warehouse
         run: |
-          blender --background --python art/build_arena_v2.py > /tmp/arena-v2.log 2>&1 || { tail -130 /tmp/arena-v2.log; exit 1; }
+          blender --background --python art/build_cover_circuit.py > /tmp/arena-v2.log 2>&1 || { tail -130 /tmp/arena-v2.log; exit 1; }
           tail -14 /tmp/arena-v2.log
-          grep THE_ARENA_V2_BUILD_SUCCESS /tmp/arena-v2.log
+          grep COVER_CIRCUIT_C_BUILD_SUCCESS /tmp/arena-v2.log
           test -s art/the_arena_v2.blend
           test -s client/public/assets/arena.glb
           ls -lh art/the_arena_v2.blend client/public/assets/arena.glb
