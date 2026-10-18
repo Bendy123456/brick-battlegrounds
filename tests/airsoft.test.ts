@@ -11,5 +11,5 @@ describe('airsoft damage and match rules',()=>{
 });
 describe('indoor blockout',()=>{
  it('has 120x80 floor and opposing symmetrical spawns',()=>{expect(MAP.find(b=>b.id==='arena-floor')?.w).toBe(120);expect(MAP.find(b=>b.id==='arena-floor')?.d).toBe(80);expect(SPAWNS[0].x).toBe(-SPAWNS[1].x)});
- it('has zone labels',()=>{expect(zoneName(-45,0)).toBe('WEST WING');expect(zoneName(45,0)).toBe('EAST WING');expect(zoneName(0,0)).toBe('CENTER COURT')});
+ it('has zone labels',()=>{expect(zoneName(-45,0)).toBe('RED BASE');expect(zoneName(45,0)).toBe('BLUE BASE');expect(zoneName(0,0)).toBe('CENTRAL')});
 });
