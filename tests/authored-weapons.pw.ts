@@ -1,6 +1,8 @@
 import {test,expect} from '@playwright/test';
 
 test('artist-authored weapon pack loads and displays in real first-person play',async({page})=>{
+ // Three live software-WebGL frames can exceed the generic 95s suite timeout.
+ test.setTimeout(240000);
  const errors:string[]=[];
  page.on('pageerror',e=>errors.push(e.message));
  await page.setViewportSize({width:960,height:540});
