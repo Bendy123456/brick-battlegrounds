@@ -167,7 +167,14 @@ test('render throttling does not starve authoritative sprint input packets',asyn
  expect(after.ackSeq).toBeGreaterThan(before.ackSeq+10);
  expect(after.inputAgeMs).toBeLessThan(600);
  const distance=Math.hypot(after.serverX-before.serverX,after.serverZ-before.serverZ);
- expect(distance).toBeGreaterThan(9);
+ // Cover Circuit C intentionally places an impact-rated plywood bunker
+ // ~6m ahead of red spawn. The authoritative runner should advance to it
+ // even when requestAnimationFrame is throttled, then stop at its collider.
+ // The former >9m expectation predated the protective cover.
+ expect(distance).toBeGreaterThan(4.8);
+ expect(distance).toBeLessThan(6.5);
+ expect(after.serverX).toBeGreaterThan(-49);
+ expect(after.serverX).toBeLessThan(-47.25);
  expect(after.cameraY).toBeGreaterThan(.2);
  expect(errors).toEqual([]);
 });
