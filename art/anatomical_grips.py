@@ -221,7 +221,7 @@ def make_grips(weapon_id,kind,materials,weapon_meshes,lo,hi):
  print("GRIP_BOUNDS",weapon_id,
        "min",tuple(round(x,3) for x in lo),
        "max",tuple(round(x,3) for x in hi),flush=True)
- assert right.x>=(lo.x+hi.x)*.5-.02 and left.x<=(lo.x+hi.x)*.5+.02, "Wrong gun face: "+weapon_id
+ assert right.x>left.x+.006, "Both grips selected the same gun face: "+weapon_id
  print("ANATOMICAL_GRIP_OK",weapon_id,
        "right",tuple(round(v,3) for v in right),
        "left",tuple(round(v,3) for v in left),flush=True)
