@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import RAPIER from '@dimforge/rapier3d-compat';
 import {MAP,SPAWNS,type Obstacle} from '../../shared/map.ts';
 import {WEAPONS,type Input,type Snapshot} from '../../shared/config.ts';
@@ -18,6 +19,9 @@ export class Engine{
  weapon=new THREE.Group();weaponCore=new THREE.Group();muzzle:THREE.PointLight;
  lastWeapon=-1; recoil=0;walkPhase=0;eyeBob=0;frame=0;lastStep=0;
  readonly temp=new THREE.Object3D();
+ readonly oldBlockout:THREE.Object3D[]=[];
+ blenderArena:THREE.Group|null=null;blenderViewmodel:THREE.Group|null=null;
+ assetState='LOADING 3D ASSETS';
  constructor(){
   this.scene.background=new THREE.Color(0x18252b);
   this.scene.fog=new THREE.FogExp2(0x192b31,.0065);
@@ -38,6 +42,7 @@ export class Engine{
   await RAPIER.init();
   this.world=new RAPIER.World({x:0,y:-20,z:0});this.world.timestep=1/60;
   this.buildMap();this.createLocal(0);this.setWeapon(0);
+  await this.loadAuthoredAssets();
  }
  buildMap(){
   const groups=new Map<string,Obstacle[]>();
@@ -61,7 +66,7 @@ export class Engine{
     this.temp.scale.set(b.w,b.h,b.d);
     this.temp.updateMatrix();mesh.setMatrixAt(i,this.temp.matrix)
    });
-   mesh.instanceMatrix.needsUpdate=true;this.scene.add(mesh);
+   mesh.instanceMatrix.needsUpdate=true;this.scene.add(mesh);this.oldBlockout.push(mesh);
   }
   // Industrial lamps, light shafts, painted lane strips, and steel roof beams.
   const stripe=new THREE.MeshStandardMaterial({color:0xb6c75a,emissive:0x405522,emissiveIntensity:.24});
@@ -109,10 +114,45 @@ export class Engine{
   this.enemy=buildClassicNinja(new THREE.Color(side?0xd8ca5e:0xd24c46));
   this.enemy.scale.setScalar(1.0);this.scene.add(this.enemy);
  }
+ async loadAuthoredAssets(){
+  const loader=new GLTFLoader();
+  const [stage,viewmodel]=await Promise.allSettled([
+   loader.loadAsync('/assets/arena.glb'),
+   loader.loadAsync('/assets/aeg_viewmodel.glb')
+  ]);
+  if(stage.status==='fulfilled'){
+   this.blenderArena=stage.value.scene;
+   this.blenderArena.traverse(node=>{
+    if((node as THREE.Mesh).isMesh){
+     const mesh=node as THREE.Mesh;
+     mesh.receiveShadow=true;
+     mesh.castShadow=false; // Large static level keeps shadow budget small.
+     mesh.frustumCulled=true;
+    }
+   });
+   this.scene.add(this.blenderArena);
+   for(const placeholder of this.oldBlockout)placeholder.visible=false;
+  }else console.warn('Blender arena unavailable; preserving playable collision blockout.',stage.reason);
+  if(viewmodel.status==='fulfilled'){
+   this.blenderViewmodel=viewmodel.value.scene;
+   this.lastWeapon=-1;this.setWeapon(0);
+  }else console.warn('Blender airsoft viewmodel unavailable; using basic practice rig.',viewmodel.reason);
+  this.assetState=stage.status==='fulfilled'&&viewmodel.status==='fulfilled'?'BLENDER ASSETS READY':'BLOCKOUT BACKUP MODE';
+  return this.assetState;
+ }
  setWeapon(index:number){
   if(this.lastWeapon===index)return;this.lastWeapon=index;
   this.weaponCore.clear();
   const w=WEAPONS[index]||WEAPONS[0],compact=w.role.includes('PISTOL'),long=w.role.includes('BOLT');
+  if(this.blenderViewmodel){
+   const model=this.blenderViewmodel.clone(true);
+   // One original Blender AEG is the polished v1 viewmodel; shortened variants
+   // are deliberately cosmetic until dedicated per-weapon models are authored.
+   model.scale.setScalar(compact?.82:long?1.12:1);
+   model.position.set(0,compact?-.015:0,compact?.085:0);
+   model.traverse(o=>{if((o as THREE.Mesh).isMesh)(o as THREE.Mesh).castShadow=false});
+   this.weaponCore.add(model);return;
+  }
   const frame=new THREE.MeshStandardMaterial({color:0x343e40,metalness:.58,roughness:.42});
   const plastic=new THREE.MeshStandardMaterial({color:0x222b28,metalness:.12,roughness:.4});
   const accent=new THREE.MeshStandardMaterial({color:0xb8c997,metalness:.15,roughness:.5});
@@ -208,7 +248,7 @@ export class Engine{
   this.muzzle.intensity*=Math.exp(-dt*32);
   this.renderer.render(this.scene,this.camera);
   this.frame++;
-  if(this.frame%35===0)$('debug').textContent='DRAW CALLS '+this.renderer.info.render.calls+'  |  TRIANGLES '+this.renderer.info.render.triangles;
+  if(this.frame%35===0)$('debug').textContent='DRAW CALLS '+this.renderer.info.render.calls+'  |  TRIANGLES '+this.renderer.info.render.triangles+'  |  '+this.assetState;
  }
  resize(){this.camera.aspect=innerWidth/innerHeight;this.camera.updateProjectionMatrix();this.renderer.setSize(innerWidth,innerHeight)}
 }
