@@ -1,7 +1,7 @@
 name: Model All Nine Airsoft Replicas in Blender
 on:
   push:
-    branches: [airsoft-nine-blender-weapons]
+    branches: [main]
     paths:
       - art/build_airsoft_weapons.py
       - .github/workflows/blender-weapons.yml
@@ -35,7 +35,7 @@ jobs:
           git add art/weapons/*.blend client/public/assets/weapons/*.glb
           if ! git diff --cached --quiet; then
             git commit -m 'Generate nine original professional airsoft Blender replicas and GLB viewmodels'
-            git fetch origin airsoft-nine-blender-weapons
-            git rebase origin/airsoft-nine-blender-weapons
-            git push origin HEAD:airsoft-nine-blender-weapons
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
           fi
