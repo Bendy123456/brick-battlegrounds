@@ -220,12 +220,10 @@ export class Engine{
   const original=this.weaponModels.get(index);
   if(original){
    const model=original.clone(true);
-   // Grow just the authored weapon meshes (including the orange tip), rather
-   // than enlarging the bare hands and forearms that share this GLB.
-   // The importer prefixes original gun meshes with AUTHORED; appended hand
-   // meshes use different names and keep their normal first-person proportions.
+   // Keep the artist-authored gun meshes, orange tip, and anatomical hands
+   // together, so they remain physically connected when the viewmodel grows.
    const weaponArt=new THREE.Group();
-   weaponArt.name='Weapon size adjustment - hands excluded';
+   weaponArt.name='Scaled FPS weapon and grip poses';
    model.add(weaponArt);
    const gunParts:THREE.Object3D[]=[];
    model.traverse(part=>{
@@ -246,11 +244,12 @@ export class Engine{
    });
    for(const part of gunParts)weaponArt.attach(part);
    for(const grip of gripRoots)weaponArt.attach(grip);
-   weaponArt.scale.setScalar(index>=7?1.31:1.28);
-   // Retain the proven first-person camera placement and weapon-specific scale.
+   // Closer, fuller COD-style first-person framing, including both grip rigs.
+   weaponArt.scale.setScalar(index>=7?1.48:1.42);
+   // Preserve the weapon-type tuning while moving the whole assembly toward the camera.
    const scale=index===6?.62:index===5?.70:index>=7?.83:index===4?.76:.70;
    model.scale.setScalar(gunParts.length?scale:scale*1.12);
-   model.position.set(0,0,-.12);
+   model.position.set(.06,-.03,-.03);
    this.weaponCore.add(model);
    // Rifles / shotguns / snipers default to two hands, sidearms to one.
    this.setGrip(this.gripModes.get(index)??(index<7));
