@@ -12,7 +12,11 @@ async function loadArena(){
 }
 const $=id=>document.getElementById(id);
 // Hoisted declaration: select(0) below must be able to call send during bootstrap.
-function send(m){if(ws?.readyState===1)ws.send(JSON.stringify(m))}
+function send(m){
+ if(ws?.readyState!==1)return false;
+ if(m.type==='state'&&ws.bufferedAmount>96000)return false;
+ try{ws.send(JSON.stringify(m));return true}catch{return false}
+}
 
 const chars=[
  ['AZURE','#137db8','#163e57','STORM BLADE','Balanced speed and electric blade techniques.'],
@@ -25,8 +29,10 @@ const chars=[
  ['ORCHID','#783ca3','#412858','ARCANE BLADE','Mysterious movement and charged attacks.'],
  ['ROSE','#ce577c','#6e2d4c','BLOSSOM BLADE','Fast dodges and graceful combos.']
 ];
-let chosen=0,peerChoice=1,mode='solo',ws=null,room='',slot=0,peerReady=false,myReady=false,peerCount=0,screen='lobby',inFight=false;const elements=[...document.querySelectorAll('.page')];
-const show=(id)=>{screen=id;document.body.classList.toggle('in-match',id==='none');elements.forEach(e=>e.classList.toggle('show',e.id===id));$('grain').style.display=id==='none'?'none':'block';$('hud').classList.toggle('hidden',id!=='none');$('gameHelp').classList.toggle('hidden',id!=='none');$('quit').classList.toggle('hidden',id!=='none');$('audioToggle').classList.toggle('hidden',id!=='none');$('reticle').style.display=id==='none'?'block':'none'};
+let chosen=0,peerChoice=1,mode='solo',ws=null,room='',slot=0,peerReady=false,myReady=false,peerCount=0,screen='lobby',inFight=false;
+let resumeToken='',reconnectTimer=null,reconnectStarted=0,reconnectTries=0,lastPong=0,lastPing=0,lastPeerFrame=0,networkPaused=false;
+const elements=[...document.querySelectorAll('.page')];
+const show=(id)=>{screen=id;document.body.classList.toggle('in-match',id==='none');elements.forEach(e=>e.classList.toggle('show',e.id===id));$('grain').style.display=id==='none'?'none':'block';$('hud').classList.toggle('hidden',id!=='none');$('gameHelp').classList.toggle('hidden',id!=='none');$('quit').classList.toggle('hidden',id!=='none');$('audioToggle').classList.toggle('hidden',id!=='none');if(id!=='none')$('netStatus').classList.add('hidden');$('reticle').style.display=id==='none'?'block':'none'};
 const toast=t=>{$('lobbyMsg').textContent=t;};
 // CHANGED: Roster icons show the SAME plain-colored classic LEGO heads as the in-game fighters.
 // CHANGED: No torso, hands, legs, head mask, or decorative emblems remain in the portrait.
@@ -52,22 +58,156 @@ function select(i){
   send({type:'select',character:chosen});
 }
 $('rosterGrid').addEventListener('click',e=>{let b=e.target.closest('.roster-item');if(b)select(Number(b.dataset.index))});
-function connect(){return new Promise((resolve,reject)=>{const url=(location.protocol==='https:'?'wss':'ws')+'://'+location.host;let sock=new WebSocket(url);let settled=false;sock.onopen=()=>{ws=sock;settled=true;resolve(sock)};sock.onerror=()=>{if(!settled)reject(new Error('Online server unavailable. This preview needs the Node server.'))};sock.onclose=()=>{if(ws===sock){ws=null;if(mode==='online'){peerCount=0;$('waitStatus').textContent='Connection lost. Return to menu and try again.';if(inFight)gameEvents.onDisconnect?.();}}};sock.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}onMessage(m)}})}
+function onlineStatus(paused,message=''){
+ networkPaused=paused;
+ arena?.setNetworkPaused?.(paused);
+ const banner=$('netStatus');
+ banner.textContent=message||'CONNECTION RECOVERED';
+ banner.classList.toggle('hidden',!inFight||!paused||mode!=='online');
+}
+function finishLostConnection(message){
+ if(reconnectTimer){clearTimeout(reconnectTimer);reconnectTimer=null}
+ stopFight();inFight=false;room='';resumeToken='';mode='solo';peerCount=0;
+ $('result').classList.add('hidden');show('lobby');
+ toast(message||'Connection lost. Create a new online room.');
+}
+function reconnectSoon(delay=800){
+ if(mode!=='online'||!room||!resumeToken||reconnectTimer)return;
+ if(!reconnectStarted)reconnectStarted=Date.now();
+ if(Date.now()-reconnectStarted>29000){
+  finishLostConnection('Could not restore the match. Please create a new online room.');return;
+ }
+ reconnectTimer=setTimeout(async()=>{
+  reconnectTimer=null;if(mode!=='online'||!room)return;
+  try{await connect(true)}
+  catch{reconnectTries++;reconnectSoon(Math.min(3000,700+reconnectTries*500))}
+ },delay);
+}
+function connect(resuming=false){
+ return new Promise((resolve,reject)=>{
+  const url=(location.protocol==='https:'?'wss':'ws')+'://'+location.host;
+  const sock=new WebSocket(url);let settled=false;
+  sock.onopen=()=>{
+   ws=sock;settled=true;lastPong=performance.now();lastPing=0;
+   if(resuming)send({type:'resume',code:room,token:resumeToken});
+   resolve(sock);
+  };
+  sock.onerror=()=>{
+   if(!settled){settled=true;reject(new Error('Could not connect to the online server.'))}
+  };
+  sock.onclose=()=>{
+   if(!settled){settled=true;reject(new Error('Connection closed before opening.'))}
+   if(ws!==sock)return;
+   ws=null;
+   if(mode==='online'&&room){
+    onlineStatus(true,'CONNECTION INTERRUPTED · RECONNECTING…');
+    reconnectSoon();
+   }
+  };
+  sock.onmessage=e=>{
+   let m;try{m=JSON.parse(e.data)}catch{return}
+   if(ws===sock)onMessage(m);
+  };
+ });
+}
+setInterval(()=>{
+ if(mode!=='online'||!room)return;
+ const t=performance.now();
+ if(ws?.readyState===1){
+  if(lastPong&&t-lastPong>15000){
+   onlineStatus(true,'NETWORK TIMEOUT · RECONNECTING…');
+   ws.close();return;
+  }
+  if(t-lastPing>4000){lastPing=t;send({type:'ping',t:Date.now()})}
+  if(inFight&&lastPeerFrame&&t-lastPeerFrame>4500){
+   onlineStatus(true,'OPPONENT SIGNAL LOST · CHECKING CONNECTION…');
+  }
+ }
+},1000);
 
-function onMessage(m){if(m.type==='error'){toast(m.message);$('waitStatus').textContent=m.message;return}if(m.type==='joined'){room=m.code;slot=m.slot;peerCount=slot+1;mode='online';myReady=false;peerReady=false;$('copyCode').innerHTML=`${room} <span>⧉ COPY</span>`;$('waitStatus').textContent='Waiting for your opponent to join...';show('waiting');return}if(m.type==='players'){peerCount=m.count;$('waitStatus').textContent=m.count===2?'Opponent joined! Pick your fighters.':'Waiting for another player...';if(screen==='selectScreen')select(chosen);return}if(m.type==='peerSelect'){peerChoice=m.character;return}if(m.type==='peerReady'){peerReady=m.ready;if(screen==='selectScreen')$('roomStatus').textContent=`ROOM ${room} · OPPONENT ${peerReady?'READY':'CHOOSING'} · YOU ${myReady?'READY':'CHOOSING'}`;return}if(m.type==='begin'){myReady=false;peerReady=false;launch();return}if(m.type==='peerLeft'){peerCount=1;peerReady=false;myReady=false;if(inFight){stopFight();inFight=false;$('resultTitle').textContent='OPPONENT LEFT';$('resultText').textContent='Your opponent disconnected from the match.';$('result').classList.remove('hidden')}else{$('waitStatus').textContent='Your opponent left. Waiting for another player.';show('waiting')}return}if(m.type==='peerState'){receivePeerState(m.data);return}if(m.type==='peerAttack'){receivePeerAttack(m.kind);return}if(m.type==='damage'){receiveDamage(m.damage,m.knockdown===true,m.stun===true,m.spinjitzuFinisher===true);return}}
-function lobby(){stopFight();inFight=false;send({type:'leave'});mode='solo';room='';peerCount=0;myReady=false;$('result').classList.add('hidden');show('lobby')}
+function onMessage(m){
+ if(m.type==='pong'){lastPong=performance.now();return}
+ if(m.type==='resumeFailed'){finishLostConnection(m.message);return}
+ if(m.type==='resumed'){
+  room=m.code;slot=m.slot;resumeToken=m.resumeToken||resumeToken;
+  peerCount=m.peerCount||1;
+  if(Number.isInteger(m.peerCharacter))peerChoice=m.peerCharacter;
+  reconnectStarted=0;reconnectTries=0;
+  lastPeerFrame=performance.now();
+  onlineStatus(peerCount<2,peerCount<2?'WAITING FOR OPPONENT TO RECONNECT…':'');
+  return;
+ }
+ if(m.type==='peerPaused'){
+  onlineStatus(true,'OPPONENT DISCONNECTED · HOLDING MATCH FOR RECONNECT…');return;
+ }
+ if(m.type==='peerStalled'){
+  onlineStatus(true,'OPPONENT GAME IS NOT RESPONDING…');return;
+ }
+ if(m.type==='peerActive'||m.type==='peerResumed'){
+  lastPeerFrame=performance.now();
+  onlineStatus(false);return;
+ }
+ if(m.type==='error'){toast(m.message);$('waitStatus').textContent=m.message;return}
+ if(m.type==='joined'){
+  room=m.code;slot=m.slot;resumeToken=m.resumeToken||'';
+  reconnectStarted=0;reconnectTries=0;peerCount=slot+1;mode='online';
+  myReady=false;peerReady=false;
+  $('copyCode').innerHTML=room+' <span>⧉ COPY</span>';
+  $('waitStatus').textContent='Waiting for your opponent to join...';
+  show('waiting');return
+ }
+ if(m.type==='players'){
+  peerCount=m.count;
+  if(!inFight)$('waitStatus').textContent=m.count===2?'Opponent joined! Pick your fighters.':'Waiting for another player...';
+  if(screen==='selectScreen')select(chosen);
+  return
+ }
+ if(m.type==='peerSelect'){peerChoice=m.character;return}
+ if(m.type==='peerReady'){
+  peerReady=m.ready;
+  if(screen==='selectScreen')$('roomStatus').textContent=
+   'ROOM '+room+' · OPPONENT '+(peerReady?'READY':'CHOOSING')+' · YOU '+(myReady?'READY':'CHOOSING');
+  return
+ }
+ if(m.type==='begin'){
+  myReady=false;peerReady=false;lastPeerFrame=performance.now();
+  launch();return
+ }
+ if(m.type==='peerLeft'){
+  peerCount=1;peerReady=false;myReady=false;
+  if(inFight){
+   stopFight();inFight=false;onlineStatus(false);
+   $('resultTitle').textContent='OPPONENT LEFT';
+   $('resultText').textContent='Your opponent disconnected from the match.';
+   $('result').classList.remove('hidden');
+  }else{
+   $('waitStatus').textContent='Your opponent left. Waiting for another player.';
+   show('waiting')
+  }
+  return
+ }
+ if(m.type==='peerState'){
+  lastPeerFrame=performance.now();
+  receivePeerState(m.data);
+  if(networkPaused&&ws?.readyState===1&&inFight&&peerCount===2)onlineStatus(false);
+  return
+ }
+ if(m.type==='peerAttack'){receivePeerAttack(m.kind);return}
+ if(m.type==='damage'){receiveDamage(m.damage,m.knockdown===true,m.stun===true,m.spinjitzuFinisher===true);return}
+}
+function lobby(){if(reconnectTimer){clearTimeout(reconnectTimer);reconnectTimer=null}stopFight();inFight=false;send({type:'leave'});mode='solo';room='';resumeToken='';reconnectStarted=0;peerCount=0;myReady=false;networkPaused=false;$('result').classList.add('hidden');show('lobby')}
 function selectScreen(){show('selectScreen');select(chosen);$('confirm').textContent='CONFIRM FIGHTER →'}
 async function launch(){
   $('confirm').disabled=true;
   $('confirm').textContent='LOADING 3D ARENA...';
-  try{const a=await loadArena();a.setMode(mode,slot);a.setCharacters(chars[chosen],chars[peerChoice]);show('none');$('result').classList.add('hidden');inFight=true;a.startFight();}
+  try{const a=await loadArena();a.setMode(mode,slot);a.setCharacters(chars[chosen],chars[peerChoice]);show('none');$('result').classList.add('hidden');inFight=true;a.startFight();onlineStatus(mode==='online'&&peerCount<2,'WAITING FOR OPPONENT CONNECTION…');}
   catch(e){show('selectScreen');$('roomStatus').textContent=e.message;inFight=false;}
   finally{$('confirm').disabled=false;$('confirm').textContent='CONFIRM FIGHTER →';}
 }
 $('solo').onclick=()=>{mode='solo';peerChoice=1;selectScreen()};$('create').onclick=async()=>{try{if(!ws||ws.readyState!==1)await connect();send({type:'create'})}catch(e){toast(e.message)}};$('join').onclick=async()=>{const code=$('roomInput').value.trim().toUpperCase();if(code.length!==6){toast('Enter a 6-character room code.');return}try{if(!ws||ws.readyState!==1)await connect();send({type:'join',code})}catch(e){toast(e.message)}};
 $('roomInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('join').click()});$('copyCode').onclick=async()=>{try{await navigator.clipboard.writeText(room);$('waitStatus').textContent='Room code copied!'}catch{$('waitStatus').textContent='Your room code: '+room}};$('waitingSelect').onclick=selectScreen;$('cancelRoom').onclick=lobby;$('backHome').onclick=()=>{if(mode==='online')show('waiting');else lobby()};$('confirm').onclick=()=>{if(mode==='solo'){launch();return}if(peerCount<2){$('roomStatus').textContent='Waiting for your opponent to join...';return}myReady=!myReady;send({type:'ready',ready:myReady});$('confirm').textContent=myReady?'CANCEL READY':'READY TO FIGHT →';$('roomStatus').textContent=myReady?'READY! Waiting for your opponent...':'Select your fighter and ready up.'};$('quit').onclick=lobby;$('resultExit').onclick=lobby;$('again').onclick=()=>{if(mode==='solo'){launch()}else{stopFight();inFight=false;myReady=false;selectScreen()}};
 let menuPadCooldown=0,oldButtons=[];function menus(){requestAnimationFrame(menus);const p=Array.from(navigator.getGamepads?.()||[]).find(Boolean);if(!p)return;const now=performance.now();const buttons=p.buttons.map(b=>b.pressed);const edge=n=>buttons[n]&&!oldButtons[n];if(screen==='selectScreen'){const horizontal=(p.axes[0]>.55?1:p.axes[0]<-.55?-1:0);const vertical=(p.axes[1]>.55?3:p.axes[1]<-.55?-3:0);if(now>menuPadCooldown&&(horizontal||vertical||edge(14)||edge(15)||edge(12)||edge(13))){const step=(edge(14)?-1:0)+(edge(15)?1:0)+(edge(12)?-3:0)+(edge(13)?3:0)+horizontal+vertical;select(chosen+step);menuPadCooldown=now+180}if(edge(0))$('confirm').click();if(edge(1))$('backHome').click()}if(screen==='lobby'&&edge(0))$('solo').click();if(screen==='waiting'&&edge(0))$('waitingSelect').click();oldButtons=buttons}menus();
-gameEvents.onState=data=>send({type:'state',data});gameEvents.onAttack=kind=>send({type:'attack',kind});gameEvents.onHit=(damage,effects={})=>send({type:'hit',damage,knockdown:effects.knockdown===true,stun:effects.stun===true,spinjitzuFinisher:effects.spinjitzuFinisher===true});gameEvents.onEnd=win=>{inFight=false;$('resultTitle').textContent=win?'VICTORY':'DEFEAT';$('resultText').textContent=win?'You conquered the battleground.':'Your opponent took the round.';$('result').classList.remove('hidden')};gameEvents.onDisconnect=()=>{};
+gameEvents.onState=data=>send({type:'state',data});gameEvents.onAttack=kind=>send({type:'attack',kind});gameEvents.onHit=(damage,effects={})=>send({type:'hit',damage,knockdown:effects.knockdown===true,stun:effects.stun===true,spinjitzuFinisher:effects.spinjitzuFinisher===true});gameEvents.onEnd=win=>{inFight=false;$('resultTitle').textContent=win?'VICTORY':'DEFEAT';$('resultText').textContent=win?'You conquered the battleground.':'Your opponent took the round.';$('result').classList.remove('hidden')};gameEvents.onDisconnect=()=>onlineStatus(true,'CONNECTION INTERRUPTED · RECONNECTING…');
 show('lobby');select(0);
 // CHANGED: Lazy-load the interactive cinematic dojo. An unsupported WebGL
 // browser retains the styled fallback; menu buttons and the separate fighter

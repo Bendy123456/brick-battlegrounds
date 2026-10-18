@@ -57,8 +57,9 @@ const p=fighter(0x1186ca,-3.8,0),cpu=fighter(0xc83d39,3.8,0);
 // CHANGED: Cache neutral joint rotations before the first animation frame.
 captureCombatRest(p);captureCombatRest(cpu);
 export const gameEvents={onState:null,onAttack:null,onHit:null,onEnd:null,onDisconnect:null};
-let gameMode='solo',remoteState=null,netTick=0,playerSlot=0;
-export function setMode(m,slot=0){gameMode=m;playerSlot=slot;remoteState=null;netTick=0}
+let gameMode='solo',remoteState=null,netTick=0,playerSlot=0,networkPaused=false;
+export function setNetworkPaused(value){networkPaused=!!value}
+export function setMode(m,slot=0){gameMode=m;playerSlot=slot;remoteState=null;netTick=0;networkPaused=false}
 // CHANGED: Every roster choice now recolors the same classic minifigure, and
 // CHANGED: color changes are isolated to this fighter (no shared materials).
 function dressFighter(f,c){
@@ -502,7 +503,7 @@ function animate(){
  const input=pollInput();
  if(frozen)bufferInput(input);else restoreInput(input);
  if(!frozen&&input.target){lock=!lock;$('reticle').style.display=lock?'block':'none'}
- if(running&&!frozen){
+ if(running&&!frozen&&!(gameMode==='online'&&networkPaused)){
   time=Math.max(0,time-dt);
   updateFighter(p,cpu,dt,input);
   if(gameMode==='solo')updateFighter(cpu,p,dt,cpuInput(dt));

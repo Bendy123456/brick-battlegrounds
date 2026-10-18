@@ -1,4 +1,12 @@
-# BRICK BATTLEGROUNDS — v0.8.28 LEGO-STYLE AUDIO PASS
+# BRICK BATTLEGROUNDS — v0.8.29 ONLINE CONNECTION RECOVERY
+
+- Fixes matches silently freezing when a WebSocket dies: both browsers now show a clear reconnecting/waiting message and pause game time instead of letting attacks occur against a frozen opponent.
+- Each room slot has a unique ephemeral recovery token; a player can automatically resume the exact same player slot within 30 seconds after a dropped connection. Other player sees pause/resume status.
+- Server and client now use WebSocket heartbeat checks and periodic ping/pong, detect stale incoming player-state packets, cap state-message backpressure and properly report failed restores.
+- Prevents duplicate spawn slots if the host leaves and another friend joins; reconnects retain original slot and selected character.
+- Server no longer depends on disconnected WebSocket objects as room roster entries. If the Node service restarts and loses in-memory rooms, a clear room-expired message appears instead of a frozen fight.
+- Existing 3D arena, controller mappings, damage and hitboxes, sound effects, Spinjitzu, CPU solo mechanics and rendering remain unchanged.
+
 
 - Replaced generic bass-heavy punches with dry, layered, slightly randomized plastic clicks and hollow LEGO-like clacks for clean light strikes, heavier double impacts, blocks, guard breaks and knockdowns.
 - Replaced the short synth Spinjitzu cue with sustained two-layer rushing wind, softly modulated to swirl while the actual 2-second ability is active; it fades immediately when the move finishes, is interrupted, a round ends, or a match is exited.

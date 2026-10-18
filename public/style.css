@@ -752,3 +752,10 @@
 #audioToggle[aria-pressed="false"]{color:#b4b8b7;border-color:#6d7778}
 @media(max-width:700px){#audioToggle{right:auto;left:14px;bottom:70px;
  font-size:10px;padding:9px 10px}}
+
+/* v0.8.29: show stalled multiplayer connections, never silently freeze an opponent. */
+#netStatus{position:fixed;z-index:10;left:50%;top:19%;transform:translateX(-50%);
+ width:min(580px,calc(100vw - 30px));padding:15px 22px;text-align:center;
+ background:#140d12e8;border:1px solid #edbb68;color:#fff2d8;box-shadow:0 12px 45px #000b;
+ border-radius:5px;font:800 clamp(12px,1.2vw,16px) Inter,Arial,sans-serif;letter-spacing:.07em;
+ pointer-events:none}
