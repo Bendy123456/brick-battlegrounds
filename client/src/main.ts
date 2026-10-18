@@ -13,7 +13,16 @@ const open=()=>{if(ws?.readyState===WebSocket.OPEN)return true;return false};
 const send=(msg:any)=>{
  if(open()&&ws!.bufferedAmount<100000)ws!.send(JSON.stringify(msg));
 };
-const goto=(page:string)=>{screen=page;show(page);if(page!=='game'&&document.pointerLockElement)document.exitPointerLock()};
+const goto=(page:string)=>{
+ // A pause must stop authoritative movement immediately, even if WebGL
+ // is too slow to deliver another animation frame.
+ if(screen==='game'&&page!=='game'&&open())send({type:'input',data:{
+  f:0,s:0,yaw:controller.yaw,pitch:controller.pitch,
+  jump:false,crouch:false,sprint:false,prone:false,slide:false,
+  fire:false,ads:false,reload:false,seq:++seq}});
+ screen=page;show(page);
+ if(page!=='game'&&document.pointerLockElement)document.exitPointerLock();
+};
 const status=(text:string)=>{$('menuMessage').textContent=text};
 function leave(){
  send({type:'leave'});
@@ -78,7 +87,7 @@ function onMessage(m:any){
    const s=m as Snapshot;lastSnap=s;
    local=s.players.find(p=>p.side===side)||null;
    if(local&&ready){
-    engine.applySnapshot(s,side);
+    engine.applySnapshot(s,side,seq);
     const w=WEAPONS[local.weapon];
     $('health').textContent=String(local.hp);
     $('weapon').textContent=w.name;
@@ -237,26 +246,61 @@ if(new URLSearchParams(location.search).has('debug')){
    slideTime:engine.motion.slideTime,slideCooldown:engine.motion.cooldown,velocity:engine.strideSpeed,serverSlide:local?.sliding,serverSprint:local?.sprinting,
    serverX:local?.x,serverY:local?.y,serverZ:local?.z,
    lowFpsMode:engine.lowFpsMode,clientOnlyProps:engine.props.length,
-   renderY:engine.renderPos.y,shadowMapEnabled:engine.renderer.shadowMap.enabled
+   renderY:engine.renderPos.y,shadowMapEnabled:engine.renderer.shadowMap.enabled,
+   inputAgeMs:local?.inputAgeMs,ackSeq:local?.ackSeq,sentSeq:seq,
+   ackLag:Math.max(0,seq-(local?.ackSeq||0))
  });
 }
 const mobile=/Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(navigator.userAgent);
 if(mobile)goto('mobile');else goto('menu');
-let last=performance.now(),sendClock=0,stepClock=0,seq=0,pendingSlide=false,localSlideQueued=false;
+// Input and physics are independent of requestAnimationFrame. A GPU stall
+// must not interrupt movement packets, even if the scene paints slowly.
+let lastFrame=performance.now(),lastInputTick=performance.now();
+let sendClock=0,simClock=0,seq=0,slidePending=false,slideForPhysics=false;
 let measuredFPS=60,fpsSamples=0,fpsWindow=performance.now();
+let latestInput:Input|null=null;
+const neutral:Input={f:0,s:0,yaw:0,pitch:0,jump:false,crouch:false,
+ prone:false,sprint:false,fire:false,ads:false,reload:false};
+function sendCurrentInput(input:Input){
+ if(!open())return;
+ send({type:'input',data:{...input,slide:slidePending,seq:++seq,
+  swap:input.swap??(seq===1?preferred:undefined)}});
+ slidePending=false;
+}
+function inputTick(){
+ if(mobile||!engine.world)return;
+ const now=performance.now();
+ const elapsed=Math.min(.12,Math.max(.001,(now-lastInputTick)/1000));
+ lastInputTick=now;
+ const active=screen==='game'&&!paused&&ready;
+ const sampled=controller.sample(elapsed,active);
+ latestInput=sampled;
+ if(sampled.slide){slidePending=true;slideForPhysics=true}
+ if(active){
+  simClock=Math.min(.10,simClock+elapsed);
+  let steps=0;
+  while(!engine.lowFpsMode&&simClock>=1/60&&steps<6){
+   engine.predict(1/60,{...sampled,slide:slideForPhysics});
+   slideForPhysics=false;simClock-=1/60;steps++;
+  }
+  if(engine.lowFpsMode||steps===6)simClock=Math.min(simClock,1/60);
+  sendClock+=elapsed;
+  if(sendClock>=1/30){sendClock=0;sendCurrentInput(sampled)}
+ }else{
+  sendClock=0;simClock=0;slidePending=false;slideForPhysics=false;
+ }
+}
 async function start(){
  try{await engine.init();status('Ready. Pick a match mode to begin.')}
  catch(err){console.error('Arena initialization failed',err);status('3D physics could not load. Refresh with WebGL enabled.')}
+ lastInputTick=performance.now();
+ window.setInterval(inputTick,1000/60);
  requestAnimationFrame(frame);
 }
 function frame(timestamp:number){
  requestAnimationFrame(frame);
- const elapsed=Math.max(.001,(timestamp-last)/1000||.016);last=timestamp;
+ const elapsed=Math.max(.001,(timestamp-lastFrame)/1000||.016);lastFrame=timestamp;
  const dt=Math.min(.05,elapsed);
- // Use real elapsed time for physics, separately from animation's safe visual
- // clamp. Dropping 55ms of every 100ms frame made sprint prediction run at half
- // server speed and caused repeated correction jumps through the floor.
- const physicsElapsed=Math.min(.116,elapsed);
  fpsSamples++;
  if(timestamp-fpsWindow>=1100){
   measuredFPS=fpsSamples*1000/(timestamp-fpsWindow);
@@ -264,27 +308,10 @@ function frame(timestamp:number){
   fpsWindow=timestamp;fpsSamples=0;
  }
  if(mobile||!engine.world)return;
- const active=screen==='game'&&!paused&&ready,inp=controller.sample(dt,active);
  if(anyPadConnected()&&!padHasActivity())$('gamepadPrompt').classList.remove('hidden');
  else $('gamepadPrompt').classList.add('hidden');
- if(active){
-  if(inp.slide){pendingSlide=true;localSlideQueued=true}
-  stepClock+=physicsElapsed;sendClock+=elapsed;
-  let steps=0;
-  while(!engine.lowFpsMode&&stepClock>=1/60&&steps<7){
-   const simInput=localSlideQueued?{...inp,slide:true}:{...inp,slide:false};
-   engine.predict(1/60,simInput);
-   localSlideQueued=false;stepClock-=1/60;steps++;
-  }
-  // Never build an unlimited backlog after changing windows / tab throttling.
-  if(steps===7||engine.lowFpsMode)stepClock=Math.min(stepClock,1/60);
-  if(sendClock>=1/30){
-   sendClock=0;send({type:'input',data:{...inp,slide:pendingSlide,seq:++seq,swap:inp.swap??(seq===1?preferred:undefined)}});
-   pendingSlide=false;
-  }
- }else{stepClock=0;sendClock=0;pendingSlide=false;localSlideQueued=false}
- if(local&&lastSnap){const me=lastSnap.players.find(p=>p.side===side);if(me)local=me}
- engine.frameDraw(dt,active?inp:controller.lastInput,local,side);
+ const active=screen==='game'&&!paused&&ready;
+ engine.frameDraw(dt,active?latestInput:neutral,local,side);
  if(open()&&timestamp-lastPing>3300){lastPing=timestamp;send({type:'ping',at:Date.now()})}
  if(!open()&&reconnectTime&&timestamp>=reconnectTime){reconnectTime=0;connect({type:'resume',code:room,token})}
 }
