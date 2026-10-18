@@ -294,10 +294,10 @@ def make(id,src,length,klass):
     # Keep MagazineGeometry seated in the receiver; strip only spare copies.
     loose=[o for o in all_meshes if any(term in o.name.lower().replace("_","")
            for term in ("sparemagazine","sparemag","extramagazine","loosemagazine"))]
+    all_meshes=[o for o in all_meshes if o not in loose]
     for ob in loose:
         print("REMOVED_FLOATING_SPARE_MAG",id,ob.name,flush=True)
         bpy.data.objects.remove(ob,do_unlink=True)
-    all_meshes=[o for o in all_meshes if o not in loose]
     # Imported upstream fallback files contain gun geometry but no skinned gloves.
     # Freeze hierarchy into mesh data while retaining ORIGINAL artist-authored geometry,
     # original UVs, and original material textures.
