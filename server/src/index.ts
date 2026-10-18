@@ -321,7 +321,7 @@ function tick(){
    room.lastSnapshot=now;
    const msg={type:'snapshot',players:room.players.map(p=>({
     ...p.actor,ackSeq:p.ackSeq,inputAgeMs:p.inputAgeMs
-   })),serverTime:now,pellets:room.pellets.map(b=>({id:b.id,x:b.x,y:b.y,z:b.z})),timer:Math.max(0,180-Math.floor((now-room.started)/1000)),score:room.score,status:room.status,round:room.round};
+   })),serverTime:now,pellets:room.pellets.map(b=>({id:b.id,x:b.x,y:b.y,z:b.z,owner:b.owner,age:b.age})),timer:Math.max(0,180-Math.floor((now-room.started)/1000)),score:room.score,status:room.status,round:room.round};
    announce(room,'snapshot',msg);
    if(room.mode==='online'&&now-room.started>180000){room.status='finished';announce(room,'matchEnd',{winner:room.score[0]>=room.score[1]?0:1,score:room.score})}
   }
