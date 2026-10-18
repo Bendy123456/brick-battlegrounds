@@ -23,6 +23,7 @@ export class Engine{
  pixelRatio=this.maxPixelRatio;lastQualityChange=0;
  projectiles=new Map<number,THREE.Mesh>();props:{body:any,mesh:THREE.Mesh}[]=[];
  muzzleSocket:THREE.Object3D|null=null;muzzleFlash:THREE.Mesh;flashRemaining=0;
+ muzzleStreaks:{line:THREE.Line,life:number}[]=[];
  weapon=new THREE.Group();weaponCore=new THREE.Group();muzzle:THREE.PointLight;
  lastWeapon=-1; recoil=0;walkPhase=0;eyeBob=0;frame=0;lastStep=0;
  // Grip preference is individual for each gun, not global.
@@ -361,7 +362,21 @@ export class Engine{
   }
     for(const [id,m] of this.projectiles)if(!current.has(id)){this.scene.remove(m);this.projectiles.delete(id)}
  }
- flash(){this.recoil+=.11;this.muzzle.intensity=5;this.flashRemaining=.075;this.muzzleFlash.visible=true}
+ flash(){
+  this.recoil+=.11;this.muzzle.intensity=5;this.flashRemaining=.075;this.muzzleFlash.visible=true;
+  if(!this.muzzleSocket)return;
+  // Each shot immediately flashes outward from the model's fitted barrel,
+  // while the real projectile keeps server-authoritative hit registration.
+  this.camera.updateMatrixWorld(true);
+  const origin=this.muzzleSocket.getWorldPosition(new THREE.Vector3());
+  const heading=this.camera.getWorldDirection(new THREE.Vector3());
+  const end=origin.clone().addScaledVector(heading,1.6);
+  const geometry=new THREE.BufferGeometry().setFromPoints([origin,end]);
+  const material=new THREE.LineBasicMaterial({color:0xffe2a4,transparent:true,opacity:.85,depthWrite:false});
+  const streak=new THREE.Line(geometry,material);
+  this.scene.add(streak);
+  this.muzzleStreaks.push({line:streak,life:.085});
+ }
  setLocalStance(kind:'stand'|'crouch'|'slide'|'prone'){
   if(kind===this.stance)return;
   const poses={stand:[.60,0],crouch:[.35,-.25],slide:[.21,-.39],prone:[.14,-.46]};
@@ -451,6 +466,14 @@ export class Engine{
   this.muzzle.intensity*=Math.exp(-dt*32);
   this.flashRemaining=Math.max(0,this.flashRemaining-dt);
   this.muzzleFlash.visible=this.flashRemaining>0;
+  for(let i=this.muzzleStreaks.length-1;i>=0;i--){
+   const streak=this.muzzleStreaks[i];streak.life-=dt;
+   if(streak.life<=0){
+    this.scene.remove(streak.line);streak.line.geometry.dispose();
+    (streak.line.material as THREE.LineBasicMaterial).dispose();
+    this.muzzleStreaks.splice(i,1);
+   }else (streak.line.material as THREE.LineBasicMaterial).opacity=Math.min(1,streak.life/.085)*.85;
+  }
   this.renderer.render(this.scene,this.camera);
   this.frame++;
   if(this.frame%35===0)$('debug').textContent='DRAW CALLS '+this.renderer.info.render.calls+'  |  TRIANGLES '+this.renderer.info.render.triangles+'  |  FPS '+Math.round(this.measuredFPS)+'  |  '+this.assetState+'  |  SYNC '+this.lastServerError.toFixed(2)+'m'+(this.lowFpsMode?'  |  SERVER MOTION':'')+'  |  NET LAG '+this.lastAckLag;
