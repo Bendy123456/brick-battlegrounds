@@ -229,10 +229,13 @@ def tip(material,muzzle_y,z):
     bore.data.materials.append(mat("Dark replica bore","090c10",0,.80))
 
 def mesh_extents(meshes):
+    """Calculate actual vertex bounds, never Blender's sometimes stale bound_box
+    cache. A few imported meshes (particularly the shotgun) use rotated axes.
+    """
     lo=Vector((1e12,1e12,1e12));hi=Vector((-1e12,-1e12,-1e12))
     for ob in meshes:
-        for c in ob.bound_box:
-            p=ob.matrix_world @ Vector(c)
+        for vertex in ob.data.vertices:
+            p=ob.matrix_world @ vertex.co
             for i in range(3):
                 lo[i]=min(lo[i],p[i]);hi[i]=max(hi[i],p[i])
     return lo,hi
@@ -256,12 +259,24 @@ def make(id,src,length,klass):
         if ob.type!="MESH":bpy.data.objects.remove(ob,do_unlink=True)
     lo,hi=mesh_extents(all_meshes)
     span=hi-lo
-    # Source barrel axis is +Y in upstream Blender coordinate frame.
-    # If a release had z as dominant (different source origin), rotate it.
-    if span.z>span.y*1.35:
+    # Align the ACTUAL longest mesh axis to Blender +Y (forward).
+    # Upstream rifles are usually +Y, whereas the author's pump shotgun is
+    # authored along +X. Without this, fitting and scaling explode thousands
+    # of times and the hands are nowhere near the trigger and pump.
+    major=max(range(3),key=lambda i:span[i])
+    if major==0:
+        rotation=Matrix.Rotation(math.pi/2,4,'Z') # +X becomes +Y
+    elif major==2:
+        rotation=Matrix.Rotation(-math.pi/2,4,'X') # +Z becomes +Y
+    else:
+        rotation=None
+    if rotation is not None:
         for ob in all_meshes:
-            ob.data.transform(Matrix.Rotation(-math.pi/2,4,'X'))
+            ob.data.transform(rotation)
+            ob.data.update()
         lo,hi=mesh_extents(all_meshes);span=hi-lo
+    print('SOURCE_WEAPON_AXES',id,'axis',major,
+          'span',tuple(round(v,3) for v in span),flush=True)
     assert span.y>.01,"Bad weapon length in "+src
     factor=length/span.y
     shift=Vector((-(lo.x+hi.x)*factor/2, -lo.y*factor-.18, -(lo.z+hi.z)*factor/2 + .035))
@@ -269,8 +284,11 @@ def make(id,src,length,klass):
     # Rebase in destination coordinates, keeping expected 1m-class weapon length.
     for ob in all_meshes:
         ob.data.transform(transform)
+        ob.data.update()
         ob.name="AUTHORED "+src+" "+ob.name
     lo,hi=mesh_extents(all_meshes)
+    assert .95*length <=hi.y-lo.y <=1.05*length, "Weapon length normalization failed "+id
+    assert max(hi.x-lo.x,hi.z-lo.z)<length*2.5, "Gun still off-axis: "+id
     # Imported FPS meshes should be substantially richer than placeholder cubes.
     source_vertices=sum(len(o.data.vertices) for o in all_meshes)
     assert source_vertices>150, "Source too sparse for "+id
