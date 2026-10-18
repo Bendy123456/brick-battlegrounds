@@ -73,3 +73,38 @@ test('actually enter arena, move, aim and shoot in a bot match',async({page})=>{
  // Do not inspect ammo after screenshot capture: the bot may tag / respawn the player in between.
  expect(errors).toEqual([]);
 });
+
+test('sprinting stays above the collision floor and sliding does not rubber-band',async({page})=>{
+ const errors:string[]=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.setViewportSize({width:1000,height:650});
+ await page.goto('/?debug=1');
+ await page.locator('#vsBot').click();
+ await expect(page.locator('#hud')).toBeVisible({timeout:45000});
+ await page.keyboard.down('ShiftLeft');
+ await page.keyboard.down('KeyW');
+ // Sustained full-speed running through the modeled Blender floor.
+ await expect.poll(async()=>{
+  const state=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
+  return state?.velocity||0;
+ },{timeout:18000,intervals:[200,400,500]}).toBeGreaterThan(7);
+ const before=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
+ console.log('SPRINT_BEFORE='+JSON.stringify(before));
+ expect(before.ready).toBe(true);
+ expect(before.playerY).toBeGreaterThan(.65);
+ expect(before.cameraY).toBeGreaterThan(.25);
+ expect(Number.isFinite(before.renderFPS)).toBe(true);
+ await page.keyboard.press('KeyC');
+ // Local movement edge and server state must agree while the capsule is low.
+ await expect.poll(async()=>{
+  const state=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
+  return Boolean(state?.slideTime>0||state?.serverSlide);
+ },{timeout:4500,intervals:[100,150,250]}).toBe(true);
+ const during=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
+ console.log('SPRINT_SLIDE='+JSON.stringify(during));
+ expect(during.cameraY).toBeGreaterThan(.20);
+ expect(during.playerY).toBeGreaterThan(.60);
+ await page.keyboard.up('KeyW');
+ await page.keyboard.up('ShiftLeft');
+ expect(errors).toEqual([]);
+});

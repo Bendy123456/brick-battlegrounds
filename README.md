@@ -25,6 +25,14 @@ Keep the Render Node web service connected to this repo, branch `main`, build co
 - Server-authoritative player movement, fire cadence, ammo and scoring. Solo vs simple server bot; private code 1v1; experimental quick-match queue; rematch and respawn; lightweight reconnect token. First to five.
 - HUD with health, time, zone, score, ammo, game results and ping. Local pause, loadout, stored keyboard rebinds, mouse sensitivity and controller deadzone, generated Web Audio placeholder sounds, server-rendered BBs and basic cosmetic props.
 
+## Sprint/floor rendering hotfix
+
+- Removed the old generated floor stripes, ceiling beams, fences and point lights when the Blender arena GLB loads, eliminating duplicated geometry and likely floor z-fighting.
+- Separated renderer frame delta from physics elapsed time. Slow frames no longer silently discard physics time; the client catches up using bounded 60Hz Rapier substeps (up to seven per displayed frame).
+- Reduced server-snapshot rewind during sprint. The predicted player is now smoothly visualized between fixed physics updates; only significant out-of-sync/respawn positions cause hard correction.
+- Camera is clamped above the actual collision floor during slides, with smoother physical interpolation and less frantic field-of-view updates. Render pixel ratio is capped at 1.2 to lower GPU load.
+- Added browser regression coverage for full-speed running over the modeled floor followed by a slide. True desktop GPU FPS and map-wide visual testing still need manual verification.
+
 ## Fast traversal update
 
 - Responsive, momentum-based acceleration: walk 6.5 m/s, hold-to-sprint 11.5 m/s, directional boosted slide up to 14.5 m/s with a roughly 0.8-second friction curve.
