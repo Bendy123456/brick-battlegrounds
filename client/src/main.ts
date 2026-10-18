@@ -9,6 +9,7 @@ const controller=new Controls(),engine=new Engine();
 let ws:WebSocket|null=null,connected=false,screen='menu',side=0,room='',token='',roomMode='bot';
 let local:Actor|null=null,lastSnap:Snapshot|null=null,ready=false,paused=false,preferred=0;
 let reconnectTime=0,reconnectAttempt=0,lastPing=0,ping=0,playerName='PLAYER';
+let pendingEquip:number|null=null;
 const open=()=>{if(ws?.readyState===WebSocket.OPEN)return true;return false};
 const send=(msg:any)=>{
  if(open()&&ws!.bufferedAmount<100000)ws!.send(JSON.stringify(msg));
@@ -57,7 +58,8 @@ function connect(handshake:any){
  };
 }
 function beginMatch(resumed=false){
- ready=true;paused=false;controller.yaw=side===0?-Math.PI/2:Math.PI/2;
+ ready=true;paused=false;
+ if(!resumed)pendingEquip=preferred;controller.yaw=side===0?-Math.PI/2:Math.PI/2;
  controller.pitch=0;
  if(!resumed){engine.createLocal(side);local=null}
  goto('game');
@@ -247,6 +249,8 @@ if(new URLSearchParams(location.search).has('debug')){
    serverX:local?.x,serverY:local?.y,serverZ:local?.z,
    lowFpsMode:engine.lowFpsMode,clientOnlyProps:engine.props.length,
    renderY:engine.renderPos.y,shadowMapEnabled:engine.renderer.shadowMap.enabled,
+   weaponModelCount:engine.weaponModels.size,weaponModelIds:engine.weaponModelIds,
+   failedWeaponModels:engine.failedWeaponModels,selectedViewmodel:engine.lastWeapon,
    inputAgeMs:local?.inputAgeMs,ackSeq:local?.ackSeq,sentSeq:seq,
    ackLag:Math.max(0,seq-(local?.ackSeq||0))
  });
@@ -263,8 +267,10 @@ const neutral:Input={f:0,s:0,yaw:0,pitch:0,jump:false,crouch:false,
  prone:false,sprint:false,fire:false,ads:false,reload:false};
 function sendCurrentInput(input:Input){
  if(!open())return;
+ const equip=input.swap??pendingEquip??undefined;
  send({type:'input',data:{...input,slide:slidePending,seq:++seq,
-  swap:input.swap??(seq===1?preferred:undefined)}});
+  swap:equip}});
+ if(equip!==undefined)pendingEquip=null;
  slidePending=false;
 }
 function inputTick(){

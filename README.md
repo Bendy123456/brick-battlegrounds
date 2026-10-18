@@ -1,3 +1,22 @@
+# Nine original Blender airsoft replicas
+
+All nine selectable replicas now have independent editable Blender source scenes in art/weapons/ and exported GLB models in client/public/assets/weapons/. Blender generator: art/build_airsoft_weapons.py.
+
+| Replica | Distinct first-person silhouette |
+| --- | --- |
+| Vanguard | Lightweight ergonomic AEG carbine, vented handguard, red-dot sight |
+| Ranger | Extended vented AEG, skeleton stock and angled foregrip |
+| Specter | Compact bullpup AEG, integrated carry handle, rear magazine |
+| Atlas | Larger tactical AEG with winding BB drum and broad accessories |
+| Whisper | SMG with folding stock, straight BB magazine and compact barrel |
+| Breacher | Pump-style airsoft shotgun, tubular assembly and ribbed fore-end |
+| Watcher | Long airsoft bolt-action silhouette with scope and folded bipod |
+| Echo | Compact GBB pistol with rounded slide and stippled grip |
+| Tempo | Extended competition-style GBB airsoft pistol with optic |
+
+The game now loads the specific model for each weapon slot, rather than stretching one rifle model. All feature original first-person LEGO-yellow hands and orange airsoft-only muzzle details. GLBs are merged by material for render efficiency; native .blend files retain named parts. These are procedural Blender-modeled game assets, not photographs or high-poly organic sculpts. Reload animations and physically-based texture baking remain future work.
+
+---
 ## Input synchronization repair (2026-10-18)
 
 - Sprint/slide keyboard and controller inputs, simulation and WebSocket packets are now pumped from a dedicated 60Hz timer, independently from Three.js requestAnimationFrame. This prevents starving the authoritative server when a rendered frame is delayed.

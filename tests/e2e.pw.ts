@@ -171,3 +171,32 @@ test('render throttling does not starve authoritative sprint input packets',asyn
  expect(after.cameraY).toBeGreaterThan(.2);
  expect(errors).toEqual([]);
 });
+
+test('all nine distinct Blender weapons load and loadout selection uses selected model',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.setViewportSize({width:860,height:525});
+ await page.goto('/?debug=1');
+ await expect.poll(async()=>{
+  const d=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
+  return d?.weaponModelCount??-1;
+ },{timeout:65000,intervals:[300,700,1000]}).toBe(9);
+ const state=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
+ expect(state.assetState).toBe('BLENDER ASSETS READY');
+ expect(state.failedWeaponModels).toEqual([]);
+ expect(new Set(state.weaponModelIds).size).toBe(9);
+ await page.locator('#openLoadout').click();
+ const choices=page.locator('#loadoutButtons button');
+ await expect(choices).toHaveCount(9);
+ for(let i=0;i<9;i++){
+  await choices.nth(i).click();
+  await expect(choices.nth(i)).toHaveClass(/selected/);
+ }
+ await page.locator('#loadoutBack').click();
+ await page.locator('#vsBot').click();
+ await expect(page.locator('#hud')).toBeVisible({timeout:55000});
+ await expect.poll(async()=>{
+  const d=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
+  return d?.selectedViewmodel;
+ },{timeout:16000}).toBe(8);
+ expect(errors).toEqual([]);
+});
