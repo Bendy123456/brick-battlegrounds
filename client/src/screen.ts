@@ -1,7 +1,7 @@
 import './style.css';
 document.querySelector<HTMLDivElement>('#app')!.innerHTML=`<div id="viewport"></div><div id="flash"></div>
 <section class="overlay" id="menu"><div class="shell"><div class="tag">AIRSOFT ARENA // FIRST PERSON // ORIGINAL</div><h1>ENTER THE<br><em>ARENA.</em></h1>
-<p>Fast, tactical, plastic-BB airsoft. The classic LEGO-style minifigures return in a brand-new 3D indoor arena. First to five eliminations wins.</p>
+<p>Fast, tactical, plastic-BB airsoft. The classic LEGO-style minifigures return in a brand-new 3D indoor arena. First to five eliminations wins. Sprint with Shift, then tap C to slide.</p>
 <div class="menu-grid"><div><button class="mode" id="vsBot">VS BOT<small>SOLO TRAINING · FIRST TO FIVE</small></button>
 <button class="mode" id="quick">QUICK MATCH<small>FIND AN ONLINE OPPONENT</small></button>
 <button class="mode" id="private">PRIVATE ROOM<small>INVITE A FRIEND USING A CODE</small></button></div>

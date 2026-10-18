@@ -84,7 +84,7 @@ function onMessage(m:any){
     $('weapon').textContent=w.name;
     $('weaponType').textContent=w.role;
     $('ammo').innerHTML=String(local.ammo)+' <small>/ '+w.mag+'</small>';
-    $('stance').textContent=local.prone?'PRONE':local.crouch?'CROUCHED':local.ads?'ADS':'STANDING';
+    $('stance').textContent=local.sliding?'SLIDING':local.sprinting?'SPRINTING':local.prone?'PRONE':local.crouch?'CROUCHED':local.ads?'ADS':'STANDING';
     $('zone').textContent=zoneName(local.x,local.z);
     $('score').innerHTML=s.score[side]+' <span>:</span> '+s.score[side===0?1:0];
     $('clock').textContent=String(Math.floor(s.timer/60)).padStart(2,'0')+':'+String(s.timer%60).padStart(2,'0');
@@ -231,12 +231,13 @@ if(new URLSearchParams(location.search).has('debug')){
  (window as any).__AIRSOFT_DEBUG__=()=>({
   screen,ready,paused,room,localHP:local?.hp,localAmmo:local?.ammo,
   socket:ws?.readyState,pointerLocked:!!document.pointerLockElement,
-  frames:engine.frame,assetState:engine.assetState,lastInput:controller.lastInput
+  frames:engine.frame,assetState:engine.assetState,lastInput:controller.lastInput,
+   slideTime:engine.motion.slideTime,slideCooldown:engine.motion.cooldown,velocity:engine.strideSpeed,serverSlide:local?.sliding,serverSprint:local?.sprinting
  });
 }
 const mobile=/Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(navigator.userAgent);
 if(mobile)goto('mobile');else goto('menu');
-let last=performance.now(),frameDelta=0,sendClock=0,stepClock=0,seq=0;
+let last=performance.now(),frameDelta=0,sendClock=0,stepClock=0,seq=0,pendingSlide=false;
 async function start(){
  try{await engine.init();status('Ready. Pick a match mode to begin.')}
  catch(err){console.error('Arena initialization failed',err);status('3D physics could not load. Refresh with WebGL enabled.')}
@@ -250,12 +251,14 @@ function frame(timestamp:number){
  if(anyPadConnected()&&!padHasActivity())$('gamepadPrompt').classList.remove('hidden');
  else $('gamepadPrompt').classList.add('hidden');
  if(active){
+  if(inp.slide)pendingSlide=true;
   stepClock+=dt;sendClock+=dt;
   while(stepClock>=1/60){engine.predict(1/60,inp);stepClock-=1/60}
   if(sendClock>=1/30){
-   sendClock=0;send({type:'input',data:{...inp,seq:++seq,swap:inp.swap??(seq===1?preferred:undefined)}});
+   sendClock=0;send({type:'input',data:{...inp,slide:pendingSlide,seq:++seq,swap:inp.swap??(seq===1?preferred:undefined)}});
+   pendingSlide=false;
   }
- }else{stepClock=0;sendClock=0}
+ }else{stepClock=0;sendClock=0;pendingSlide=false}
  if(local&&lastSnap){const me=lastSnap.players.find(p=>p.side===side);if(me)local=me}
  engine.frameDraw(dt,active?inp:controller.lastInput,local,side);
  if(open()&&timestamp-lastPing>3300){lastPing=timestamp;send({type:'ping',at:Date.now()})}
