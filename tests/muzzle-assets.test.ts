@@ -25,6 +25,9 @@ describe('visible barrel muzzle and projectile effects',()=>{
    const code=readFileSync(resolve('client/src/engine.ts'),'utf8');
    expect(code).toContain('this.muzzleSocket=attachedSocket;');
    expect(code).toContain('b.owner===side&&b.age<.14&&this.muzzleSocket');
+   expect(code).toContain('this.muzzleStreaks.push({line:streak,life:.085})');
+   const server=readFileSync(resolve('server/src/index.ts'),'utf8');
+   expect(server).toContain('owner:b.owner,age:b.age');
    if(weapon.id==='vanguard'){
     console.log('VANGUARD_AUTHORED_NODES',JSON.stringify(nodes.filter(n=>/AUTHORED|magazine|mag\b/i.test(n.name||'')).map(n=>({name:n.name,mesh:n.mesh,translation:n.translation})).slice(0,75)));
    }
