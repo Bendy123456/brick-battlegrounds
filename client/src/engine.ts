@@ -204,6 +204,13 @@ export class Engine{
   this.setGrip(!this.gripTwoHanded);
   return this.gripTwoHanded;
  }
+ getGripForWeapon(index:number){
+  return this.gripModes.get(index)??(index<7);
+ }
+ setGripForWeapon(index:number,twoHanded:boolean){
+  this.gripModes.set(index,twoHanded);
+  if(this.lastWeapon===index)this.setGrip(twoHanded);
+ }
  setWeapon(index:number){
   if(this.lastWeapon===index)return;this.lastWeapon=index;
   this.weaponCore.clear();
