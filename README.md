@@ -1,3 +1,12 @@
+## Input synchronization repair (2026-10-18)
+
+- Sprint/slide keyboard and controller inputs, simulation and WebSocket packets are now pumped from a dedicated 60Hz timer, independently from Three.js requestAnimationFrame. This prevents starving the authoritative server when a rendered frame is delayed.
+- The Node server uses a monotonic fixed-step accumulator to catch up after event loop delays, and tolerates brief input gaps up to 1.8 seconds (instead of a 450ms threshold which caused rapid run/stop/run oscillation during WebGL stalls).
+- Pause immediately sends a zero-movement packet, disconnects immediately stop player input, one-shot slide inputs cannot replay, and incoming input sequence numbers are acknowledged in snapshots.
+- Snapshots expose packet input age and sequence acknowledgement, and the FPS debug overlay reports network lag. Client prediction accepts expected network latency without repeatedly teleporting the camera.
+- Browser regression test artificially throttles requestAnimationFrame while holding sprint and checks the server keeps receiving input and moves the avatar.
+- These changes target network/input continuity. A GPU rendering slowdown remains possible on integrated graphics and needs real-device benchmarking.
+
 # Airsoft Arena — TypeScript prototype
 
 Previously Brick Battlegrounds. Option B migration: preserve the existing repo and Render URL.

@@ -134,3 +134,40 @@ test('Blender arena uses shared collision only and slow-render movement keeps ca
  }
  expect(errors).toEqual([]);
 });
+
+test('render throttling does not starve authoritative sprint input packets',async({page})=>{
+ const errors:string[]=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.setViewportSize({width:650,height:390});
+ // Render a maximum of 2fps, but allow normal browser timers and sockets.
+ // The old code sent movement only in requestAnimationFrame, causing an
+ // input timeout and the server repeatedly stopping the sprint.
+ await page.addInitScript(()=>{
+  const native=requestAnimationFrame.bind(window);
+  window.requestAnimationFrame=(cb:FrameRequestCallback)=>{
+   return window.setTimeout(()=>native(cb),430) as unknown as number;
+  };
+ });
+ await page.goto('/?debug=1');
+ await page.locator('#vsBot').click();
+ await expect(page.locator('#hud')).toBeVisible({timeout:55000});
+ await expect.poll(async()=>{
+  const d=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
+  return d?.ackSeq||0;
+ },{timeout:14000}).toBeGreaterThan(0);
+ const before=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
+ await page.keyboard.down('ShiftLeft');
+ await page.keyboard.down('KeyW');
+ await page.waitForTimeout(2400);
+ const after=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
+ await page.keyboard.up('KeyW');
+ await page.keyboard.up('ShiftLeft');
+ console.log('THROTTLED_INPUT='+JSON.stringify({before,after}));
+ expect(after.ready).toBe(true);
+ expect(after.ackSeq).toBeGreaterThan(before.ackSeq+10);
+ expect(after.inputAgeMs).toBeLessThan(600);
+ const distance=Math.hypot(after.serverX-before.serverX,after.serverZ-before.serverZ);
+ expect(distance).toBeGreaterThan(9);
+ expect(after.cameraY).toBeGreaterThan(.2);
+ expect(errors).toEqual([]);
+});
