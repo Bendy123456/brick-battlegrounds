@@ -212,8 +212,8 @@ export class Engine{
     }
    });
    for(const part of gunParts)weaponArt.attach(part);
-   // A modest 18% increase (22% for pistols); keep all grip/hand meshes put.
-   weaponArt.scale.setScalar(index>=7?1.22:1.18);
+   // Fine-tune the last size pass by roughly another 8%; bare forearms stay unchanged.
+   weaponArt.scale.setScalar(index>=7?1.31:1.28);
    // Retain the proven first-person camera placement and weapon-specific scale.
    const scale=index===6?.62:index===5?.70:index>=7?.83:index===4?.76:.70;
    model.scale.setScalar(gunParts.length?scale:scale*1.12);
