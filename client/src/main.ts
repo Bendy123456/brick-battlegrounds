@@ -273,6 +273,16 @@ window.addEventListener('keydown',e=>{
  if(e.code==='Tab'&&screen==='game'){$('killfeed').textContent='SCORE: '+(lastSnap?.score.join(' - ')||'0 - 0')}
 });
 if(new URLSearchParams(location.search).has('debug')){
+ // Used only by automated first-person visual QA, never in normal play.
+ (window as any).__AIRSOFT_QA_RESET_VIEW__=()=>{
+  controller.pitch=0;
+  controller.yaw=-Math.PI/2;
+ };
+ (window as any).__AIRSOFT_QA_EQUIP__=(index:number)=>{
+  send({type:'input',data:{f:0,s:0,yaw:controller.yaw,pitch:controller.pitch,
+   jump:false,crouch:false,sprint:false,prone:false,fire:false,ads:false,
+   reload:false,swap:index}});
+ };
  (window as any).__AIRSOFT_DEBUG__=()=>({
   screen,ready,paused,room,localHP:local?.hp,localAmmo:local?.ammo,
   socket:ws?.readyState,pointerLocked:!!document.pointerLockElement,
