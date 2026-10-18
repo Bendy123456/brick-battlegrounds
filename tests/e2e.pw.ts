@@ -59,7 +59,7 @@ test('actually enter arena, move, aim and shoot in a bot match',async({page})=>{
  await page.mouse.down({button:'left'});
  await page.waitForTimeout(900);
  await page.mouse.up({button:'left'});
- await expect.poll(async()=>await page.locator('#ammo').innerText(),{timeout:8000}).not.toMatch(/^30\\s*\\/\\s*30/);
+ await expect.poll(async()=>parseInt(await page.locator('#ammo').innerText(),10),{timeout:8000}).toBeLessThan(30);
  await page.waitForTimeout(700);
  // A compressed screenshot is emitted into CI logs for visual evaluation.
  const screenshot=await page.screenshot({type:'jpeg',quality:32,animations:'disabled'});
