@@ -241,6 +241,20 @@ function renderLoadout(){
   };
   $('loadoutButtons').append(b);
  });
+ const choices=$('gripChoices');
+ choices.innerHTML='';
+ for(const [two,label] of [[false,'ONE HAND'],[true,'TWO HANDS']] as const){
+  const option=document.createElement('button');
+  option.textContent=label;
+  option.classList.toggle('selected',engine.getGripForWeapon(preferred)===two);
+  option.setAttribute('aria-pressed',String(engine.getGripForWeapon(preferred)===two));
+  option.onclick=()=>{
+   unlockAudio();sfx('ui');
+   engine.setGripForWeapon(preferred,two);
+   renderLoadout();
+  };
+  choices.appendChild(option);
+ }
 }
 document.addEventListener('pointerlockchange',()=>{
  if(!document.pointerLockElement&&screen==='game'&&!controller.gamepadActive){paused=true;goto('pause')}
