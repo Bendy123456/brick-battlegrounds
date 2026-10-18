@@ -34,7 +34,17 @@ test('artist-authored weapon pack loads and displays in real first-person play',
  await expect.poll(async()=>await page.evaluate(
   ()=>(window as any).__AIRSOFT_DEBUG__?.()?.gripTwoHanded
  ),{timeout:10000}).toBe(true);
- const image=await page.screenshot({type:'jpeg',quality:24,animations:'disabled'});
- console.log('AUTHORED_FPS_SCREENSHOT_JPEG_BASE64='+image.toString('base64'));
+ // Shoot from a level, forward-looking camera; the old QA screenshot looked
+ // almost straight up and could not reveal whether hands were touching the gun.
+ for(const [index,label] of [[0,'vanguard'],[5,'breacher'],[7,'echo']] as const){
+  await page.evaluate(()=>(window as any).__AIRSOFT_QA_RESET_VIEW__());
+  await page.evaluate((weaponIndex)=>(window as any).__AIRSOFT_QA_EQUIP__(weaponIndex),index);
+  await expect.poll(async()=>await page.evaluate(
+    ()=>(window as any).__AIRSOFT_DEBUG__?.()?.selectedViewmodel
+  ),{timeout:20000,intervals:[250,500,1000]}).toBe(index);
+  await page.waitForTimeout(1300); // at least one frame in CI's software WebGL
+  const image=await page.screenshot({type:'jpeg',quality:65,animations:'disabled'});
+  console.log('GRIP_REVIEW_'+label.toUpperCase()+'_JPEG_BASE64='+image.toString('base64'));
+ }
  expect(errors).toEqual([]);
 });
