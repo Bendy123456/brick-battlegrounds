@@ -15,10 +15,13 @@ describe('The Arena V2 professional Blender deliverables',()=>{
   expect(bin.length).toBeGreaterThan(180000);
   expect(bin.readUInt32LE(16)).toBe(0x4e4f534a);
   const meta=JSON.parse(bin.subarray(20,20+bin.readUInt32LE(12)).toString());
-  expect(meta.materials?.length).toBeGreaterThanOrEqual(14);
+  expect(meta.materials?.length).toBeGreaterThanOrEqual(22);
   expect(meta.images?.length).toBeGreaterThanOrEqual(4);
   expect(meta.meshes?.length).toBeLessThanOrEqual(80);
   expect(meta.materials.map((m:any)=>m.name).join(' ')).toMatch(/WORN_CONCRETE|CONCRETE_PBR/);
+  expect(meta.materials.map((m:any)=>m.name).join('|')).toContain('21_ARENA_ORANGE_NEON');
+  const sceneNodes=(meta.nodes||[]).map((n:any)=>n.name||'').join('|');
+  expect(sceneNodes).toContain('BATCH_21_ARENA_ORANGE_NEON');
  });
  it('keeps important cover, bridge and team geometry in Rapier shared map',()=>{
   expect(MAP.find(o=>o.id==='central-shipping-container')).toBeTruthy();

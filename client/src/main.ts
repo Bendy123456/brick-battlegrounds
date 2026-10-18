@@ -25,6 +25,12 @@ const goto=(page:string)=>{
  if(page!=='game'&&document.pointerLockElement)document.exitPointerLock();
 };
 const status=(text:string)=>{$('menuMessage').textContent=text};
+const expectedArenaLabel='THE ARENA V2 · INDUSTRIAL SHOWDOWN';
+function refreshArenaLabel(){
+ const label=engine.assetState==='BLENDER ASSETS READY'
+  ? expectedArenaLabel : 'MAP: LOADING / OLD BLOCKOUT';
+ if($('arenaBuild').textContent!==label)$('arenaBuild').textContent=label;
+}
 function leave(){
  send({type:'leave'});
  room='';token='';ready=false;connected=false;paused=false;lastSnap=null;local=null;
@@ -252,7 +258,7 @@ if(new URLSearchParams(location.search).has('debug')){
  (window as any).__AIRSOFT_DEBUG__=()=>({
   screen,ready,paused,room,localHP:local?.hp,localAmmo:local?.ammo,
   socket:ws?.readyState,pointerLocked:!!document.pointerLockElement,
-  frames:engine.frame,assetState:engine.assetState,arenaVersion:ARENA_VERSION,lastInput:controller.lastInput,
+  frames:engine.frame,assetState:engine.assetState,arenaVersion:ARENA_VERSION,arenaLabel:$('arenaBuild').textContent,lastInput:controller.lastInput,
    playerX:engine.localPos.x,playerY:engine.localPos.y,playerZ:engine.localPos.z,
    cameraY:engine.camera.position.y,serverError:engine.lastServerError,renderFPS:Math.round(measuredFPS),
    slideTime:engine.motion.slideTime,slideCooldown:engine.motion.cooldown,velocity:engine.strideSpeed,serverSlide:local?.sliding,serverSprint:local?.sprinting,
@@ -324,6 +330,7 @@ function frame(timestamp:number){
   fpsWindow=timestamp;fpsSamples=0;
  }
  if(mobile||!engine.world)return;
+ refreshArenaLabel();
  if(anyPadConnected()&&!padHasActivity())$('gamepadPrompt').classList.remove('hidden');
  else $('gamepadPrompt').classList.add('hidden');
  const active=screen==='game'&&!paused&&ready;

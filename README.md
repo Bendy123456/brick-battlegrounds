@@ -1,3 +1,9 @@
+## Arena V2 — landmark visual overhaul
+
+The industrial warehouse model now has clearly identifiable suspended **red/blue team entry gateways** at x=-34m and x=34m, a giant central overhead neon command pavilion visible from both spawn directions, a tournament-style black anti-slip lane floor with glowing color-coded routes, and readable **THE ARENA / INDUSTRIAL V2** signage. These are original 3D Blender meshes, not an image, and are high enough not to alter player/BB collision shapes. The 120 × 80m collision map and movement remain synchronized across client/server.
+
+The client now requests the map with a versioned GLB URL to prevent stale browser/CDN cache reuse. During a match, a HUD tag explicitly says **THE ARENA V2 · INDUSTRIAL SHOWDOWN** only after the Blender model has loaded; otherwise it warns **MAP: LOADING / OLD BLOCKOUT** so players can detect failures instead of silently seeing the old map. This tag does not substitute for the visual art.
+
 # The Arena V2 — original multi-level Blender FPS map
 
 A replacement for the old rectangular blockout, modeled from scratch in Blender, influenced by the user-approved industrial arena layout. Built-in features include the balanced red and blue team bases, central raised cargo objective with stairs, alpha/bravo routes, side mezzanines with navigable stairs, plywood tactical dividers, industrial containers, realistic inflatable cover, safety netting, industrial trusses/fixtures, factory doors, painted floor markings and room signage.

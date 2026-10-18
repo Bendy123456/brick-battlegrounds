@@ -1,7 +1,7 @@
-name: Build The Arena V2 Blender Game Map
+name: Build Arena V2 Landmark Overhaul in Blender
 on:
   push:
-    branches: [arena-v2-blender-professional]
+    branches: [arena-v2-visual-overhaul]
     paths:
       - 'art/build_arena_v2.py'
       - 'shared/arena-layout.json'
@@ -36,7 +36,7 @@ jobs:
           git add art/the_arena_v2.blend client/public/assets/arena.glb
           if ! git diff --cached --quiet; then
             git commit -m 'Generate The Arena V2 detailed Blender warehouse map and game GLB'
-            git fetch origin arena-v2-blender-professional
-            git rebase origin/arena-v2-blender-professional
-            git push origin HEAD:arena-v2-blender-professional
+            git fetch origin arena-v2-visual-overhaul
+            git rebase origin/arena-v2-visual-overhaul
+            git push origin HEAD:arena-v2-visual-overhaul
           fi

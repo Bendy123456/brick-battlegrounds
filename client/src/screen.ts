@@ -1,6 +1,6 @@
 import './style.css';
 document.querySelector<HTMLDivElement>('#app')!.innerHTML=`<div id="viewport"></div><div id="flash"></div>
-<section class="overlay" id="menu"><div class="shell"><div class="tag">AIRSOFT ARENA // FIRST PERSON // ORIGINAL</div><h1>ENTER THE<br><em>ARENA.</em></h1>
+<section class="overlay" id="menu"><div class="shell"><div class="tag">AIRSOFT ARENA // THE ARENA V2 // INDUSTRIAL SHOWDOWN</div><h1>ENTER THE<br><em>ARENA.</em></h1>
 <p>Fast, tactical, plastic-BB airsoft. The classic LEGO-style minifigures return in a brand-new 3D indoor arena. First to five eliminations wins. Sprint with Shift, then tap C to slide.</p>
 <div class="menu-grid"><div><button class="mode" id="vsBot">VS BOT<small>SOLO TRAINING · FIRST TO FIVE</small></button>
 <button class="mode" id="quick">QUICK MATCH<small>FIND AN ONLINE OPPONENT</small></button>
@@ -10,7 +10,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML=`<div id="viewport"></
 <div class="row"><button id="openSettings">SETTINGS</button><button id="openLoadout">LOADOUT</button></div><p id="menuMessage">Desktop Chrome / Edge / Firefox.</p></div></div>
 <p style="font-size:10px">ORIGINAL GAME IN DEVELOPMENT · NON-GRAPHIC BB HITS · ORIGINAL BRICK CHARACTER MODELS</p></div></section>
 <section class="overlay hidden" id="waiting"><div class="shell"><div class="tag">ONLINE LOBBY</div><h2 id="waitTitle">SEARCHING...</h2><p id="waitDescription">Waiting for opponent.</p><div class="row"><button id="copyRoom" class="primary">COPY CODE</button><button id="cancelWait">CANCEL</button></div></div></section>
-<div id="hud" class="hidden"><div class="hudtop"><div class="hudbox"><small>ZONE</small><strong id="zone">CENTER COURT</strong><small id="net">PING --</small></div><div id="score">0 <span>:</span> 0</div><div class="hudbox"><small>TIME REMAINING</small><strong id="clock">03:00</strong><small>FIRST TO FIVE</small></div></div>
+<div id="hud" class="hidden"><div class="hudtop"><div class="hudbox"><small>ZONE</small><strong id="zone">CENTER COURT</strong><small id="net">PING --</small><small id="arenaBuild">ARENA V2 // LOADING MAP...</small></div><div id="score">0 <span>:</span> 0</div><div class="hudbox"><small>TIME REMAINING</small><strong id="clock">03:00</strong><small>FIRST TO FIVE</small></div></div>
 <div id="crosshair">+</div><div id="hitmarker">×</div><div id="killfeed"></div><div id="message"></div>
 <div class="hudbottom"><div class="hudbox"><small>HEALTH</small><div id="health">100</div><small id="stance">STANDING</small></div><div><div id="weapon">VX-4 VECTOR</div><div id="ammo">30 <small>/ 30</small></div><small id="weaponType">AEG / ASSAULT</small></div></div><div id="debug"></div></div>
 <div id="gamepadPrompt" class="hidden">CONTROLLER DETECTED · PRESS ANY BUTTON</div>
