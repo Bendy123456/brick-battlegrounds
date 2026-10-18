@@ -20,30 +20,49 @@ def change(old,new):
 for old,new in [
  ("'30363c'","'181b1d'"), ("'48515a'","'252a2d'"),
  ("'78848b'","'373b3e'"), ("'1e272b'","'121416'"),
- ("'10191f'","'0a0d0e'"), ("'edb94b'","'332219'"),
- ("'3d768a'","'37251c'"), ("'ed7f32'","'fc7a20'")
+ ("'10191f'","'0a0d0e'"), ("'edb94b'","'090505'"),
+ ("'3d768a'","'0b0605'"), ("'ed7f32'","'fc7a20'")
 ]:
  change(old,new)
 change("'accent':material('CUSTOM_TEAM_ACCENT_06',accent_hex,.29,.40)",
        "'accent':material('FACTORY_DARK_GRAPHITE_06','35393b',.20,.55)")
-change("'hand':material('YELLOW_MINIFIG_HAND_09','332219',0,.33)",
-       "'hand':material('DEEP_EBONY_BARE_SKIN_09','332219',0,.68)")
-change("'sleeve':material('TEAM_UNIFORM_SLEEVE_10','37251c',0,.58)",
-       "'sleeve':material('BARE_DARK_SKIN_FOREARMS_10','37251c',0,.72)")
-change(" 'sleeve':material('BARE_DARK_SKIN_FOREARMS_10','37251c',0,.72),",
-       " 'sleeve':material('BARE_DARK_SKIN_FOREARMS_10','37251c',0,.72),\n 'nail':material('NATURAL_DARK_FINGERNAIL_11','493429',0,.60),")
+change("'hand':material('YELLOW_MINIFIG_HAND_09','090505',0,.33)",
+       "'hand':material('DEEP_EBONY_BARE_SKIN_09','090505',0,.68)")
+change("'sleeve':material('TEAM_UNIFORM_SLEEVE_10','0b0605',0,.58)",
+       "'sleeve':material('BARE_DARK_SKIN_FOREARMS_10','0b0605',0,.72)")
+change(" 'sleeve':material('BARE_DARK_SKIN_FOREARMS_10','0b0605',0,.72),",
+       " 'sleeve':material('BARE_DARK_SKIN_FOREARMS_10','0b0605',0,.72),\n 'nail':material('NATURAL_DARK_FINGERNAIL_11','180d09',0,.60),")
 original=original.replace("DEEP_EBONY_BARE_SKIN_09","DEEP_EBONY_BARE_SKIN_09")
 original=original.replace("YELLOW_MINIFIG_HAND_09","BARE_SKIN_09")
 start=original.index("def hand_arm(")
 end=original.index("\ndef stock(",start)
 replacement=r'''
 def tapered_forearm(name,first,last,base,tip,skin):
- a=Vector(p(*first));b=Vector(p(*last));direction=b-a
- bpy.ops.mesh.primitive_cone_add(vertices=20,radius1=base,radius2=tip,
-   depth=direction.length,location=(a+b)*.5)
- part=bpy.context.object;part.name=name
- part.rotation_euler=direction.to_track_quat('Z','Y').to_euler()
- return finish(part,skin,.009,2)
+ """Curved shaded 8-section skin loft: muscle bulge, wrist taper, no tubes."""
+ a=Vector(p(*first));b=Vector(p(*last));d=(b-a).normalized()
+ ref=Vector((0,0,1))
+ if abs(d.dot(ref))>.87:ref=Vector((0,1,0))
+ across=d.cross(ref).normalized();forward=d.cross(across).normalized()
+ verts=[];faces=[];sections=8;sides=20
+ for i in range(sections):
+  t=i/(sections-1)
+  center=a.lerp(b,t)+across*.010*math.sin(math.pi*t)
+  radius=(base*(1-t)+tip*t)*(1+.16*math.sin(math.pi*t))
+  for k in range(sides):
+   angle=2*math.pi*k/sides
+   pt=center+across*(radius*math.cos(angle))+forward*(radius*.88*math.sin(angle))
+   verts.append(tuple(pt))
+ for i in range(sections-1):
+  for k in range(sides):
+   nxt=(k+1)%sides
+   faces.append((i*sides+k,i*sides+nxt,(i+1)*sides+nxt,(i+1)*sides+k))
+ faces.append(tuple(reversed(range(sides))))
+ faces.append(tuple(range((sections-1)*sides,sections*sides)))
+ mesh=bpy.data.meshes.new(name);mesh.from_pydata(verts,[],faces);mesh.update()
+ obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj)
+ obj.data.materials.append(skin)
+ for face in obj.data.polygons:face.use_smooth=True
+ return obj
 
 def hand_arm(prefix,m,x,y,z,side,forearm=.38,grip='support'):
  """Anatomical bare forearm extends into view from below the camera.
