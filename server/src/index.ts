@@ -273,7 +273,7 @@ wss.on('connection',(sock:WebSocket)=>{
  const ws=sock as Client;ws.lastPong=Date.now();
  ws.on('pong',()=>{ws.lastPong=Date.now()});
  ws.on('message',raw=>{
-  if(raw.length>2048)return;
+  if(Buffer.byteLength(String(raw))>2048)return;
   let msg:any;try{msg=JSON.parse(String(raw))}catch{return}
   if(!msg||typeof msg.type!=='string')return;
   if(msg.type==='ping'){send(ws,{type:'pong',at:msg.at||0});return}
