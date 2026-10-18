@@ -1,0 +1,55 @@
+name: Import Artist-Authored FPS Weapon Replacements
+on:
+  push:
+    branches: [main]
+    paths:
+      - art/import_authored_weapons.py
+      - .github/workflows/import-authored-weapons.yml
+permissions:
+  contents: write
+jobs:
+  authored-weapons:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Install Blender for authored source conversion
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y blender python3-numpy
+          blender --version
+      - name: Retrieve original 3D artist weapon meshes with documented licenses
+        run: |
+          set -eu
+          mkdir -p art/upstream_weapon_sources
+          BASE=https://raw.githubusercontent.com/cktang88/3d-fps/130ac2a5c856401ec36e7d35afcfefe40c5801f4/public/assets/models/weapons
+          for item in m4a1 scarl vss ak47 mp5a5 shotgun m24 p226 m1911; do
+            curl -fLSs --retry 3 "$BASE/$item.glb" -o "art/upstream_weapon_sources/$item.glb"
+            test "$(stat -c %s art/upstream_weapon_sources/$item.glb)" -gt 25000
+          done
+      - name: Convert and export 9 individual game-ready Blender viewmodels
+        run: |
+          blender --background --python art/import_authored_weapons.py > /tmp/authored-weapons.log 2>&1 || { tail -160 /tmp/authored-weapons.log; exit 1; }
+          grep HAND_AUTHORED_SOURCE_IMPORTED /tmp/authored-weapons.log
+          test "$(grep -c HAND_AUTHORED_SOURCE_IMPORTED /tmp/authored-weapons.log)" -eq 9
+          test "$(find art/weapons -maxdepth 1 -name '*.blend' | wc -l)" -eq 9
+          test "$(find client/public/assets/weapons -maxdepth 1 -name '*.glb' | wc -l)" -eq 9
+      - name: Run asset contract tests and project build
+        run: |
+          npm install --no-audit --no-fund
+          npm test
+          npm run check
+          npm run build
+      - name: Publish authored replacement Blender and GLB files
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add art/weapons/*.blend client/public/assets/weapons/*.glb
+          if ! git diff --cached --quiet; then
+            git commit -m 'Replace nine procedural block weapons with licensed authored FPS meshes'
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
+          fi
