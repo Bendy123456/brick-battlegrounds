@@ -44,10 +44,13 @@ test('private online match connects two browsers',async({browser})=>{
 test('actually enter arena, move, aim and shoot in a bot match',async({page})=>{
  const errors:string[]=[];
  page.on('pageerror',e=>errors.push(e.message));
- await page.setViewportSize({width:1100,height:680});
+ await page.setViewportSize({width:800,height:500});
  await page.goto('/?debug=1');
  await page.locator('#vsBot').click();
  await expect(page.locator('#hud')).toBeVisible({timeout:45000});
+ // Capture the level itself before match results or menus obscure the screen.
+ const arenaScreenshot=await page.screenshot({type:'jpeg',quality:32,animations:'disabled'});
+ console.log('AIRSOFT_ARENA_JPEG_B64='+arenaScreenshot.toString('base64'));
  // Simulate actual player controls and allow server to advance authoritative ticks.
  await page.keyboard.down('KeyW');
  await page.waitForTimeout(850);
@@ -61,7 +64,7 @@ test('actually enter arena, move, aim and shoot in a bot match',async({page})=>{
  // Capture test state while fire is still held, not after all input is released.
  console.log('PLAYTEST_STATE='+JSON.stringify(await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.())));
  await page.mouse.up({button:'left'});
- const screenshot=await page.screenshot({type:'jpeg',quality:30,animations:'disabled'});
+ const screenshot=await page.screenshot({type:'jpeg',quality:34,animations:'disabled'});
  console.log('AIRSOFT_VISUAL_JPEG_B64='+screenshot.toString('base64'));
  console.log('PLAYTEST_RENDER_STATS='+await page.locator('#debug').innerText());
  await expect.poll(async()=>parseInt(await page.locator('#ammo').innerText(),10),{timeout:12000}).toBeLessThan(30);

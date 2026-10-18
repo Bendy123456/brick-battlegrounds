@@ -195,6 +195,13 @@ function updatePellets(room:Room,dt:number){
 function controlBot(p:Participant,dt:number,now:number){
  const other=p.room.players[0],a=p.actor,t=other.actor;
  if(!a.alive||!t.alive){p.input.fire=false;return}
+ // VS BOT is a training mode. Do not massacre a player while their first
+ // Blender scene is still loading or before they have engaged the bot.
+ const roomAny=p.room as Room & {botEngagedAt?:number};
+ if(!roomAny.botEngagedAt&&(other.input.fire||other.actor.kills>0)){
+  roomAny.botEngagedAt=now;
+ }
+ const botMayAttack=!!roomAny.botEngagedAt&&now-roomAny.botEngagedAt>3600;
  const dx=t.x-a.x,dz=t.z-a.z,range=Math.hypot(dx,dz);
  const desiredYaw=Math.atan2(-dx,-dz);
  const difficulty=p.room.difficulty;
@@ -213,7 +220,7 @@ function controlBot(p:Participant,dt:number,now:number){
   p.thinkAt=now+Math.max(150,difficulty*1000);
   p.decision=Math.sin(now*.0011+p.index*13)>0?1:-1;
   // Three-second orientation window gives beginners time to take control.
-  const ready=now-p.room.started>3000;
+  const ready=botMayAttack;
   const alignment=Math.abs(Math.atan2(Math.sin(desiredYaw-a.yaw),Math.cos(desiredYaw-a.yaw)))<.14;
   const shootChance=difficulty>=.6?.27:difficulty>=.4?.43:difficulty>=.25?.62:.80;
   p.input.fire=ready&&visible&&alignment&&range<45&&Math.random()<shootChance;
@@ -272,7 +279,7 @@ function tick(){
    room.lastSnapshot=now;
    const msg={type:'snapshot',players:room.players.map(p=>p.actor),pellets:room.pellets.map(b=>({id:b.id,x:b.x,y:b.y,z:b.z})),timer:Math.max(0,180-Math.floor((now-room.started)/1000)),score:room.score,status:room.status,round:room.round};
    announce(room,'snapshot',msg);
-   if(now-room.started>180000){room.status='finished';announce(room,'matchEnd',{winner:room.score[0]>=room.score[1]?0:1,score:room.score})}
+   if(room.mode==='online'&&now-room.started>180000){room.status='finished';announce(room,'matchEnd',{winner:room.score[0]>=room.score[1]?0:1,score:room.score})}
   }
  }
 }
