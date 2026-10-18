@@ -63,6 +63,16 @@ function beginMatch(resumed=false){
  controller.pitch=0;
  if(!resumed){engine.createLocal(side);local=null}
  goto('game');
+ // Equip immediately on the authoritative server, even when pointer lock is
+ // unavailable or headless/low-FPS rendering pauses the regular input timer.
+ // A prior implementation only sent the selected gun from inputTick(), so
+ // paused players could stay stuck with the default Vanguard viewmodel.
+ if(!resumed&&open()){
+  send({type:'input',data:{f:0,s:0,yaw:controller.yaw,pitch:controller.pitch,
+   jump:false,crouch:false,prone:false,sprint:false,slide:false,fire:false,
+   ads:false,reload:false,swap:preferred,seq:++seq}});
+  pendingEquip=null;
+ }
  $('zone').textContent='ENTRY CORRIDOR';
  $('killfeed').textContent='';
  unlockAudio();
