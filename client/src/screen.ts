@@ -1,14 +1,29 @@
 import './style.css';
 document.querySelector<HTMLDivElement>('#app')!.innerHTML=`<div id="viewport"></div><div id="flash"></div>
-<section class="overlay" id="menu"><div class="shell"><div class="tag">AIRSOFT ARENA // COVER CIRCUIT C // THE ARENA V2</div><h1>ENTER THE<br><em>ARENA.</em></h1>
-<p>Fast, tactical, plastic-BB airsoft. The classic LEGO-style minifigures return in a brand-new 3D indoor arena. First to five eliminations wins. Sprint with Shift, then tap C to slide.</p>
-<div class="menu-grid"><div><button class="mode" id="vsBot">VS BOT<small>SOLO TRAINING · FIRST TO FIVE</small></button>
-<button class="mode" id="quick">QUICK MATCH<small>FIND AN ONLINE OPPONENT</small></button>
-<button class="mode" id="private">PRIVATE ROOM<small>INVITE A FRIEND USING A CODE</small></button></div>
-<div class="side"><div class="field"><label>BOT DIFFICULTY</label><select id="difficulty"><option>Easy</option><option selected>Normal</option><option>Hard</option><option>Nightmare</option></select></div>
-<div class="field"><label>JOIN PRIVATE ROOM</label><div class="row"><input id="roomCode" maxlength="6" type="text" placeholder="6-CHAR CODE" style="flex:1;min-width:120px"><button class="primary" id="join">JOIN</button></div></div>
-<div class="row"><button id="openSettings">SETTINGS</button><button id="openLoadout">LOADOUT</button></div><p id="menuMessage">Desktop Chrome / Edge / Firefox.</p></div></div>
-<p style="font-size:10px">ORIGINAL GAME IN DEVELOPMENT · NON-GRAPHIC BB HITS · ORIGINAL BRICK CHARACTER MODELS</p></div></section>
+<section class="overlay" id="menu">
+  <div class="arena-menu">
+    <div class="menu-scenery" aria-hidden="true"><div class="scenery-beam"></div><div class="scenery-b3">B3</div><div class="scenery-stacks"></div><div class="scenery-light"></div></div>
+    <div class="menu-content">
+      <header class="bb-brand">
+        <div class="bb-brand-kicker">COVER CIRCUIT C <span>✦</span> THE ARENA V2</div>
+        <div class="bb-title"><span>BRICK</span><strong>BATTLEGROUNDS</strong></div>
+        <div class="bb-ribbon">AIRSOFT ARENA</div>
+      </header>
+      <div class="bb-modes" aria-label="Choose your game mode">
+        <button class="bb-mode bb-bot" id="vsBot" type="button"><span class="bb-art" aria-hidden="true"><span class="bb-brick bb-brick-one"></span><span class="bb-figure"><i class="bb-head"></i><i class="bb-body"></i><i class="bb-gun"></i></span></span><span class="bb-mode-info"><span class="bb-mode-name">VS BOT</span><small>SOLO TRAINING<br>FIRST TO FIVE</small><b class="bb-arrow">➜</b></span></button>
+        <button class="bb-mode bb-quick" id="quick" type="button"><span class="bb-art" aria-hidden="true"><span class="bb-brick bb-brick-two"></span><span class="bb-figure"><i class="bb-head"></i><i class="bb-body"></i><i class="bb-gun"></i></span></span><span class="bb-mode-info"><span class="bb-mode-name">QUICK MATCH</span><small>FIND AN ONLINE<br>OPPONENT</small><b class="bb-arrow">➜</b></span></button>
+        <button class="bb-mode bb-private" id="private" type="button"><span class="bb-art" aria-hidden="true"><span class="bb-brick bb-brick-three"></span><span class="bb-figure"><i class="bb-head"></i><i class="bb-body"></i><i class="bb-gun"></i></span></span><span class="bb-mode-info"><span class="bb-mode-name">PRIVATE ROOM</span><small>INVITE A FRIEND<br>USING A CODE</small><b class="bb-arrow">➜</b></span></button>
+      </div>
+      <div class="bb-toolbar">
+        <div class="bb-tool"><label for="difficulty">BOT DIFFICULTY</label><select id="difficulty"><option>Easy</option><option selected>Normal</option><option>Hard</option><option>Nightmare</option></select></div>
+        <div class="bb-tool bb-join-tool"><label for="roomCode">JOIN WITH CODE</label><div class="bb-join-row"><input id="roomCode" maxlength="6" type="text" autocomplete="off" placeholder="6-CHAR CODE" aria-label="Private room code"><button class="primary" id="join" type="button">JOIN</button></div></div>
+        <button class="bb-tool-button" id="openSettings" type="button"><span aria-hidden="true">⚙</span> SETTINGS</button>
+        <button class="bb-tool-button" id="openLoadout" type="button"><span aria-hidden="true">◈</span> LOADOUT</button>
+      </div>
+      <p id="menuMessage" class="bb-menu-status" role="status">CHOOSE YOUR MODE TO ENTER THE ARENA</p>
+    </div>
+  </div>
+</section>
 <section class="overlay hidden" id="waiting"><div class="shell"><div class="tag">ONLINE LOBBY</div><h2 id="waitTitle">SEARCHING...</h2><p id="waitDescription">Waiting for opponent.</p><div class="row"><button id="copyRoom" class="primary">COPY CODE</button><button id="cancelWait">CANCEL</button></div></div></section>
 <div id="hud" class="hidden"><div class="hudtop"><div class="hudbox"><small>ZONE</small><strong id="zone">CENTER COURT</strong><small id="net">PING --</small><small id="arenaBuild">ARENA V2 // LOADING MAP...</small></div><div id="score">0 <span>:</span> 0</div><div class="hudbox"><small>TIME REMAINING</small><strong id="clock">03:00</strong><small>FIRST TO FIVE</small></div></div>
 <div id="crosshair">+</div><div id="hitmarker">×</div><div id="killfeed"></div><div id="message"></div>
