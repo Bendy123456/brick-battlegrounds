@@ -502,6 +502,118 @@ def dramatic_floor_zones():
    cube('CONCRETE_INSET_WARNING_RAIL',dx*2.7,.040,zz,2.4,.016,.10,
     M['yellow'],.009)
 
+
+def cover_circuit_panel(b):
+ """Original Blender-modeled airsoft plywood obstacles with visible OSB grain,
+ layered frame rails, reinforced corners, screwed steel shoes and impact marks.
+ No detail protrudes enough to act as misleading invisible/hittable cover:
+ the shared collision cuboid encloses the dominant solid bunker volume.
+ """
+ x,y,z,w,h,d=(b[k] for k in ('x','y','z','w','h','d'))
+ ident=b['id'];is_upper='cover-mezz-' in ident
+ is_corner='corner' in ident
+ is_low='cover-low-' in ident
+ kind='UPPER_WALKWAY' if is_upper else 'SLIDE_BARRICADE' if is_low else 'MODULAR_AIRSOFT_WALL'
+ cube(kind+'_LAYERED_OSB_'+ident,x,y,z,w*.96,h*.96,d*.96,M['osb'],.024)
+ # Design both long-side broad faces. "thin X" panels point at players
+ # sprinting east/west; cover must have its detail on that visible side.
+ if w<d*.64:
+  for direction in [-1,1]:
+   xx=x+direction*w*.50
+   cube('REINFORCED_METAL_FACE_TRIM',xx,y,z,.065,h*.95,d*.91,M['wood'],.014)
+   # Paint a few wide OSB sheet panels on the outward face.
+   for zz in [z-d*.31,z,z+d*.31]:
+    cube('WOODEN_PLYWOOD_REPLACEMENT_SHEET',xx+direction*.048,y,zz,
+     .026,h*.83,d*.27,M['osb'],.007)
+   for zz in [z-d*.43,z+d*.43]:
+    cube('FIELD_FRAME_OUTER_VERTICAL',xx+direction*.068,y,zz,
+     .060,h*.96,.092,M['steel'],.012)
+   for yy in [y-h*.42,y+h*.42]:
+    cube('FIELD_FRAME_WELDED_HORIZONTAL',xx+direction*.069,yy,z,
+     .060,.095,d*.93,M['edge'],.011)
+   for zz in [z-d*.37,z,z+d*.37]:
+    for yy in [y-h*.28,y+h*.28]:
+     tube('PANEL_SAFETY_BOLT',(xx+direction*.10,yy,zz),
+      (xx+direction*.122,yy,zz),.013,M['shade'],8)
+  # A realistic visible hazard cap and scuffed base foot.
+  cube('FIELD_WALL_ORANGE_MARKER',x,y+h*.47,z,w*.99,.058,d*.92,M['paint'],.008)
+  cube('MODULAR_SUPPORT_SKID',x,y-h*.48,z,w*.99,.065,d*.88,M['grip'] if 'grip' in M else M['rubber'],.012)
+ else:
+  # Squat waist-high blocks: authentic stacked OSB and rental field frame
+  # braces; ideal endpoints for a crouch or slide.
+  for direction in [-1,1]:
+   zz=z+direction*d*.50
+   cube('LOW_COVER_FRONT_SHEET',x,y,zz,w*.91,h*.84,.040,M['osb'],.011)
+   for xx in [x-w*.43,x+w*.43]:
+    cube('LOW_COVER_STEEL_SIDE_FRAME',xx,y,zz+direction*.036,
+     .085,h*.95,.052,M['steel'],.013)
+   for yy in [y-h*.42,y+h*.42]:
+    cube('REINFORCED_LOW_COVER_CROSSBAR',x,yy,zz+direction*.052,
+     w*.91,.083,.057,M['wood'],.009)
+   for xx in [x-w*.29,x+w*.29]:
+    for yy in [y-h*.25,y+h*.25]:
+     tube('LOW_PANEL_FASTENER',(xx,yy,zz+direction*.07),
+      (xx,yy,zz+direction*.094),.013,M['shade'],8)
+  cube('FIELD_ORANGE_SLIDE_STRIPE',x,y+h*.46,z,w*.90,.063,d*.91,M['paint'],.01)
+ # Light decal numbers give the cover the look of a tournament facility.
+ # Reuse embossed geometry rather than importing store assets.
+ if int(sum(ord(c) for c in ident))%3==0:
+  if w<d*.64:sign_facing_x('FIELD_LANE_STENCIL','6MM - AIRSOFT',
+   x+w*.54,y-.18,z-.60,.18,positive=x>0,ma=M['sign'])
+  else:sign('FIELD_LANE_STENCIL','AIRSOFT',
+   x,y-.08,z+d*.54,.18,M['sign'])
+
+def cover_circuit_pallet(b):
+ """Low stacks made from handmade slats/frames and bolt hardware,
+ positioned exactly over their shared server-side wooden collision boxes.
+ """
+ x,y,z,w,h,d=(b[k] for k in ('x','y','z','w','h','d'))
+ cube('BURIED_COLLISION_MATCHED_PALLET_CRATE_CORE',x,y,z,w*.95,h*.93,d*.94,M['wood'],.042)
+ for yy in [y-h*.34,y,y+h*.34]:
+  for dx in [-w*.41,0,w*.41]:
+   cube('REFINISHED_PALLET_VERTICAL_SLAT',x+dx,yy,z+d*.48,.16,h*.28,.073,
+    M['osb'],.015)
+   cube('REAR_PALLET_SLAT',x+dx,yy,z-d*.48,.16,h*.28,.073,
+    M['osb'],.015)
+  for zz in [-d*.43,d*.43]:
+   cube('PRACTICE_FIELD_PALLET_PLANK',x,yy,z+zz,w*.94,.11,.16,
+    M['edge'] if yy>y else M['wood'],.015)
+ for xx in [x-w*.45,x+w*.45]:
+  for zz in [z-d*.41,z+d*.41]:
+   cube('PALLET_BOLT_AND_CORNER_POST',xx,y,zz,.105,h*.95,.10,M['steel'],.014)
+ cube('PALLET_AIRSOFT_ORANGE_LANE_BAND',x,y+h*.48,z,w*.92,.052,d*.90,
+  M['paint'],.009)
+ for xx in [x-w*.42,x+w*.42]:
+  tube('PALLET_TIE_ROD',(xx,y-h*.32,z+d*.51),
+   (xx,y+h*.35,z+d*.51),.022,M['shade'],10)
+
+def cover_circuit_foam(b):
+ """Airsoft tournament inflatable bunker: formed vinyl shell, weld seams,
+ endcaps, anchor eyes and safety number decals. Solid for BB hits in Rapier.
+ """
+ x,y,z,w,h,d=(b[k] for k in ('x','y','z','w','h','d'))
+ cube('AIRFILLED_MOLDED_VINYL_CORE',x,y,z,w*.97,h*.97,d*.97,M['rubber'],.30)
+ # Molded tube-shaped seams sit on the four exposed sides of the foam bunkers.
+ for sy in [-1,1]:
+  y1=y+sy*h*.36
+  for sz in [-1,1]:
+   tube('INFLATABLE_WELDED_DOME_SEAM',(x-w*.40,y1,z+sz*d*.44),
+    (x+w*.40,y1,z+sz*d*.44),.051,M['shade'],14)
+ for xx in [x-w*.35,x+w*.35]:
+  tube('INFLATABLE_REINFORCED_CORNER',(xx,y-h*.40,z+d*.42),
+   (xx,y+h*.40,z+d*.42),.085,M['rubber'],14)
+ for sz in [-1,1]:
+  zz=z+sz*d*.49
+  cube('SOFT_FIELD_TEAM_PATCH',x,y+.11,zz,w*.45,h*.39,.027,M['paint'],.040)
+  cube('SOFT_FIELD_RUBBER_RAISED_NUMERAL_BACK',x,y-.21,zz+sz*.034,
+   w*.24,h*.22,.025,M['shade'],.023)
+ for sx in [-1,1]:
+  tube('INFLATABLE_LASHING_RING',(x+sx*w*.39,y-h*.38,z-d*.30),
+   (x+sx*w*.39,y-h*.38,z+d*.30),.023,M['edge'],10)
+ # Tactile rubber bands around the bumper and a visible air-valve enclosure.
+ cube('VINYL_BUMPER_REINFORCEMENT',x,y-h*.44,z,w*.87,.069,d*.88,M['shade'],.034)
+ cube('AIRSOFT_FILL_VALVE',x+w*.44,y,z,.04,.19,.16,M['steel'],.028)
+
 # Generate all shared collider visuals (no separate collision objects in GLB).
 count=0
 for b in LAYOUT['obstacles']:
@@ -518,6 +630,9 @@ for b in LAYOUT['obstacles']:
  elif ident.startswith('central-container-roof'):
   cube('CENTRAL_VANTAGE_RAISED_ROOF',b['x'],b['y'],b['z'],b['w'],b['h'],b['d'],M['steel'],.06)
   cube('ORANGE_ROOF_SAFETY_ZONE',b['x'],b['y']+b['h']/2+.008,b['z'],b['w']*.92,.013,b['d']*.89,M['edge'])
+ elif ident.startswith('cover-pallet-'):cover_circuit_pallet(b)
+ elif ident.startswith('cover-foam-'):cover_circuit_foam(b)
+ elif ident.startswith('cover-'):cover_circuit_panel(b)
  elif matkind=='wood':plywood_cover(b)
  elif matkind=='foam':inflatable(b)
  elif matkind=='concrete':concrete_cover(b)
