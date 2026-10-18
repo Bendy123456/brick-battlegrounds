@@ -29,7 +29,12 @@ export class Engine{
  readonly oldDecor:THREE.Object3D[]=[];
  renderPos=new THREE.Vector3(-18,1,0);
  lastServerError=0;lastAckLag=0;
- blenderArena:THREE.Group|null=null;blenderViewmodel:THREE.Group|null=null;
+ blenderArena:THREE.Group|null=null;
+ // Each original Blender weapon model has distinct topology, silhouette,
+ // accessories, magazine and first-person LEGO hands.
+ weaponModels=new Map<number,THREE.Group>();
+ failedWeaponModels:number[]=[];
+ weaponModelIds:string[]=[];
  assetState='LOADING 3D ASSETS';
  constructor(){
   this.scene.background=new THREE.Color(0x18252b);
@@ -127,59 +132,74 @@ export class Engine{
  }
  async loadAuthoredAssets(){
   const loader=new GLTFLoader();
-  const [stage,viewmodel]=await Promise.allSettled([
+  // Nine original airsoft models are independently authored/exported in
+  // Blender; none is a scaled clone of another weapon.
+  const requests=[
    loader.loadAsync('/assets/arena.glb'),
-   loader.loadAsync('/assets/aeg_viewmodel.glb')
-  ]);
+   ...WEAPONS.map(w=>loader.loadAsync('/assets/weapons/'+w.id+'.glb'))
+  ];
+  const results=await Promise.allSettled(requests);
+  const stage=results[0];
   if(stage.status==='fulfilled'){
    this.blenderArena=stage.value.scene;
    this.blenderArena.traverse(node=>{
     if((node as THREE.Mesh).isMesh){
-     const mesh=node as THREE.Mesh;
-     mesh.receiveShadow=true;
-     mesh.castShadow=false; // Large static level keeps shadow budget small.
-     mesh.frustumCulled=true;
+     const mesh=node as THREE.Mesh;mesh.receiveShadow=true;
+     mesh.castShadow=false;mesh.frustumCulled=true;
     }
    });
    this.scene.add(this.blenderArena);
    for(const placeholder of this.oldBlockout)placeholder.visible=false;
-   // The Blender model already includes its own floor markings, rails and lamps.
-   // Drawing legacy decorations over them creates z-fighting and unnecessary lighting work.
    for(const decor of this.oldDecor)decor.visible=false;
-   // These props existed only in the client world and were not replicated
-   // on the authoritative server. They could stop movement locally while
-   // the server walked through, triggering violent snapshot corrections.
-   // Blender already contains detailed modeled crates in their place.
+   // Keep only the shared level collision geometry. Local-only prop
+   // collisions would cause snapping in multiplayer.
    for(const prop of this.props){
     this.scene.remove(prop.mesh);
     this.world.removeRigidBody(prop.body);
    }
    this.props.length=0;
-   // Large moving shadow maps across the floor are prone to shimmer and
-   // they are expensive on integrated GPUs. Keep the constant industrial
-   // lighting and authored material shading instead.
    this.renderer.shadowMap.enabled=false;
-  }else console.warn('Blender arena unavailable; preserving playable collision blockout.',stage.reason);
-  if(viewmodel.status==='fulfilled'){
-   this.blenderViewmodel=viewmodel.value.scene;
-   this.lastWeapon=-1;this.setWeapon(0);
-  }else console.warn('Blender airsoft viewmodel unavailable; using basic practice rig.',viewmodel.reason);
-  this.assetState=stage.status==='fulfilled'&&viewmodel.status==='fulfilled'?'BLENDER ASSETS READY':'BLOCKOUT BACKUP MODE';
+  }else console.warn('Blender arena unavailable; keeping original collision blockout',stage.reason);
+  this.weaponModels.clear();this.failedWeaponModels=[];this.weaponModelIds=[];
+  for(let i=0;i<WEAPONS.length;i++){
+   const res=results[i+1];
+   if(res.status==='fulfilled'){
+    const model=res.value.scene;
+    model.traverse(o=>{
+     if((o as THREE.Mesh).isMesh){
+      const mesh=o as THREE.Mesh;
+      mesh.castShadow=false;
+      mesh.frustumCulled=true;
+      mesh.receiveShadow=true;
+     }
+    });
+    this.weaponModels.set(i,model);
+    this.weaponModelIds.push(WEAPONS[i].id);
+   }else{
+    console.error('Blender replica missing '+WEAPONS[i].id,res.reason);
+    this.failedWeaponModels.push(i);
+   }
+  }
+  this.lastWeapon=-1;this.setWeapon(0);
+  this.assetState=stage.status==='fulfilled'&&this.weaponModels.size===WEAPONS.length
+   ?'BLENDER ASSETS READY'
+   :`ART ${this.weaponModels.size}/${WEAPONS.length} REPLICAS`;
   return this.assetState;
  }
  setWeapon(index:number){
   if(this.lastWeapon===index)return;this.lastWeapon=index;
   this.weaponCore.clear();
   const w=WEAPONS[index]||WEAPONS[0],compact=w.role.includes('PISTOL'),long=w.role.includes('BOLT');
-  if(this.blenderViewmodel){
-   const model=this.blenderViewmodel.clone(true);
-   // One original Blender AEG is the polished v1 viewmodel; shortened variants
-   // are deliberately cosmetic until dedicated per-weapon models are authored.
-   model.scale.setScalar(compact?.82:long?1.12:1);
-   model.position.set(0,compact?-.015:0,compact?.085:0);
-   model.traverse(o=>{if((o as THREE.Mesh).isMesh)(o as THREE.Mesh).castShadow=false});
-   this.weaponCore.add(model);return;
+  const original=this.weaponModels.get(index);
+  if(original){
+   const model=original.clone(true);
+   // All nine have a dedicated first-person hand pose, orange 6mm airsoft
+   // muzzle and detailed polymer/metal meshes in their own Blender source.
+   this.weaponCore.add(model);
+   return;
   }
+  // This temporary emergency proxy is used only if an asset failed to load.
+  // Normal release CI rejects missing Blender weapon assets.
   const frame=new THREE.MeshStandardMaterial({color:0x343e40,metalness:.58,roughness:.42});
   const plastic=new THREE.MeshStandardMaterial({color:0x222b28,metalness:.12,roughness:.4});
   const accent=new THREE.MeshStandardMaterial({color:0xb8c997,metalness:.15,roughness:.5});
