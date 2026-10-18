@@ -50,6 +50,8 @@ export class Engine{
   this.scene.add(lamp);
   this.muzzle=new THREE.PointLight(0xf2f4c0,0,5);this.muzzle.position.set(.4,-.24,-1.15);this.camera.add(this.muzzle);
   this.camera.add(this.weapon);this.weapon.add(this.weaponCore);this.scene.add(this.camera);
+  // Spawn at the final near-hip position to avoid clipping on the first frame.
+  this.weapon.position.set(.30,-.36,-.96);
   window.addEventListener('resize',()=>this.resize());
  }
  async init(){
@@ -193,8 +195,14 @@ export class Engine{
   const original=this.weaponModels.get(index);
   if(original){
    const model=original.clone(true);
-   // All nine have a dedicated first-person hand pose, orange 6mm airsoft
-   // muzzle and detailed polymer/metal meshes in their own Blender source.
+   // Scope/stock geometry extends behind the local gun origin. Keeping the
+   // entire mesh safely in front of the FPS near plane prevents the huge
+   // blocky receiver clipping across the whole screen during ADS.
+   const scale=index===6?.62:index===5?.70:index>=7?.83:index===4?.76:.70;
+   model.scale.setScalar(scale);
+   model.position.set(0,0,-.12);
+   // All nine have their own detailed Blender design, and the hand geometry
+   // is part of that design instead of a second floating overlay.
    this.weaponCore.add(model);
    return;
   }
@@ -346,13 +354,19 @@ export class Engine{
    this.cameraBank=THREE.MathUtils.damp(this.cameraBank,lean,sliding?12:9,dt);
    this.camera.rotation.z=this.cameraBank;
    const aim=input.ads&&!sliding&&!sprinting?1:0,sprint=sprinting?1:0;
-   const targetX=aim?0:sprint?.40:.33;
-   const targetY=aim?-.24:sliding?-.57:sprint?-.49:-.38;
-   const targetZ=aim?-.44:sliding?-.55:sprint?-.77:-.68;
+   const targetX=aim?0:sprint?.33:.30;
+   // Center model-specific optic heights on the true reticle in ADS.
+   const aimingY=this.lastWeapon>=7?-.125:this.lastWeapon===6?-.18:
+    this.lastWeapon===5?-.15:-.19;
+   const targetY=aim?aimingY:sliding?-.48:sprint?-.45:-.36;
+   // The rear stock on scoped models extends back 0.76m before scale.
+   // Don't move it through the camera near-plane (old model was at -.44).
+   const targetZ=aim?-.85:sliding?-1.02:sprint?-1.08:-.96;
    this.weapon.position.lerp(new THREE.Vector3(targetX,targetY,targetZ),Math.min(1,dt*(aim?17:12)));
    this.recoil=Math.max(0,this.recoil-dt*.83);
    this.weapon.rotation.x=THREE.MathUtils.lerp(this.weapon.rotation.x,-this.recoil-sprint*.33+(sliding?-.16:0),Math.min(1,dt*14));
    this.weapon.rotation.z=THREE.MathUtils.lerp(this.weapon.rotation.z,sprint*-.32+(sliding?.15:0),Math.min(1,dt*10));
+   this.weapon.rotation.y=THREE.MathUtils.lerp(this.weapon.rotation.y,aim?0:-.07,Math.min(1,dt*10));
    this.weapon.position.y+=Math.sin(this.walkPhase)*Math.hypot(input.f,input.s)*(sliding?.003:.012);
    const requestedFov=aim?Math.max(55,settings.fov-18):settings.fov+(sliding?7:sprinting?5:0);
    const nextFov=THREE.MathUtils.lerp(this.camera.fov,requestedFov,Math.min(1,dt*7));

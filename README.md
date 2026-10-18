@@ -14,7 +14,7 @@ All nine selectable replicas now have independent editable Blender source scenes
 | Echo | Compact GBB pistol with rounded slide and stippled grip |
 | Tempo | Extended competition-style GBB airsoft pistol with optic |
 
-The game now loads the specific model for each weapon slot, rather than stretching one rifle model. All feature original first-person LEGO-yellow hands and orange airsoft-only muzzle details. GLBs are merged by material for render efficiency; native .blend files retain named parts. These are procedural Blender-modeled game assets, not photographs or high-poly organic sculpts. Reload animations and physically-based texture baking remain future work.
+The game now loads the specific model for each weapon slot, rather than stretching one rifle model. Each viewmodel is scaled and placed far enough forward to prevent the rear stock from clipping through the camera, with ADS sight alignment adjusted by weapon type. All feature original first-person LEGO-yellow hands and orange airsoft-only muzzle details. GLBs are merged by material for render efficiency; native .blend files retain named parts. These are procedural Blender-modeled game assets, not photographs or high-poly organic sculpts. Reload animations and physically-based texture baking remain future work.
 
 ---
 ## Input synchronization repair (2026-10-18)

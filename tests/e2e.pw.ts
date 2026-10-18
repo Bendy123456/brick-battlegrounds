@@ -198,5 +198,8 @@ test('all nine distinct Blender weapons load and loadout selection uses selected
   const d=await page.evaluate(()=>(window as any).__AIRSOFT_DEBUG__?.());
   return d?.selectedViewmodel;
  },{timeout:16000}).toBe(8);
+ // Capture the real first-person rendering of the distinct Tempo sidearm.
+ const pistolFrame=await page.screenshot({type:'jpeg',quality:32,animations:'disabled'});
+ console.log('AIRSOFT_TEMPO_JPEG_B64='+pistolFrame.toString('base64'));
  expect(errors).toEqual([]);
 });
