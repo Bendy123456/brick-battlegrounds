@@ -26,6 +26,8 @@ export class Engine{
  lastWeapon=-1; recoil=0;walkPhase=0;eyeBob=0;frame=0;lastStep=0;
  // Grip preference is individual for each gun, not global.
  gripModes=new Map<number,boolean>(); gripTwoHanded=true;
+ // Test-only viewmodel selector, never enabled during ordinary gameplay.
+ qaWeaponOverride:number|null=null;
  readonly temp=new THREE.Object3D();
  readonly oldBlockout:THREE.Object3D[]=[];
  readonly oldDecor:THREE.Object3D[]=[];
@@ -281,7 +283,8 @@ export class Engine{
   this.playerSide=side;
   const local=s.players.find(p=>p.side===side),remote=s.players.find(p=>p.side!==side);
   if(local){
-   if(this.lastWeapon!==local.weapon)this.setWeapon(local.weapon);
+   const presentedWeapon=this.qaWeaponOverride??local.weapon;
+   if(this.lastWeapon!==presentedWeapon)this.setWeapon(presentedWeapon);
    const pos=this.body.translation();
    const dx=local.x-pos.x,dy=local.y-pos.y,dz=local.z-pos.z;
    const error=Math.hypot(dx,dy,dz);
