@@ -195,14 +195,29 @@ export class Engine{
   const original=this.weaponModels.get(index);
   if(original){
    const model=original.clone(true);
-   // Scope/stock geometry extends behind the local gun origin. Keeping the
-   // entire mesh safely in front of the FPS near plane prevents the huge
-   // blocky receiver clipping across the whole screen during ADS.
+   // Grow just the authored weapon meshes (including the orange tip), rather
+   // than enlarging the bare hands and forearms that share this GLB.
+   // The importer prefixes original gun meshes with AUTHORED; appended hand
+   // meshes use different names and keep their normal first-person proportions.
+   const weaponArt=new THREE.Group();
+   weaponArt.name='Weapon size adjustment - hands excluded';
+   model.add(weaponArt);
+   const gunParts:THREE.Object3D[]=[];
+   model.traverse(part=>{
+    if((part as THREE.Mesh).isMesh &&
+       (part.name.startsWith('AUTHORED ') ||
+        part.name.startsWith('AIRSOFT_ORANGE_TIP_07') ||
+        part.name.startsWith('Orange tip /'))){
+     gunParts.push(part);
+    }
+   });
+   for(const part of gunParts)weaponArt.attach(part);
+   // A modest 18% increase (22% for pistols); keep all grip/hand meshes put.
+   weaponArt.scale.setScalar(index>=7?1.22:1.18);
+   // Retain the proven first-person camera placement and weapon-specific scale.
    const scale=index===6?.62:index===5?.70:index>=7?.83:index===4?.76:.70;
-   model.scale.setScalar(scale);
+   model.scale.setScalar(gunParts.length?scale:scale*1.12);
    model.position.set(0,0,-.12);
-   // All nine have their own detailed Blender design, and the hand geometry
-   // is part of that design instead of a second floating overlay.
    this.weaponCore.add(model);
    return;
   }
