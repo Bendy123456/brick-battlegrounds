@@ -295,6 +295,54 @@ function banners(g,M){
   block(g,.13,1.45,.15,x+.85,4.20,z,mark);
  }
 }
+// CHANGED: Merge repeated stationary decorative geometry by material after
+// all world transforms have been baked. This collapses hundreds of tiny
+// temple/lantern meshes into a handful of GPU draw calls. Fighting rigs,
+// transparent materials, lit shaders, roofs casting shadows and InstancedMesh
+// objects are explicitly excluded. No runtime work is added.
+function batchStaticDecorations(root){
+ root.updateMatrixWorld(true);
+ const batches=new Map();
+ root.traverse(o=>{
+  if(!o.isMesh||o.isInstancedMesh||o.castShadow||
+   !o.material?.isMeshStandardMaterial||o.material.vertexColors||
+   o.material.transparent||o.material.map||o.material.skinning)return;
+  const geo=o.geometry;
+  if(!geo?.getAttribute('position')||!geo.getAttribute('normal')||
+   !geo.getAttribute('uv'))return;
+  const bucket=batches.get(o.material)||[];
+  bucket.push(o);batches.set(o.material,bucket);
+ });
+ let combined=0,drawCallsSaved=0;
+ for(const [material,meshes] of batches){
+  if(meshes.length<3)continue;
+  const positions=[],normals=[],uvs=[];
+  for(const mesh of meshes){
+   let g=mesh.geometry.clone();
+   if(g.index){const non=g.toNonIndexed();g.dispose();g=non}
+   g.applyMatrix4(mesh.matrixWorld);
+   const p=g.getAttribute('position'),n=g.getAttribute('normal'),uv=g.getAttribute('uv');
+   for(let i=0;i<p.count;i++){
+    positions.push(p.getX(i),p.getY(i),p.getZ(i));
+    normals.push(n.getX(i),n.getY(i),n.getZ(i));
+    uvs.push(uv.getX(i),uv.getY(i));
+   }
+   g.dispose();
+   mesh.parent.remove(mesh);
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geo.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));
+  geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+  geo.computeBoundingSphere();
+  const merged=part(root,geo,material,0,0,0,false);
+  merged.name="BatchedMonasteryArchitecture";
+  combined++;drawCallsSaved+=meshes.length-1;
+ }
+ root.userData.staticBatches=combined;
+ root.userData.decorativeDrawCallsSaved=drawCallsSaved;
+}
+
 export function buildMountainMonastery(scene){
  const g=new THREE.Group();g.name="MountainMonasteryScenery";scene.add(g);
  makeSky(scene);
@@ -323,6 +371,7 @@ export function buildMountainMonastery(scene){
  lanterns(g,M);
  blossomingTrees(g);
  banners(g,M);
+ batchStaticDecorations(g); // CHANGED: bake static details into material-batched meshes.
  // Static scenery: there are no per-frame updates and no collision bodies.
  return g;
 }
