@@ -742,3 +742,13 @@
   #selectScreen .select-fog-cloud,#selectScreen .select-fog-embers{animation:none;will-change:auto}
   #selectScreen .buttonrow button{transition:none}
 }
+
+/* v0.8.27 — accessible in-match sound control. */
+#audioToggle{position:fixed;bottom:51px;right:137px;z-index:8;
+ background:#101e24dc;color:#f3d7a7;border:1px solid #bca06f;
+ border-radius:3px;padding:10px 13px;min-height:34px;
+ font:800 11px Inter,Arial,sans-serif;letter-spacing:.07em}
+#audioToggle:hover{background:#273f42}
+#audioToggle[aria-pressed="false"]{color:#b4b8b7;border-color:#6d7778}
+@media(max-width:700px){#audioToggle{right:auto;left:14px;bottom:70px;
+ font-size:10px;padding:9px 10px}}

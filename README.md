@@ -1,4 +1,12 @@
-# BRICK BATTLEGROUNDS — v0.8.26 MOUNTAIN MONASTERY ARENA
+# BRICK BATTLEGROUNDS — v0.8.27 COMBAT FEEL PASS
+
+- Procedural Web Audio sound design for light/heavy swings, impacts, block, guard break, jumps, directional dashes, elemental Spinjitzu and knockdowns (no downloaded samples).
+- Glowing hit rings, restrained decaying camera shake, and 20–80 ms solo-only hit-stop to make impacts readable.
+- Buffered one-shot combat inputs during hit-stop, preventing dropped inputs when freezing action. Online fight simulations are never hit-stopped.
+- In-match sound toggle and keyboard M mute shortcut with a locally saved preference. Browsers require an initial user gesture to enable Web Audio.
+- Existing damage, hitboxes, 150 health, attack/combo timing, guard and dash cooldowns, Spinjitzu cooldown/duration, input mappings, CPU logic, map and online protocol are unchanged.
+- Physical controller feel and actual browser audio/visual performance should be verified in a manual live match.
+
 
 Online-ready browser fighting game with original brick ninja fighters and a fully playable 3D mountain monastery courtyard.
 

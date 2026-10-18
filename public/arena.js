@@ -1,6 +1,7 @@
 import * as THREE from '/vendor/three.module.js';
 // CHANGED v0.8.26: 3D mountain monastery built separately from combat/gameplay.
 import {buildMountainMonastery} from './mountain-monastery.js';
+import {initCombatAudio,playCombatSound} from './combat-audio.js';
 import {buildClassicNinja} from './classic-ninja.js';
 import {setupTouchControls} from './touch-controls.js';
 // CHANGED: Visual-only combat poses live independently of hit detection.
@@ -27,6 +28,7 @@ renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.34;
 $('game').appendChild(renderer.domElement);
+initCombatAudio($('audioToggle'));
 const camera = new THREE.PerspectiveCamera(50,innerWidth/innerHeight,.1,260);
 // CHANGED: Natural soft daylight with warm mountain sunrise highlights.
 scene.add(new THREE.HemisphereLight(0xcfe1e2,0x5a6d53,2.0));
@@ -75,7 +77,7 @@ export function setCharacters(local,opponent){
  $('p1name').textContent=local[0];$('p2name').textContent=opponent[0];
 }
 export function startFight(){startGame()}
-export function stopFight(){running=false;finished=false;roundWait=0;stopSpinjitzu(p);stopSpinjitzu(cpu);mobileTouch.reset()}
+export function stopFight(){running=false;finished=false;roundWait=0;hitStopRemaining=0;clearBufferedInputs();stopSpinjitzu(p);stopSpinjitzu(cpu);mobileTouch.reset()}
 export function receivePeerState(state){remoteState=state}
 export function receivePeerAttack(kind){if(gameMode==='online')tryAttack(cpu,kind)}
 // CHANGED: Multiplayer reuses the original damage event with stun/knockdown flags.
@@ -97,9 +99,20 @@ export function receiveDamage(damage,knockdown=false,stun=true,spinjitzuFinisher
   }
  }
  fx(p.root.position.clone().add(new THREE.Vector3(0,1.75,0)),0xff9977,11);
+ spawnImpactRing(p.root.position,knockdown?0xffe4a2:0xff9977,knockdown?1.35:1);
+ playCombatSound(knockdown?'knockdown':damage>=18?'heavyHit':'lightHit');
+ shakeCamera(knockdown?.115:.065);
 }
 cpu.root.rotation.y=Math.PI/2;p.root.rotation.y=-Math.PI/2;
 let running=false,finished=false,time=120,round=1,roundWait=0,lock=true,camYaw=-Math.PI/2,camPitch=.16;
+// Solo-only hit-stop holds frames very briefly without dropping queued button presses.
+let hitStopRemaining=0,shakeRemaining=0,shakeAmplitude=0;
+const previousShake=new THREE.Vector3();
+const bufferedInputs={light:false,heavy:false,dodge:false,jump:false,special:false,target:false};
+function clearBufferedInputs(){for(const key of Object.keys(bufferedInputs))bufferedInputs[key]=false}
+function bufferInput(input){for(const key of Object.keys(bufferedInputs))bufferedInputs[key] ||= !!input[key]}
+function restoreInput(input){for(const key of Object.keys(bufferedInputs)){input[key] ||= bufferedInputs[key];bufferedInputs[key]=false}}
+function shakeCamera(strength){shakeRemaining=Math.max(shakeRemaining,.22);shakeAmplitude=Math.max(shakeAmplitude,strength)}
 const keys=new Set(),mouse={drag:false,px:0,py:0};
 let mouseLightQueued=false;
 const mobileTouch=setupTouchControls();
@@ -154,7 +167,7 @@ function resetFighter(f,x){
  f.specialCooldown=0;f.hitFlash=0;f.block=false;f.visual.position.set(0,0,0);
  f.visual.rotation.set(0,0,0);f.runTime=0;
 }
-function startGame(){p.score=cpu.score=0;round=1;finished=false;newRound();running=true}
+function startGame(){p.score=cpu.score=0;round=1;finished=false;hitStopRemaining=0;shakeRemaining=0;clearBufferedInputs();newRound();running=true}
 function newRound(){resetFighter(p,gameMode==='online'&&playerSlot===1?3.8:-3.8);resetFighter(cpu,gameMode==='online'&&playerSlot===1?-3.8:3.8);time=120;showToast('ROUND '+round,1.2);updateHUD()}
 let toastT=0;function showToast(txt,secs){$('toast').textContent=txt;toastT=secs}
 function aimAt(f,op){const d=new THREE.Vector3().subVectors(op.root.position,f.root.position);f.face=Math.atan2(-d.x,-d.z);f.root.rotation.y=f.face}
@@ -189,11 +202,21 @@ function tryAttack(f,kind){
  if(!base)return;
  f.attack={kind,stage:kind==='light'?f.combo:0,...base,hitIndex:0};
  f.attackTime=0;f.attackCooldown=base.len+.065;
+ playCombatSound(kind==='special'?'spinStart':kind==='heavy'?'heavySwing':'lightSwing');
  if(kind==='special')f.specialCooldown=SPIN_COOLDOWN;
  if(f===p&&gameMode==='online')gameEvents.onAttack?.(kind);
 }
 // Low-cost pooled-ish particle bursts: only spawned on confirmed contact.
 const sparkGeo=new THREE.BoxGeometry(.105,.105,.105),particles=[];
+const impactRingGeometry=new THREE.RingGeometry(.29,.385,40),impactRings=[];
+function spawnImpactRing(origin,color,scale=1){
+ if(impactRings.length>=18)return;
+ const material=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.92,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending});
+ const mesh=new THREE.Mesh(impactRingGeometry,material);
+ mesh.position.copy(origin);mesh.position.y+=1.55;
+ mesh.scale.setScalar(scale*.6);scene.add(mesh);
+ impactRings.push({mesh,material,life:.23,total:.23,scale});
+}
 function fx(pos,color,n=12){
  const m=new THREE.MeshBasicMaterial({color});
  for(let i=0;i<n;i++){
@@ -248,6 +271,16 @@ function hit(att,def,attack){
  fx(b.clone().add(new THREE.Vector3(0,1.55,0)),
   blocked?0xffde97:attack.kind==='special'?att.visual.userData.baseColor:
   att===p?0x71dfff:0xff8970,finisher?22:blocked?8:13);
+ spawnImpactRing(b,blocked?0xffedab:finisher?0xffffff:
+  attack.kind==='special'?att.visual.userData.baseColor:attack.kind==='heavy'?0xffd7a5:0xffffff,
+  finisher?1.85:attack.kind==='heavy'?1.45:blocked?.85:1);
+ playCombatSound(blocked?(def.guard<=0?'guardBreak':'block'):
+  attack.kind==='special'?'spinHit':attack.kind==='heavy'?'heavyHit':'lightHit');
+ if(knockdown)playCombatSound('knockdown');
+ shakeCamera(blocked?.035:finisher?.15:attack.kind==='heavy'?.12:.07);
+ // Pause only local simulations; never stall online state packets.
+ if(gameMode==='solo')hitStopRemaining=Math.max(hitStopRemaining,
+  blocked?.02:finisher?.08:attack.kind==='heavy'?.07:.04);
 }
 // CHANGED: All LIGHT/HEAVY keyframes, angle tables and interpolation are in combat-poses.js.
 const SPECIAL_POSES=[[0,{}],[.19,{l:1.55,r:1.55,lift:.18,lean:-.12}],[.53,{l:2.25,r:2.25,bodyY:2.1,bodyZ:.24,lift:.35}],[.8,{l:1,r:1,bodyY:3.1}],[1,{}]];
@@ -363,7 +396,7 @@ function updateFighter(f,op,dt,controls){
  for(const k of ['stun','attackCooldown','specialCooldown','iframes','dodge','dashCooldown','comboWindow','hitFlash'])f[k]=Math.max(0,f[k]-dt);
  f.guard=Math.min(100,f.guard+dt*(f.block?2:15));
  f.block=controls.block&&f.stun<=0&&f.guard>0&&f.dodge<=0&&!f.attack;
- if(controls.jump&&f.onGround&&f.stun<=0){f.yVel=8;f.onGround=false}
+ if(controls.jump&&f.onGround&&f.stun<=0){f.yVel=8;f.onGround=false;playCombatSound('jump')}
  // CHANGED: Four proper directional dashes, selected on Q / B / Circle press.
  if(controls.dodge&&f.dodge<=0&&f.dashCooldown<=0&&f.stun<=0&&f.attackCooldown<=0&&!f.attack){ // CHANGED: shared dash cooldown gate
   const mx=controls.mx||0,my=controls.my||0;
@@ -373,6 +406,7 @@ function updateFighter(f,op,dt,controls){
   const settings=DASH_ANIMATIONS[type];f.dashKind=type;f.dashDuration=settings.duration;
    // CHANGED: Cooldown starts on dash activation. Side dashes = 1s; forward/back = 2s.
    f.dashCooldown=(type==='left'||type==='right')?1:2;
+   playCombatSound('dash');
   f.dodge=settings.duration;f.iframes=.26; // CHANGED: Keep the existing dash i-frame window.
   // CHANGED: Character-local directions track the facing opponent, not screen pixels.
   const forward=new THREE.Vector3(-Math.sin(f.face),0,-Math.cos(f.face));
@@ -457,13 +491,17 @@ const clock=new THREE.Clock();let frames=0,frameWindow=0;
 const fpsCounter=document.createElement('div');fpsCounter.id='fpsCounter';fpsCounter.style.cssText='position:fixed;bottom:54px;left:18px;z-index:8;padding:5px 9px;background:#071319c9;color:#a9f2a5;font:700 12px Arial;pointer-events:none';fpsCounter.textContent='FPS --';document.body.appendChild(fpsCounter);
 function animate(){
  requestAnimationFrame(animate);
- const dt=Math.min(clock.getDelta(),.04);
- frames++;frameWindow+=dt;
+ const realDt=Math.min(clock.getDelta(),.04);
+ const frozen=running&&gameMode==='solo'&&hitStopRemaining>0;
+ if(frozen)hitStopRemaining=Math.max(0,hitStopRemaining-realDt);
+ const dt=frozen?0:realDt;
+ frames++;frameWindow+=realDt;
  if(frameWindow>=1){fpsCounter.textContent='FPS '+Math.round(frames/frameWindow);frames=0;frameWindow=0}
  fpsCounter.style.display=$('hud').classList.contains('hidden')?'none':'block';
  const input=pollInput();
- if(input.target){lock=!lock;$('reticle').style.display=lock?'block':'none'}
- if(running){
+ if(frozen)bufferInput(input);else restoreInput(input);
+ if(!frozen&&input.target){lock=!lock;$('reticle').style.display=lock?'block':'none'}
+ if(running&&!frozen){
   time=Math.max(0,time-dt);
   updateFighter(p,cpu,dt,input);
   if(gameMode==='solo')updateFighter(cpu,p,dt,cpuInput(dt));
@@ -502,6 +540,16 @@ function animate(){
   q.obj.position.addScaledVector(q.v,dt);q.v.y-=16*dt;q.obj.rotation.x+=dt*6;
   if(q.life<=0){scene.remove(q.obj);particles.splice(i,1);if(!particles.some(p=>p.material===q.material))q.material.dispose()}
  }
+ for(let i=impactRings.length-1;i>=0;i--){
+  const q=impactRings[i];q.life-=realDt;
+  q.mesh.quaternion.copy(camera.quaternion);
+  const t=1-Math.max(0,q.life/q.total);
+  q.mesh.scale.setScalar(q.scale*(.6+t*1.32));
+  q.material.opacity=.92*(1-t)*(1-t);
+  if(q.life<=0){scene.remove(q.mesh);q.material.dispose();impactRings.splice(i,1)}
+ }
+ // Remove the previous screen-shake offset before applying camera smoothing.
+ camera.position.sub(previousShake);previousShake.set(0,0,0);
  // Combat framing: short camera distance, gentle zoom-out as opponents separate, smooth yaw.
  const midpoint=p.root.position.clone().lerp(cpu.root.position,.33).add(new THREE.Vector3(0,1.9,0));
  if(lock&&running){
@@ -515,6 +563,14 @@ function animate(){
  const offset=new THREE.Vector3(Math.sin(camYaw)*camDist,3.5+camPitch*4.1+separation*.06,Math.cos(camYaw)*camDist);
  camera.position.lerp(midpoint.clone().add(offset),1-Math.exp(-5.2*dt));
  camera.lookAt(midpoint.clone().lerp(cpu.root.position.clone().add(new THREE.Vector3(0,1.7,0)),.05));
+ if(shakeRemaining>0){
+  shakeRemaining=Math.max(0,shakeRemaining-realDt);
+  const fade=shakeRemaining/.22,t=performance.now()*.001;
+  previousShake.set(Math.sin(t*93)*shakeAmplitude*fade,Math.cos(t*117)*shakeAmplitude*fade*.68,0);
+  previousShake.applyQuaternion(camera.quaternion);
+  camera.position.add(previousShake);
+  if(shakeRemaining===0)shakeAmplitude=0;
+ }
  renderer.render(scene,camera);
 }
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
