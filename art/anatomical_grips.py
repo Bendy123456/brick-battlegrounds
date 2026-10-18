@@ -77,11 +77,12 @@ def contact_point(points,lo,hi,frac,z_frac,side,y_shift=0):
  """
  ys=lo.y+(hi.y-lo.y)*frac+y_shift
  zs=lo.z+(hi.z-lo.z)*z_frac
+ center_x=(lo.x+hi.x)*.5
  candidates=[]
  for widen in (.035,.075,.14,.24):
   candidates=[p for p in points
      if abs(p[1]-ys)<=widen and abs(p[2]-zs)<=widen*.80
-     and p[0]*side>=-.015]
+     and (p[0]-center_x)*side>=.004]
   if len(candidates)>=6:break
  if not candidates:
   # Some large authored meshes (notably shotgun stocks) have their left-side
