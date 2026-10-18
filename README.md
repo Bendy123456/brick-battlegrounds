@@ -25,6 +25,15 @@ Keep the Render Node web service connected to this repo, branch `main`, build co
 - Server-authoritative player movement, fire cadence, ammo and scoring. Solo vs simple server bot; private code 1v1; experimental quick-match queue; rematch and respawn; lightweight reconnect token. First to five.
 - HUD with health, time, zone, score, ammo, game results and ping. Local pause, loadout, stored keyboard rebinds, mouse sensitivity and controller deadzone, generated Web Audio placeholder sounds, server-rendered BBs and basic cosmetic props.
 
+## Fast traversal update
+
+- Responsive, momentum-based acceleration: walk 6.5 m/s, hold-to-sprint 11.5 m/s, directional boosted slide up to 14.5 m/s with a roughly 0.8-second friction curve.
+- **Keyboard:** hold **Shift + W** to sprint, tap **C** while sprinting to slide. Tap **Space** during a slide to cancel into a jump; release **C** to stand. **C** at walking speed crouches normally.
+- **Controller:** hold **L3 + left-stick forward** to sprint, tap **B** (Xbox) / **Circle** (PS5) to slide. Press **A/Cross** to jump out of the slide.
+- The server validates slides, movement and stance. Both predicted movement and authoritative players use the same acceleration, slide momentum, steering and cooldown logic. A lowered capsule is used for slides; if overhead clearance is blocked, the player remains crouched rather than clipping through the obstacle.
+- Camera leans and drops during slides; sprint and slide provide distinct FOV changes, weapon movement, running bob and brief wind sound. Original LEGO models, Blender stage, weapons, BB hit logic and maps are preserved.
+- The movement does not use proprietary game code or assets.
+
 ## Controls
 
 Keyboard: WASD move; mouse look; LMB fire; RMB aim; R reload; Space jump; C crouch; Z prone; Shift sprint; Q/E lean (prototype support); 1/2 select default primary/pistol; G grenade (placeholder), V melee (placeholder), Tab score; Esc pause and release pointer lock.
@@ -36,7 +45,7 @@ Controllers: the standard Gamepad API; left stick move, right stick look, RT/R2 
 - [OPEN] **Blender files:** no original .blend sources, baked lightmaps, GLB character/arms/gun/map assets or authored rig animation clips exist yet. Blockout geometry is procedural. The required all-Blender asset pipeline has not been delivered.
 - [OPEN] **Bots:** no navmesh, cover/flank/peek decision-making or true ragdoll solver. Basic bot steering can get stuck on obstacles.
 - [OPEN] **Network:** no 150ms server-side position rewind, robust anti-cheat, ranked matchmaking, replayable event logs, 20-cycle soak tests or packet-loss benchmarking. Reconnect rooms are in-memory and disappear on server restart.
-- [OPEN] **Physics:** no reliable ricochet or penetration by material, proper synchronized dynamic props, CCD configuration on separate BB rigid bodies, complete slide mechanics, or collider height adjustment for prone and crouch.
+- [OPEN] **Physics:** no reliable ricochet or penetration by material, proper synchronized dynamic props, CCD configuration on separate BB rigid bodies, full vault/mantle/wall-run traversal (slide and lower stance capsule now implemented).
 - [OPEN] **Equipment:** smoke/flash grenades, melee tagging and detailed per-weapon recoil patterns remain placeholders.
 - [OPEN] **Performance:** 60/120fps not benchmarked; draw-call readout available but under-300 budget not verified. No chunked GLB loading, progress UI, baked maps, authored LOD or compressed textures.
 - [OPEN] **Testing:** Vitest unit tests and GitHub-hosted TypeScript/Vite build checks pass. Windows Edge/Firefox/Safari, real Xbox/PS5 gamepads, multiple browser networking under 30/100/200ms latency and 2% loss, 10-minute memory, and end-to-end finish/rematch testing are not yet complete.
