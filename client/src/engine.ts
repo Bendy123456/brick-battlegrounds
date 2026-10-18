@@ -13,13 +13,13 @@ const COLORS:Record<string,number>={concrete:0x56636a,metal:0x485969,wood:0x8468
 const toV=(p:any)=>new THREE.Vector3(p.x,p.y,p.z);
 export class Engine{
  scene=new THREE.Scene();
- camera=new THREE.PerspectiveCamera(88,innerWidth/innerHeight,.08,190);
+ camera=new THREE.PerspectiveCamera(88,innerWidth/innerHeight,.12,190);
  renderer:THREE.WebGLRenderer;
  world:any;body:any;collider:any;controller:any;enemy:THREE.Group|null=null;
  opponentYaw=0;playerSide=0;localPos=new THREE.Vector3(-18,1,0);
  motion:Motion=newMotion();stance:'stand'|'crouch'|'slide'|'prone'='stand';grounded=true;vy=0;
  cameraHeight=.52;cameraBank=0;strideSpeed=0;
- measuredFPS=60;maxPixelRatio=Math.min(devicePixelRatio||1,1.20);
+ measuredFPS=60;lowFpsMode=false;maxPixelRatio=Math.min(devicePixelRatio||1,1.20);
  pixelRatio=this.maxPixelRatio;lastQualityChange=0;
  projectiles=new Map<number,THREE.Mesh>();props:{body:any,mesh:THREE.Mesh}[]=[];
  weapon=new THREE.Group();weaponCore=new THREE.Group();muzzle:THREE.PointLight;
@@ -115,7 +115,7 @@ export class Engine{
  createLocal(side:number){
   this.playerSide=side;const spawn=SPAWNS[side];this.localPos.set(spawn.x,spawn.y,spawn.z);
   this.motion=newMotion();this.stance='stand';this.grounded=true;this.vy=0;this.cameraHeight=.52;
-  this.renderPos.set(spawn.x,spawn.y,spawn.z);this.lastServerError=0;
+  this.renderPos.set(spawn.x,spawn.y,spawn.z);this.lastServerError=0;this.lowFpsMode=false;
   if(this.body){this.world.removeRigidBody(this.body)}
   this.body=this.world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(spawn.x,spawn.y,spawn.z));
   this.collider=this.world.createCollider(RAPIER.ColliderDesc.capsule(.60,.30),this.body);
@@ -146,6 +146,19 @@ export class Engine{
    // The Blender model already includes its own floor markings, rails and lamps.
    // Drawing legacy decorations over them creates z-fighting and unnecessary lighting work.
    for(const decor of this.oldDecor)decor.visible=false;
+   // These props existed only in the client world and were not replicated
+   // on the authoritative server. They could stop movement locally while
+   // the server walked through, triggering violent snapshot corrections.
+   // Blender already contains detailed modeled crates in their place.
+   for(const prop of this.props){
+    this.scene.remove(prop.mesh);
+    this.world.removeRigidBody(prop.body);
+   }
+   this.props.length=0;
+   // Large moving shadow maps across the floor are prone to shimmer and
+   // they are expensive on integrated GPUs. Keep the constant industrial
+   // lighting and authored material shading instead.
+   this.renderer.shadowMap.enabled=false;
   }else console.warn('Blender arena unavailable; preserving playable collision blockout.',stage.reason);
   if(viewmodel.status==='fulfilled'){
    this.blenderViewmodel=viewmodel.value.scene;
@@ -197,19 +210,25 @@ export class Engine{
    const dx=local.x-pos.x,dy=local.y-pos.y,dz=local.z-pos.z;
    const error=Math.hypot(dx,dy,dz);
    this.lastServerError=error;
-   // The server snapshot is 30-100ms behind the already-predicted browser
-   // position. Pulling the body 20% backwards every 50ms at sprint speed
-   // made both the floor and camera appear to jump. Only hard-correct large
-   // divergences; otherwise apply a very small correction when not sprinting.
-   // Keep the physics root authoritative on a true respawn/large desync.
-   if(error>3.5||(!local.alive&&error>1.5)){
+   // On slow GPUs fixed-step client prediction cannot keep up with 60Hz
+   // server motion. Trust authoritative snapshots directly instead of
+   // teleporting the FPS camera after every delayed render frame.
+   if(this.lowFpsMode){
     this.body.setTranslation({x:local.x,y:local.y,z:local.z},true);
     this.localPos.set(local.x,local.y,local.z);
-    this.renderPos.set(local.x,local.y,local.z);
-    this.motion=newMotion();
-   }else if(error>.85&&this.motion.slideTime<=0&&this.strideSpeed<5){
-    const correction=.055;
-    this.body.setTranslation({x:pos.x+dx*correction,y:pos.y+dy*correction,z:pos.z+dz*correction},true);
+    this.strideSpeed=Math.max(0,local.velocity)*11.5;
+    this.motion.slideTime=local.sliding?.20:0;
+   }else if(error>4.5){
+    // Large desync / respawn: restore server position without resetting the
+    // current velocity each time (that reset created repeated sprint stalls).
+    this.body.setTranslation({x:local.x,y:local.y,z:local.z},true);
+    this.localPos.set(local.x,local.y,local.z);
+    if(error>12||!local.alive)this.renderPos.set(local.x,local.y,local.z);
+   }else if(error>1.8&&this.motion.slideTime<=0&&this.strideSpeed<3){
+    // Only very small resting correction. No chasing of delayed snapshots
+    // while the user is moving, walking, sprinting or sliding.
+    const c=.025;
+    this.body.setTranslation({x:pos.x+dx*c,y:pos.y+dy*c,z:pos.z+dz*c},true);
    }
   }
   if(remote&&this.enemy){
@@ -254,7 +273,7 @@ export class Engine{
   this.stance=kind;
  }
  predict(dt:number,input:Input){
-  if(!this.world||!this.body)return;
+  if(!this.world||!this.body||this.lowFpsMode)return;
   const movement=stepMotion(this.motion,input,dt,this.grounded);
   if(movement.started)sfx('slide');
   const sliding=movement.sliding;
@@ -297,10 +316,10 @@ export class Engine{
    let eyeY=this.renderPos.y+this.cameraHeight+this.eyeBob*(sliding?.12:1);
    // Use the collision floor (rather than visual paint strips) as camera
    // clearance so the near plane never passes through flooring on a slide.
-   const origin={x:this.renderPos.x,y:this.renderPos.y+.55,z:this.renderPos.z};
-   const ray=new RAPIER.Ray(origin,{x:0,y:-1,z:0});
-   const ground=this.world.castRay(ray,2.4,true,RAPIER.QueryFilterFlags.EXCLUDE_KINEMATIC);
-   if(ground)eyeY=Math.max(eyeY,origin.y-ground.timeOfImpact+.21);
+   // A downwards ray was also hitting dynamic boxes, mezzanines and trim.
+   // That falsely raised the camera while walking by cover, making the
+   // whole floor seem to jump. The player's capsule already handles ground.
+   eyeY=Math.max(eyeY,this.renderPos.y+.21,.24);
    this.camera.position.set(this.renderPos.x,eyeY,this.renderPos.z);
    const lean=sliding?.045:(input.s-.1)*.012;
    this.cameraBank=THREE.MathUtils.damp(this.cameraBank,lean,sliding?12:9,dt);
@@ -321,11 +340,14 @@ export class Engine{
   this.muzzle.intensity*=Math.exp(-dt*32);
   this.renderer.render(this.scene,this.camera);
   this.frame++;
-  if(this.frame%35===0)$('debug').textContent='DRAW CALLS '+this.renderer.info.render.calls+'  |  TRIANGLES '+this.renderer.info.render.triangles+'  |  FPS '+Math.round(this.measuredFPS)+'  |  '+this.assetState+'  |  SYNC '+this.lastServerError.toFixed(2)+'m';
+  if(this.frame%35===0)$('debug').textContent='DRAW CALLS '+this.renderer.info.render.calls+'  |  TRIANGLES '+this.renderer.info.render.triangles+'  |  FPS '+Math.round(this.measuredFPS)+'  |  '+this.assetState+'  |  SYNC '+this.lastServerError.toFixed(2)+'m'+(this.lowFpsMode?'  |  SERVER MOTION':'');
  }
  adjustQuality(fps:number){
   this.measuredFPS=fps;
   if(this.assetState==='LOADING 3D ASSETS')return;
+  // Hysteresis avoids flipping back and forth at the framerate boundary.
+  if(fps<27)this.lowFpsMode=true;
+  else if(fps>43)this.lowFpsMode=false;
   const now=performance.now();
   if(now-this.lastQualityChange<4500)return;
   // Software/WebGL and integrated GPUs can struggle with a giant arena GLB.
@@ -333,12 +355,12 @@ export class Engine{
   if(fps<38&&this.pixelRatio>.72){
    this.pixelRatio=Math.max(.72,this.pixelRatio-.18);
    this.renderer.setPixelRatio(this.pixelRatio);
-   if(fps<25&&this.pixelRatio<=.90)this.renderer.shadowMap.enabled=false;
+   // Shadows remain consistently disabled on the Blender scene.
    this.lastQualityChange=now;
   }else if(fps>58&&this.pixelRatio<this.maxPixelRatio){
    this.pixelRatio=Math.min(this.maxPixelRatio,this.pixelRatio+.12);
    this.renderer.setPixelRatio(this.pixelRatio);
-   if(this.pixelRatio>=1.0)this.renderer.shadowMap.enabled=true;
+   // Never toggle moving shadows back on while playing.
    this.lastQualityChange=now;
   }
  }
