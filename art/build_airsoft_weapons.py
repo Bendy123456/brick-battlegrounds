@@ -106,6 +106,63 @@ def label(name,word,pos,size,mat):
  ob.rotation_euler=(math.pi/2,0,0)
  bpy.context.view_layer.objects.active=ob;bpy.ops.object.convert(target='MESH')
  return ob
+def sculpted_shell(name,sections,mat,sides=20):
+ # Swept elliptical section housing: smooth, contoured geometry, no box primitive.
+ # Each section is (z,center_y,radius_x,radius_y).
+ verts=[];faces=[]
+ for z,cy,rx,ry in sections:
+  for i in range(sides):
+   ang=2*math.pi*i/sides
+   verts.append(p(rx*math.cos(ang),cy+ry*math.sin(ang),z))
+ for k in range(len(sections)-1):
+  for i in range(sides):
+   j=(i+1)%sides;a=k*sides+i;b=k*sides+j
+   faces.append((a,b,b+sides,a+sides))
+ faces.append(tuple(range(sides-1,-1,-1)))
+ last=(len(sections)-1)*sides
+ faces.append(tuple(last+i for i in range(sides)))
+ mesh=bpy.data.meshes.new(name);mesh.from_pydata(verts,[],faces);mesh.update()
+ ob=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(ob)
+ ob.data.materials.append(mat)
+ for polyface in ob.data.polygons:polyface.use_smooth=True
+ return ob
+
+def sculpted_surface_pass(kind,m):
+ # Hero-scale rounded, tapered sections to replace slab-like visual mass.
+ sidearm=kind in ('echo','tempo')
+ if sidearm:
+  sculpted_shell('Contoured slide spine',[(-.46,.045,.065,.037),(-.39,.058,.079,.043),
+     (-.21,.057,.081,.044),(-.025,.059,.085,.044),(.12,.052,.068,.032)],
+     m['frame'],24)
+  for sign in (-1,1):
+   for i in range(7):
+    z=-.30+i*.047
+    curve('Hand-cut slide traction',( (sign*.082,.077,z),(sign*.085,.030,z+.012),
+          (sign*.077,-.015,z+.020)),.003,m['dark'],2)
+  return
+ front={'vanguard':-.94,'ranger':-1.06,'specter':-.69,
+        'atlas':-1.01,'whisper':-.68,'breacher':-1.05,
+        'watcher':-1.43}.get(kind,-.90)
+ sculpted_shell('CNC receiver shoulders',[(.17,.022,.079,.069),(.08,.034,.118,.104),
+   (-.20,.029,.128,.118),(-.40,.018,.128,.106),(-.51,.015,.097,.074)],m['body'],26)
+ sculpted_shell('Rounded free-float outer handguard',[(-.47,.008,.103,.084),
+   (-.55,.007,.111,.094),(front+.08,.007,.117,.090),(front,.007,.092,.066)],m['frame'],24)
+ for sign in (-1,1):
+  for i in range(7):
+   z=-.54+(front+.58)*i/6
+   # Dark recessed side vents interrupt broad flat metal surfaces.
+   sphere('Recessed cooling-port',(sign*.113,.018,z),(.006,.028,.023),m['dark'])
+   tube('Vent inset rim',(sign*.110,.018,z),(sign*.119,.018,z),
+        .014,m['grip'],10)
+ for j in range(4):
+  z=-.06-j*.103
+  sphere('Receiver inset oval',(.116,.047,z),(.009,.012,.025),m['dark'])
+ # Fine protective ridge lines catch lighting even at first-person scale.
+ for sign in (-1,1):
+  x=sign*.120
+  curve('Upper chassis rim',[(x,.104,.07),(x,.132,-.18),
+   (x,.103,-.42)],.005,m['rail'],2)
+
 def batch_export(asset):
  # Retain every editable named part in the Blender file; only merge matching
  # materials into a few meshes in the game export. Export does not merge
@@ -136,16 +193,16 @@ def batch_export(asset):
 # orange muzzle and visible handguards. No real logos or copied assets.
 def colors(accent_hex):
  return {
- 'body':material('CERAMIC_POLYMER_01','30363c',.16,.52),
- 'frame':material('MACHINED_GRAPHITE_02','48515a',.64,.34),
- 'rail':material('BRUSHED_ALLOY_03','78848b',.73,.31),
+ 'body':material('CERAMIC_POLYMER_01','171c21',.18,.62),
+ 'frame':material('MACHINED_GRAPHITE_02','292e33',.55,.39),
+ 'rail':material('BRUSHED_ALLOY_03','51585c',.72,.35),
  'grip':material('RUBBER_04','1e272b',.02,.77),
  'dark':material('SHADOW_GROOVES_05','10191f',.12,.76),
  'accent':material('CUSTOM_TEAM_ACCENT_06',accent_hex,.29,.40),
  'safety':material('AIRSOFT_ORANGE_TIP_07','ed7f32',.02,.39),
  'label':material('6MM_BB_ETCHED_08','c3d5c1',.3,.48),
  'hand':material('YELLOW_MINIFIG_HAND_09','edb94b',0,.33),
- 'sleeve':material('TEAM_UNIFORM_SLEEVE_10','3d768a',0,.58),
+ 'sleeve':material('TEAM_UNIFORM_SLEEVE_10','202729',0,.75),
  }
 def core(parts,scale=1):
  m=parts
@@ -453,6 +510,7 @@ for key,accent in WEAPONS:
  if key in ['echo','tempo']:pistol(key,m)
  else:gun_body(key,m)
  premium_surface_detail(key,m)
+ sculpted_surface_pass(key,m)
  # Every variant has unmistakable proportions and separately modeled
  # round tube, grip and sight details (no shared clone/scaled placeholder).
  batch_export(key)
