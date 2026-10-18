@@ -24,6 +24,8 @@ export class Engine{
  projectiles=new Map<number,THREE.Mesh>();props:{body:any,mesh:THREE.Mesh}[]=[];
  weapon=new THREE.Group();weaponCore=new THREE.Group();muzzle:THREE.PointLight;
  lastWeapon=-1; recoil=0;walkPhase=0;eyeBob=0;frame=0;lastStep=0;
+ // Grip preference is individual for each gun, not global.
+ gripModes=new Map<number,boolean>(); gripTwoHanded=true;
  readonly temp=new THREE.Object3D();
  readonly oldBlockout:THREE.Object3D[]=[];
  readonly oldDecor:THREE.Object3D[]=[];
@@ -188,6 +190,20 @@ export class Engine{
    :`ART ${this.weaponModels.size}/${WEAPONS.length} REPLICAS`;
   return this.assetState;
  }
+ setGrip(twoHanded:boolean){
+  this.gripTwoHanded=twoHanded;
+  if(this.lastWeapon>=0)this.gripModes.set(this.lastWeapon,twoHanded);
+  // Hide the unused posed mesh hierarchy, not a single hand mesh: all fingers,
+  // knuckles and forearm pieces change together without touching shooting logic.
+  this.weaponCore.traverse(object=>{
+   if(object.name==='GRIP_ONE_HAND')object.visible=!twoHanded;
+   if(object.name==='GRIP_TWO_HAND')object.visible=twoHanded;
+  });
+ }
+ toggleGrip(){
+  this.setGrip(!this.gripTwoHanded);
+  return this.gripTwoHanded;
+ }
  setWeapon(index:number){
   if(this.lastWeapon===index)return;this.lastWeapon=index;
   this.weaponCore.clear();
@@ -219,6 +235,8 @@ export class Engine{
    model.scale.setScalar(gunParts.length?scale:scale*1.12);
    model.position.set(0,0,-.12);
    this.weaponCore.add(model);
+   // Rifles / shotguns / snipers default to two hands, sidearms to one.
+   this.setGrip(this.gripModes.get(index)??(index<7));
    return;
   }
   // This temporary emergency proxy is used only if an asset failed to load.
