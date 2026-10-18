@@ -1,0 +1,60 @@
+name: Build Seamless Floor Tiles and Wood-Plank Walls
+on:
+  push:
+    branches: [main]
+    paths:
+      - art/rebuild_tiled_wood_arena.py
+      - .github/workflows/wood-floor-arena.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: brick-wood-tile-arena
+  cancel-in-progress: true
+jobs:
+  blender-arena:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Install Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y blender python3-numpy
+          blender --version
+      - name: Replace patchy tile seams and wooden wall finishes in real arena
+        run: |
+          set -eu
+          blender --background --python-exit-code 1 --python art/rebuild_tiled_wood_arena.py > /tmp/wood-floor-arena.log 2>&1 || { tail -120 /tmp/wood-floor-arena.log; exit 1; }
+          grep COMPLETE_FLOOR_TILE_GRID /tmp/wood-floor-arena.log
+          grep ALL_WALLS_WOOD_PLANKS /tmp/wood-floor-arena.log
+          grep COMPLETE_TILED_AND_WOOD_WALL_ARENA_GLTF /tmp/wood-floor-arena.log
+          grep WOOD_TILE_ARENA_BUILD_SUCCESS /tmp/wood-floor-arena.log
+          test -s art/arena_tiled_wood_upgrade.blend
+          test -s client/public/assets/arena.glb
+          ls -lh art/arena_tiled_wood_upgrade.blend client/public/assets/arena.glb
+      - name: Run type, unit, arena, and build validations
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npm test
+          npm run build
+      - name: Publish Blender overlay source and updated game arena
+        run: |
+          set -eu
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          mkdir -p /tmp/new-arena
+          cp art/arena_tiled_wood_upgrade.blend /tmp/new-arena/
+          cp client/public/assets/arena.glb /tmp/new-arena/
+          git fetch origin main
+          git reset --hard origin/main
+          cp /tmp/new-arena/arena_tiled_wood_upgrade.blend art/
+          cp /tmp/new-arena/arena.glb client/public/assets/
+          git add art/arena_tiled_wood_upgrade.blend client/public/assets/arena.glb
+          if ! git diff --cached --quiet; then
+            git commit -m 'Publish full-coverage floor tiles and wood plank arena walls'
+            git push origin HEAD:main
+          fi
