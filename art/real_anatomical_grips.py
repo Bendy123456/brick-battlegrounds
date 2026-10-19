@@ -136,12 +136,17 @@ def make_real_grips(weapon_id,klass,materials,gun_meshes,lo,hi):
             across=thumb-pinky
             assert fwd.length>.015 and across.length>.012,'Degenerate finger geometry'
             sign=1 if hand=='RIGHT' else -1
-            target_fwd=Vector((-.13*sign,.06,-.989)).normalized()
+            # Trigger fingers curl down the pistol grip; support fingers
+            # curl ACROSS and under the fore-end rather than dangling below.
+            target_fwd=(Vector((-.26*sign,.04,-.965)) if hand=='RIGHT'
+                        else Vector((-.78*sign,.025,-.625))).normalized()
             target_across=Vector((0,sign,0))
             rotate=basis(target_fwd,target_across) @ basis(fwd,across).transposed()
             factor=(.120 if hand=='RIGHT' else .127)/fwd.length
             factor=max(.48,min(1.45,factor))
-            target=Vector(contact)+Vector((sign*.035,-.014,-.016))
+            # Put the palm against the selected mesh face; the old +3.5 cm
+            # offset made small fingers appear to float alongside the gun.
+            target=Vector(contact)+Vector((sign*(.024 if hand=='RIGHT' else .019),-.010,-.014))
             mesh.transform(Matrix.Translation(target) @ rotate.to_4x4() @ Matrix.Scale(factor,4) @ Matrix.Translation(-palm))
             name=weapon_id+' '+mode+' '+hand+' REAL ANATOMICAL CC0 HAND'
             ob=bpy.data.objects.new(name,mesh)
