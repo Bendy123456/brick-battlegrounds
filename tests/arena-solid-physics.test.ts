@@ -7,7 +7,7 @@ function world(){
  const w=new RAPIER.World({x:0,y:-20,z:0});
  w.timestep=1/60;
  for(const b of MAP){
-  if(b.material==='net')continue;
+  // All registered barriers, including safety nets, must be physical.
   const body=w.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(b.x,b.y,b.z));
   w.createCollider(RAPIER.ColliderDesc.cuboid(b.w/2,b.h/2,b.d/2),body);
  }
@@ -101,6 +101,26 @@ describe('Real shared arena collision physics',()=>{
    expect(hit).toBeTruthy();
   }
   w.free();
+ });
+ it('all added wooden pallets, pads, upper doors, and nets block actual rays',()=>{
+  const w=world();
+  const extras=MAP.filter(b=>b.id.startsWith('solid-'));
+  expect(extras.length).toBeGreaterThanOrEqual(35);
+  const nets=MAP.filter(b=>b.material==='net');
+  expect(nets).toHaveLength(4);
+  for(const b of [...extras,...nets]){
+   // Shot starts just outside the collider and must stop inside it.
+   const start={x:b.x-b.w/2-.15,y:b.y,z:b.z};
+   expect(ray(w,start,{x:1,y:0,z:0},b.w+.35),b.id).toBeTruthy();
+  }
+  w.free();
+ });
+ it('added props use client/server-consistent physical geometry and IDs',()=>{
+  expect(new Set(MAP.map(b=>b.id)).size).toBe(MAP.length);
+  for(const b of MAP.filter(b=>b.id.startsWith('solid-'))){
+   expect([b.x,b.y,b.z,b.w,b.h,b.d].every(Number.isFinite)).toBe(true);
+   expect(Math.min(b.w,b.h,b.d)).toBeGreaterThan(0);
+  }
  });
  it('BB raycasts collide with solid cover and cannot pass through it',()=>{
   const w=world();
