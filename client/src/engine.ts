@@ -26,6 +26,7 @@ export class Engine{
  muzzleStreaks:{line:THREE.Line,life:number}[]=[];
  weapon=new THREE.Group();weaponCore=new THREE.Group();muzzle:THREE.PointLight;
  lastWeapon=-1; recoil=0;walkPhase=0;eyeBob=0;frame=0;lastStep=0;
+ weaponWallClearance=0;
  // Grip preference is individual for each gun, not global.
  gripModes=new Map<number,boolean>(); gripTwoHanded=true;
  // Test-only viewmodel selector, never enabled during ordinary gameplay.
@@ -447,17 +448,33 @@ export class Engine{
    this.cameraBank=THREE.MathUtils.damp(this.cameraBank,lean,sliding?12:9,dt);
    this.camera.rotation.z=this.cameraBank;
    const aim=input.ads&&!sliding&&!sprinting?1:0,sprint=sprinting?1:0;
+   // FPS weapon obstruction: trace the actual shared Rapier environment
+   // in front of the camera. Pull the viewmodel down/back before the muzzle
+   // would clip straight through a wooden wall, crate, or support column.
+   // This affects rendering only, never the authoritative shot direction.
+   const look=this.camera.getWorldDirection(new THREE.Vector3());
+   const barrelRay=new RAPIER.Ray(
+    {x:this.camera.position.x,y:this.camera.position.y,z:this.camera.position.z},
+    {x:look.x,y:look.y,z:look.z});
+   const blocker=this.world.castRay(barrelRay,1.35,true,
+    RAPIER.QueryFilterFlags.EXCLUDE_KINEMATIC);
+   const wantClearance=blocker?
+    Math.min(1,Math.max(0,(1.30-blocker.timeOfImpact)/1.10)):0;
+   this.weaponWallClearance=THREE.MathUtils.damp(
+    this.weaponWallClearance,wantClearance,20,dt);
    const targetX=aim?0:sprint?.33:.30;
    // Center model-specific optic heights on the true reticle in ADS.
    const aimingY=this.lastWeapon>=7?-.125:this.lastWeapon===6?-.18:
     this.lastWeapon===5?-.15:-.19;
-   const targetY=aim?aimingY:sliding?-.48:sprint?-.45:-.36;
-   // The rear stock on scoped models extends back 0.76m before scale.
-   // Don't move it through the camera near-plane (old model was at -.44).
-   const targetZ=aim?-.85:sliding?-1.02:sprint?-1.08:-.96;
+   const targetY=(aim?aimingY:sliding?-.48:sprint?-.45:-.36)
+    -this.weaponWallClearance*.20;
+   // Move the muzzle BACK toward the camera as we approach world geometry.
+   // Never place the gun/stock behind the camera near-plane.
+   const targetZ=(aim?-.85:sliding?-1.02:sprint?-1.08:-.96)
+    +this.weaponWallClearance*.16;
    this.weapon.position.lerp(new THREE.Vector3(targetX,targetY,targetZ),Math.min(1,dt*(aim?17:12)));
    this.recoil=Math.max(0,this.recoil-dt*.83);
-   this.weapon.rotation.x=THREE.MathUtils.lerp(this.weapon.rotation.x,-this.recoil-sprint*.33+(sliding?-.16:0),Math.min(1,dt*14));
+   this.weapon.rotation.x=THREE.MathUtils.lerp(this.weapon.rotation.x,-this.recoil-sprint*.33+(sliding?-.16:0)+this.weaponWallClearance*.25,Math.min(1,dt*14));
    this.weapon.rotation.z=THREE.MathUtils.lerp(this.weapon.rotation.z,sprint*-.32+(sliding?.15:0),Math.min(1,dt*10));
    this.weapon.rotation.y=THREE.MathUtils.lerp(this.weapon.rotation.y,aim?0:-.07,Math.min(1,dt*10));
    this.weapon.position.y+=Math.sin(this.walkPhase)*Math.hypot(input.f,input.s)*(sliding?.003:.012);
