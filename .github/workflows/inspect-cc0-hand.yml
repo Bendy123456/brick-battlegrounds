@@ -15,7 +15,7 @@ jobs:
       - name: Install Blender
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y blender
+          sudo apt-get install -y blender python3-numpy
       - name: Fetch original anatomically sculpted CC0 rigged hand
         run: |
           curl -fL --retry 3 'https://www.innerscene.com/api/library/posable-anatomical-right-hand-f6098b4f/download' -o /tmp/cc0-posable-hand.glb
