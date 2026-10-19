@@ -74,36 +74,38 @@ def find_wrist_joint(mesh,palm,forward):
     return joint
 
 def slender_forearm(name,wrist,hand,material,parent,pistol,support=False):
-    """Continuous tapered anatomical profile with measured wrist contact.
-    Slim extensor-side contours and subtle muscle taper replace the former
-    two long round arm tubes; the forearm is still fully bare, not a glove.
+    """Minimal FPS wrist, about 30% of the old forearm length.
+
+    The hand mesh stays unchanged. Five short tapered cross sections meet the
+    measured skin wrist surface. No long, sausage-shaped forearm obstructs the
+    game view or intersects the weapon stock.
     """
     sign=1 if hand=='RIGHT' else -1
-    x,y,z=Vector(wrist)
-    reach=.15 if pistol else (.165 if support else .18)
-    lower=.115 if pistol else (.135 if support else .15)
-    sideways=.058 if support else .066
-    elbow=Vector((x+sign*sideways,y-reach,z-lower))
-    joint=Vector((x,y,z))
+    joint=Vector(wrist)
+    back=.048 if pistol else (.055 if support else .060)
+    drop=.030 if pistol else (.034 if support else .038)
+    sideways=.016 if support else .020
+    back_end=joint+Vector((sign*sideways,-back,-drop))
+    # Keep a little skin below the wrist, with a gentle inset at the exposed
+    # end so the cut silhouette is less obvious from the player camera.
+    sections=[
+        (.00,.019,.021),
+        (.18,.023,.025),
+        (.42,.026,.028),
+        (.72,.028,.030),
+        (1.00,.030,.032),
+    ]
     rings=[]
-    # Narrow the offscreen stump, gradually rise through the forearm belly,
-    # and blend a shallow, nearly circular cross-section into the real hand.
-    stations=[
-        (.00,.029,.031),(.10,.036,.039),(.22,.043,.046),
-        (.36,.044,.047),(.50,.040,.044),(.63,.037,.040),
-        (.75,.033,.036),(.86,.030,.033),(.94,.028,.031),
-        (1.00,.027,.030)]
-    for k,(t,rx,ry) in enumerate(stations):
-        center=elbow.lerp(joint,t)
-        # Curved bone contour, with subtle pronation and a muscular ridge.
-        center.x+=sign*.006*math.sin(math.pi*t)
-        center.z+=.010*math.sin(math.pi*t)
-        cross=1.0+.035*math.sin(t*math.pi*2.0)
-        rings.append((tuple(center),rx*cross,ry))
-    arm=sculpt_mesh(name+' anatomically tapered slim forearm',rings,material,32)
-    arm.parent=parent
-    arm['forearm_profile']='curved 10-station wrist-fitted organic taper'
-    arm['wrist_contact']=tuple(round(v,5) for v in joint)
+    for t,rx,ry in sections:
+        center=back_end.lerp(joint,t)
+        center.x+=sign*.003*math.sin(math.pi*t)
+        center.z+=.004*math.sin(math.pi*t)
+        rings.append((tuple(center),rx,ry))
+    wrist_mesh=sculpt_mesh(name+' short wrist stub',rings,material,24)
+    wrist_mesh.parent=parent
+    wrist_mesh['forearm_profile']='short fps wrist only'
+    wrist_mesh['wrist_contact']=tuple(round(v,5) for v in joint)
+    wrist_mesh['wrist_length_m']=back
 
 def make_real_grips(weapon_id,klass,materials,gun_meshes,lo,hi):
     assert weapon_id in GRIPS
