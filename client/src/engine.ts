@@ -320,6 +320,15 @@ export class Engine{
     this.localPos.set(local.x,local.y,local.z);
     this.strideSpeed=Math.max(0,local.velocity)*11.5;
     this.motion.slideTime=local.sliding ? .20 : 0;
+   }else if(Math.abs(dy)>.55&&error<5&&!this.lowFpsMode){
+    // Server-authoritative raised-floor recovery. The old code ignored
+    // 1-4m VERTICAL errors whenever you were moving, making the camera seem
+    // to fall through the solid mezzanine even while the server stood on it.
+    // Only reconcile height here; preserve responsive X/Z sprint/slide.
+    this.body.setTranslation({x:pos.x,y:local.y,z:pos.z},true);
+    this.localPos.y=local.y;
+    if(dy>0&&this.vy<0)this.vy=0;
+    if(Math.abs(dy)>1.2)this.renderPos.y=local.y;
    }else if(error>Math.max(5,Math.min(12,2+this.lastAckLag*.36))){
     // Large desync / respawn: restore server position without resetting the
     // current velocity each time (that reset created repeated sprint stalls).
@@ -373,7 +382,13 @@ export class Engine{
   this.camera.updateMatrixWorld(true);
   const origin=this.muzzleSocket.getWorldPosition(new THREE.Vector3());
   const heading=this.camera.getWorldDirection(new THREE.Vector3());
-  const end=origin.clone().addScaledVector(heading,1.6);
+  const tracerHit=this.world.castRay(new RAPIER.Ray(
+   {x:origin.x,y:origin.y,z:origin.z},
+   {x:heading.x,y:heading.y,z:heading.z}),1.6,true,
+   RAPIER.QueryFilterFlags.EXCLUDE_KINEMATIC);
+  // Never draw a BB tracer *through* wood, steel, netting, or a platform.
+  const visibleRange=Math.max(.015,Math.min(1.6,tracerHit?.timeOfImpact??1.6));
+  const end=origin.clone().addScaledVector(heading,visibleRange);
   const geometry=new THREE.BufferGeometry().setFromPoints([origin,end]);
   const material=new THREE.LineBasicMaterial({color:0xffe2a4,transparent:true,opacity:.85,depthWrite:false});
   const streak=new THREE.Line(geometry,material);
