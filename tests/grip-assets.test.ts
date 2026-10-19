@@ -35,6 +35,9 @@ describe('hand contact and pose exports',()=>{
    expect(two).toContain('finger 4 articulated');
    expect(two).toContain('natural nail');
    expect(two).toContain('bare anatomical forearm');
+   expect(two).toContain('fingertip cushion');
+   expect(two).toContain('natural finger and palm folds');
+   expect(one).toContain('natural finger and palm folds');
   });
  }
 });
@@ -68,6 +71,8 @@ describe('anatomical weapon model scale and rigidly attached hand contacts',()=>
  it('both sculpted grip families share the same scaled gun parent',()=>{
   const source=readFileSync(resolve('client/src/engine.ts'),'utf8');
   expect(source).toContain('for(const grip of gripRoots)weaponArt.attach(grip)');
-  expect(source).toContain('weaponArt.scale.setScalar(');
+  expect(source).toContain('weaponArt.scale.setScalar(index>=7?1.70:index===6?1.59:1.63)');
+  expect(source).toContain('model.position.set(.045,-.012,-.052)');
+  expect(source).toContain('for(const grip of gripRoots)weaponArt.attach(grip)');
  });
 });
