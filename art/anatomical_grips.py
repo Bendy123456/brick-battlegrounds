@@ -124,6 +124,16 @@ def sculpt_hand(name,contact,side,is_pistol,is_support,materials,parent,pose):
  if is_support:slim*=1.035
  forearm_slim=.93 if is_pistol else .95
  before=set(bpy.context.scene.objects)
+ # One lightweight combined mesh of subtle crease details per hand (instead
+ # of dozens of extra draw calls on every first-person weapon).
+ detail_vertices=[]
+ detail_faces=[]
+ def crease_quad(center,width,height):
+  px,py,pz=center
+  first=len(detail_vertices)
+  detail_vertices.extend([(px-width,py-height,pz),(px+width,py-height,pz),
+                          (px+width,py+height,pz),(px-width,py+height,pz)])
+  detail_faces.append((first,first+1,first+2,first+3))
  # Shoulder-side forearm slips into the bottom of the viewport rather than
  # forming a giant sausage and blocking the environment.
  start=(pad_x+s*(.115 if not is_support else .105),
@@ -177,6 +187,11 @@ def sculpt_hand(name,contact,side,is_pistol,is_support,materials,parent,pose):
      tuple(tip+Vector((s*.003,.0,.008))),(.008,.011,.0029),materials["nail"])
   face_volume(name+" finger knuckle %d"%(k+1),tuple(root),
      (.014*fsize,.016*fsize,.015*fsize),materials["skin"])
+  # Fine flexion creases at the two joints; narrow and tucked directly onto
+  # the finger surface so they aren't floating ornamental rings.
+  for joint,thickness in ((first,.013),(second,.011)):
+   crease_quad((joint.x,joint.y,joint.z+thickness*fsize),
+               .0085*fsize,.0013)
  # Opposable thumb curves across the OTHER edge of grip.
  t0=Vector((pad_x+s*.013,y+.034,pad_z+.030))
  t1=Vector((pad_x-s*.017,y+.061,pad_z+.046))
@@ -189,6 +204,17 @@ def sculpt_hand(name,contact,side,is_pistol,is_support,materials,parent,pose):
    (tuple(t2),.011*slim,.012*slim)],materials["skin"],20)
  face_volume(name+" thumb nail",tuple(t2+Vector((s*.003,0,.008))),
              (.009,.012,.0027),materials["nail"])
+ # Knuckle-fan/palm creases follow the cupped palm just beneath the index.
+ for i in range(3):
+  crease_quad((pad_x-s*.008,y+.019-i*.018,
+              pad_z+.035*slim),.011*slim,.0015)
+ if detail_faces:
+  detail_mesh=bpy.data.meshes.new(name+" crease sculpture mesh")
+  detail_mesh.from_pydata(detail_vertices,[],detail_faces)
+  detail_mesh.update()
+  detail_obj=bpy.data.objects.new(name+" natural finger and palm folds",detail_mesh)
+  bpy.context.collection.objects.link(detail_obj)
+  detail_obj.data.materials.append(materials["crease"])
  # World transform preserved when parented to actual runtime grip object.
  for obj in set(bpy.context.scene.objects)-before:
   if obj.type=="MESH":
