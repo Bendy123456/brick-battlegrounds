@@ -3,6 +3,7 @@ Original: Innerscene Posable Anatomical Right Hand, MakeHuman CC0, 8120 vertices
 Nine airsoft weapon rigs receive individual wrist/trigger/support contact poses.
 """
 import bpy
+import math
 from mathutils import Vector,Matrix
 from anatomical_grips import GRIPS,vertex_points,contact_point,sculpt_mesh
 
@@ -45,20 +46,64 @@ def basis(fwd,side):
     n=a.cross(f).normalized()
     return Matrix((a,f,n)).transposed()
 
-def slender_forearm(name,origin,hand,material,parent,pistol):
+def find_wrist_joint(mesh,palm,forward):
+    """Find the skinned wrist end on the actual hand surface, rather than
+    connecting a guessed cylinder to a point in the middle of the palm.
+    'forward' points toward the fingers; the wrist is behind the palm.
+    """
+    p=Vector(palm)
+    f=Vector(forward).normalized()
+    distances=sorted((v.co-p).dot(f) for v in mesh.vertices)
+    # Sample the palm-side 8th-17th percentiles to avoid a single stray vertex.
+    back=distances[max(0,int(len(distances)*.08))]
+    front=distances[max(0,int(len(distances)*.17))]
+    selection=[]
+    for vertex in mesh.vertices:
+        off=vertex.co-p
+        along=off.dot(f)
+        radial=(off-f*along).length
+        if back<=along<=front and radial<.075:
+            selection.append(vertex.co)
+    if len(selection)>=20:
+        joint=sum(selection,Vector((0,0,0)))/len(selection)
+    else:
+        joint=p-f*.055
+    # A malformed imported rig must never send the arm across the screen.
+    if not .018<=(joint-p).length<=.13:
+        joint=p-f*.055
+    return joint
+
+def slender_forearm(name,wrist,hand,material,parent,pistol,support=False):
+    """Continuous tapered anatomical profile with measured wrist contact.
+    Slim extensor-side contours and subtle muscle taper replace the former
+    two long round arm tubes; the forearm is still fully bare, not a glove.
+    """
     sign=1 if hand=='RIGHT' else -1
-    x,y,z=origin
-    length=.19 if pistol else .26
-    rings=[
-       ((x+sign*.110,y-length,z-.210),.050,.056),
-       ((x+sign*.095,y-length*.84,z-.172),.052,.056),
-       ((x+sign*.061,y-length*.62,z-.130),.046,.049),
-       ((x+sign*.033,y-length*.37,z-.075),.040,.042),
-       ((x+sign*.012,y-.055,z-.025),.033,.035),
-       ((x,y,z),.029,.032)]
-    arm=sculpt_mesh(name+' slim bare forearm',rings,material,28)
-    transform=arm.matrix_world.copy()
-    arm.parent=parent;arm.matrix_world=transform
+    x,y,z=Vector(wrist)
+    reach=.15 if pistol else (.165 if support else .18)
+    lower=.115 if pistol else (.135 if support else .15)
+    sideways=.058 if support else .066
+    elbow=Vector((x+sign*sideways,y-reach,z-lower))
+    joint=Vector((x,y,z))
+    rings=[]
+    # Narrow the offscreen stump, gradually rise through the forearm belly,
+    # and blend a shallow, nearly circular cross-section into the real hand.
+    stations=[
+        (.00,.029,.031),(.10,.036,.039),(.22,.043,.046),
+        (.36,.044,.047),(.50,.040,.044),(.63,.037,.040),
+        (.75,.033,.036),(.86,.030,.033),(.94,.028,.031),
+        (1.00,.027,.030)]
+    for k,(t,rx,ry) in enumerate(stations):
+        center=elbow.lerp(joint,t)
+        # Curved bone contour, with subtle pronation and a muscular ridge.
+        center.x+=sign*.006*math.sin(math.pi*t)
+        center.z+=.010*math.sin(math.pi*t)
+        cross=1.0+.035*math.sin(t*math.pi*2.0)
+        rings.append((tuple(center),rx*cross,ry))
+    arm=sculpt_mesh(name+' anatomically tapered slim forearm',rings,material,32)
+    arm.parent=parent
+    arm['forearm_profile']='curved 10-station wrist-fitted organic taper'
+    arm['wrist_contact']=tuple(round(v,5) for v in joint)
 
 def make_real_grips(weapon_id,klass,materials,gun_meshes,lo,hi):
     assert weapon_id in GRIPS
@@ -116,8 +161,11 @@ def make_real_grips(weapon_id,klass,materials,gun_meshes,lo,hi):
             for poly in mesh.polygons:poly.use_smooth=True
             ob.parent=parent
             ob['fingers']='five bone-posed, connected fingers'
-            slender_forearm(weapon_id+' '+mode+' '+hand,tuple(target-target_fwd*.045),hand,
-                            materials['arm'],parent,pistol)
+            wrist=find_wrist_joint(mesh,target,target_fwd)
+            slender_forearm(weapon_id+' '+mode+' '+hand,wrist,hand,
+                            materials['arm'],parent,pistol,hand=='LEFT')
+            print('WRIST_FIT',weapon_id,mode,hand,
+                  tuple(round(v,4) for v in wrist),flush=True)
             count+=1
             print('REAL_HAND_CONTACT',weapon_id,mode,hand,'vertices',len(mesh.vertices),
                   'factor',round(factor,3),'position',tuple(round(v,3) for v in target),flush=True)
