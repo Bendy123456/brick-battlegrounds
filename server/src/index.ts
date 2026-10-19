@@ -42,7 +42,7 @@ function makeWorld(){
  const world=new RAPIER.World({x:0,y:-20,z:0});
  world.timestep=1/60;
  for(const b of MAP){
-  if(b.material==='net')continue;
+  // Safety mesh is a real physical barrier for players and BBs.
   const body=world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(b.x,b.y,b.z));
   world.createCollider(RAPIER.ColliderDesc.cuboid(b.w/2,b.h/2,b.d/2).setFriction(.9),body);
  }
