@@ -75,7 +75,9 @@ export class Engine{
    const type=obj.material;
    if(!groups.has(type))groups.set(type,[]);
    groups.get(type)!.push(obj);
-   if(type!=='net'){
+   // All shared solid objects, including the airsoft safety netting,
+   // are represented by the same Rapier colliders as the server.
+   {
     const rb=this.world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(obj.x,obj.y,obj.z));
     this.world.createCollider(RAPIER.ColliderDesc.cuboid(obj.w/2,obj.h/2,obj.d/2),rb);
    }
