@@ -114,11 +114,15 @@ def sculpt_hand(name,contact,side,is_pistol,is_support,materials,parent,pose):
  x,y,z=contact
  # Point is on the side of gun. Wrist is outside while fingers curl
  # across and down over the side of the weapon.
- pad_x=x+s*(.040 if not is_support else .034)
+ # Bring the flesh right up against each gun's measured metal grip surface.
+ pad_x=x+s*(.034 if not is_support else .028)
  pad_y=y-.018
  pad_z=z-.019
- slim=.85 if is_pistol else 1.
- if is_support:slim*=.93
+ # Larger, more legible first-person PALMS/FINGERS while keeping the
+ # forearm slim rather than enlarging the old tubular forearm silhouette.
+ slim=1.15 if is_pistol else 1.12
+ if is_support:slim*=1.035
+ forearm_slim=.93 if is_pistol else .95
  before=set(bpy.context.scene.objects)
  # Shoulder-side forearm slips into the bottom of the viewport rather than
  # forming a giant sausage and blocking the environment.
@@ -127,28 +131,28 @@ def sculpt_hand(name,contact,side,is_pistol,is_support,materials,parent,pose):
         z-(.215 if not is_pistol else .17))
  wrist=(pad_x,y-.07,pad_z-.015)
  points=[
-   (start,.043*slim,.048*slim),
-   ((start[0]-s*.019,start[1]+.055,start[2]+.047),.047*slim,.051*slim),
-   ((pad_x+s*.039,y-.16,pad_z-.098),.043*slim,.048*slim),
-   ((pad_x+s*.015,y-.105,pad_z-.052),.034*slim,.039*slim),
-   (wrist,.030*slim,.032*slim),
-   ((pad_x,y-.039,pad_z+.004),.027*slim,.032*slim)]
+   (start,.043*forearm_slim,.048*forearm_slim),
+   ((start[0]-s*.019,start[1]+.055,start[2]+.047),.047*forearm_slim,.051*forearm_slim),
+   ((pad_x+s*.039,y-.16,pad_z-.098),.043*forearm_slim,.048*forearm_slim),
+   ((pad_x+s*.015,y-.105,pad_z-.052),.034*forearm_slim,.039*forearm_slim),
+   (wrist,.031*forearm_slim,.033*forearm_slim),
+   ((pad_x,y-.039,pad_z+.004),.030*forearm_slim,.034*forearm_slim)]
  sculpt_mesh(name+" bare anatomical forearm",points,materials["arm"],28)
  # Smooth webbed palm contour, tapered wrist/knuckle silhouette.
  palm=[
-  ((pad_x,y-.079,pad_z-.021),.030,.031),
-  ((pad_x-s*.004,y-.049,pad_z-.013),.040,.034),
-  ((pad_x-s*.008,y-.013,pad_z),.045,.035),
-  ((pad_x-s*.012,y+.030,pad_z+.005),.040,.031),
-  ((pad_x-s*.014,y+.053,pad_z+.007),.036,.023)]
+  ((pad_x,y-.079,pad_z-.021),.034*slim,.032*slim),
+  ((pad_x-s*.004,y-.049,pad_z-.013),.040*slim,.034*slim),
+  ((pad_x-s*.008,y-.013,pad_z),.045*slim,.035*slim),
+  ((pad_x-s*.012,y+.030,pad_z+.005),.040*slim,.031*slim),
+  ((pad_x-s*.014,y+.053,pad_z+.007),.036*slim,.023*slim)]
  sculpt_mesh(name+" cupped sculpted palm",palm,materials["skin"],28)
  face_volume(name+" thenar mound",(pad_x-s*.022,y+.025,pad_z+.022),
-             (.023,.030,.025),materials["skin"])
+             (.027*slim,.029*slim,.025*slim),materials["skin"])
  # Four individually sized fingers: index lies high near the trigger, other
  # three wrap tighter around the grip. Fingers are jointed, not straight tubes.
  for k in range(4):
-  finger_y=y+.046-k*.027
-  fsize=(1.0-.06*k)*slim
+  finger_y=y+.048-k*.029
+  fsize=(1.0-.055*k)*slim
   finger_contact=Vector((x+s*.007,finger_y,z-.034-.007*k))
   root=Vector((pad_x-s*.003,finger_y,pad_z+.012))
   first=Vector((pad_x-s*.027,finger_y+.012,pad_z+.003))
@@ -164,7 +168,11 @@ def sculpt_hand(name,contact,side,is_pistol,is_support,materials,parent,pose):
    (tuple((first+second)*.5),.0128*fsize,.013*fsize),
    (tuple(second),.011*fsize,.012*fsize),
    (tuple(tip),.009*fsize,.010*fsize)]
-  sculpt_mesh(name+" finger %d articulated"%(k+1),shape,materials["skin"],16)
+  sculpt_mesh(name+" finger %d articulated"%(k+1),shape,materials["skin"],22)
+  # Soft rounded distal pad and proximal knuckle; visible fingertip mass
+  # prevents the fingers looking like flat rectangular prongs.
+  face_volume(name+" fingertip cushion %d"%(k+1),tuple(tip),
+              (.011*fsize,.013*fsize,.012*fsize),materials["skin"])
   face_volume(name+" natural nail %d"%(k+1),
      tuple(tip+Vector((s*.003,.0,.008))),(.008,.011,.0029),materials["nail"])
   face_volume(name+" finger knuckle %d"%(k+1),tuple(root),
@@ -174,11 +182,11 @@ def sculpt_hand(name,contact,side,is_pistol,is_support,materials,parent,pose):
  t1=Vector((pad_x-s*.017,y+.061,pad_z+.046))
  t2=Vector((x+s*.004,y+.081,z+.014))
  sculpt_mesh(name+" opposable thumb",[
-   (tuple(t0),.021,.020),
-   (tuple((t0+t1)*.5),.023,.022),
-   (tuple(t1),.017,.017),
-   (tuple((t1+t2)*.5),.014,.015),
-   (tuple(t2),.011,.012)],materials["skin"],20)
+   (tuple(t0),.021*slim,.020*slim),
+   (tuple((t0+t1)*.5),.023*slim,.022*slim),
+   (tuple(t1),.017*slim,.017*slim),
+   (tuple((t1+t2)*.5),.014*slim,.015*slim),
+   (tuple(t2),.011*slim,.012*slim)],materials["skin"],20)
  face_volume(name+" thumb nail",tuple(t2+Vector((s*.003,0,.008))),
              (.009,.012,.0027),materials["nail"])
  # World transform preserved when parented to actual runtime grip object.
