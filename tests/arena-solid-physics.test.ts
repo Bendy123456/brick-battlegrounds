@@ -45,6 +45,38 @@ describe('Real shared arena collision physics',()=>{
   }
   w.free();
  });
+ it('the side stair run actually reaches each upper deck without sinking',()=>{
+  const w=world();
+  for(const side of [-1,1]){
+   // Begin in front of the first step and walk all the way across the
+   // last stair-to-deck transition using the REAL in-game capsule/KCC.
+   const body=w.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased()
+    .setTranslation(side*51,1,38.1));
+   const collider=w.createCollider(RAPIER.ColliderDesc.capsule(.60,.30),body);
+   const controller=w.createCharacterController(.03);
+   controller.enableAutostep(.4,.24,true);
+   controller.enableSnapToGround(.18);
+   let vy=0,highest=0,atLanding=0;
+   for(let tick=0;tick<300;tick++){
+    vy=Math.max(-25,vy-20/60);
+    controller.computeColliderMovement(collider,{x:0,y:vy/60,z:-.095});
+    const mov=controller.computedMovement();
+    const at=body.translation();
+    body.setNextKinematicTranslation({x:at.x+mov.x,y:at.y+mov.y,z:at.z+mov.z});
+    if(controller.computedGrounded()&&vy<0)vy=0;
+    w.step();
+    const pos=body.translation();
+    highest=Math.max(highest,pos.y);
+    if(pos.z<18)atLanding=Math.max(atLanding,pos.y);
+   }
+   const end=body.translation();
+   console.log('STAIR_TO_MEZZ_PHYSICS',side,{end,highest,atLanding});
+   expect(end.z).toBeLessThan(18);
+   expect(end.y).toBeGreaterThan(5.05);
+   w.removeRigidBody(body);
+  }
+  w.free();
+ });
  it('central shipping-container roof and stairs are solid and walkable',()=>{
   const w=world();
   const roof=MAP.find(b=>b.id==='central-container-roof')!;
