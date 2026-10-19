@@ -29,15 +29,14 @@ describe('hand contact and pose exports',()=>{
    const one=descendants(nodes,single).join('|');
    const two=descendants(nodes,double).join('|');
    expect(one).toContain('RIGHT');
-   expect(one).not.toContain('LEFT bare anatomical forearm');
-   expect(two).toContain('RIGHT');
-   expect(two).toContain('LEFT');
-   expect(two).toContain('finger 4 articulated');
-   expect(two).toContain('natural nail');
-   expect(two).toContain('bare anatomical forearm');
-   expect(two).toContain('fingertip cushion');
-   expect(two).toContain('natural finger and palm folds');
-   expect(one).toContain('natural finger and palm folds');
+   expect(one).not.toContain('LEFT REAL ANATOMICAL');
+   expect(two).toContain('RIGHT REAL ANATOMICAL CC0 HAND');
+   expect(two).toContain('LEFT REAL ANATOMICAL CC0 HAND');
+   expect(one).toContain('RIGHT REAL ANATOMICAL CC0 HAND');
+   expect(two).toContain('slim bare forearm');
+   expect(two).not.toContain('finger 4 articulated');
+   const handMeshNodes=nodes.filter(n=>n.name?.includes('REAL ANATOMICAL CC0 HAND')&&n.mesh!==undefined);
+   expect(handMeshNodes.length).toBe(3);
   });
  }
 });
