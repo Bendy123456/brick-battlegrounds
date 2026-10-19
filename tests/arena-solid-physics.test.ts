@@ -102,6 +102,29 @@ describe('Real shared arena collision physics',()=>{
   }
   w.free();
  });
+ it('walking directly into solid wooden barricades and upper doors is stopped by Rapier',()=>{
+  const w=world();
+  for(const id of ['cover-panel--1-0','cover-pallet--1-0',
+   'solid-field-pad--1--31','solid-upper-storage-door--1--26']){
+   const b=MAP.find(o=>o.id===id)!;
+   expect(b).toBeDefined();
+   // Full player capsule for ground obstacles; mezzanine capsule for door.
+   const feetY=id.includes('upper-storage')?5.33:1.0;
+   const position={x:b.x-b.w/2-.70,y:feetY,z:b.z};
+   const body=w.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(position.x,position.y,position.z));
+   const collider=w.createCollider(RAPIER.ColliderDesc.capsule(.60,.30),body);
+   const ctrl=w.createCharacterController(.03);
+   ctrl.enableAutostep(.46,.28,true);
+   ctrl.enableSnapToGround(.30);
+   ctrl.computeColliderMovement(collider,{x:2,y:0,z:0});
+   const m=ctrl.computedMovement();
+   expect(m.x,id).toBeLessThan(1.0);
+   expect(position.x+m.x,id).toBeLessThan(b.x-b.w/2-.22);
+   w.removeRigidBody(body);
+   w.step();
+  }
+  w.free();
+ });
  it('all added wooden pallets, pads, upper doors, and nets block actual rays',()=>{
   const w=world();
   const extras=MAP.filter(b=>b.id.startsWith('solid-'));
