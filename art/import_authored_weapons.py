@@ -350,9 +350,12 @@ def make(id,src,length,klass):
     source_vertices=sum(len(o.data.vertices) for o in all_meshes)
     assert source_vertices>150, "Source too sparse for "+id
     m={
-        "skin":mat("DEEP_EBONY_BARE_SKIN_09","140a08",0,.76),
-        "arm":mat("BARE_DARK_SKIN_FOREARMS_10","160b08",0,.78),
-        "nail":mat("NATURAL_DARK_FINGERNAIL_11","49312b",0,.68),
+        # Dark bare skin with enough midtone contrast to show joints and
+        # palm folds in the dim warehouse; forearms remain glove-free.
+        "skin":mat("DEEP_EBONY_BARE_SKIN_09","2d1a15",0,.72),
+        "arm":mat("BARE_DARK_SKIN_FOREARMS_10","291611",0,.77),
+        "nail":mat("NATURAL_DARK_FINGERNAIL_11","503028",0,.68),
+        "crease":mat("SUBTLE_FINGER_JOINT_FOLDS_12","1d0f0c",0,.91),
         "orange":mat("AIRSOFT_ORANGE_TIP_07","f66511",0,.48),
     }
     # Custom thin-forearm sculpture with nine unique gun-mesh surface contacts.
