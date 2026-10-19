@@ -33,13 +33,13 @@ describe('hand contact and pose exports',()=>{
    expect(two).toContain('RIGHT REAL ANATOMICAL CC0 HAND');
    expect(two).toContain('LEFT REAL ANATOMICAL CC0 HAND');
    expect(one).toContain('RIGHT REAL ANATOMICAL CC0 HAND');
-   expect(two).toContain('anatomically tapered slim forearm');
-   expect(one).toContain('anatomically tapered slim forearm');
-   expect(two).not.toContain('slim bare forearm');
+   expect(two).toContain('short wrist stub');
+   expect(one).toContain('short wrist stub');
+   expect(two).not.toContain('anatomically tapered slim forearm');
    expect(two).not.toContain('finger 4 articulated');
    const handMeshNodes=nodes.filter(n=>n.name?.includes('REAL ANATOMICAL CC0 HAND')&&n.mesh!==undefined);
    expect(handMeshNodes.length).toBe(3);
-   const forearms=nodes.filter(n=>n.name?.includes('anatomically tapered slim forearm')&&n.mesh!==undefined);
+   const forearms=nodes.filter(n=>n.name?.includes('short wrist stub')&&n.mesh!==undefined);
    expect(forearms.length).toBe(3);
    const bin=readFileSync(resolve('client/public/assets/weapons',w.id+'.glb'));
    const len=bin.readUInt32LE(12);
@@ -47,9 +47,11 @@ describe('hand contact and pose exports',()=>{
    for(const forearm of forearms){
     const mesh=data.meshes[forearm.mesh!];
     const positions=data.accessors[mesh.primitives[0].attributes.POSITION];
-    expect(positions.count).toBeGreaterThan(260);
+    expect(positions.count).toBeGreaterThan(100);
     expect(positions.min.every(Number.isFinite)).toBe(true);
     expect(positions.max.every(Number.isFinite)).toBe(true);
+    const spans=positions.min.map((v:number,i:number)=>positions.max[i]-v);
+    expect(Math.max(...spans)).toBeLessThan(.24);
    }
   });
  }
@@ -84,8 +86,8 @@ describe('anatomical weapon model scale and rigidly attached hand contacts',()=>
  it('both sculpted grip families share the same scaled gun parent',()=>{
   const source=readFileSync(resolve('client/src/engine.ts'),'utf8');
   expect(source).toContain('for(const grip of gripRoots)weaponArt.attach(grip)');
-  expect(source).toContain('weaponArt.scale.setScalar(index>=7?1.89:index===6?1.75:1.83)');
-  expect(source).toContain('model.position.set(.040,-.009,-.053)');
+  expect(source).toContain('weaponArt.scale.setScalar(index>=7?1.95:index===6?1.80:1.88)');
+  expect(source).toContain('model.position.set(.038,-.006,-.055)');
   expect(source).toContain('for(const grip of gripRoots)weaponArt.attach(grip)');
  });
 });
