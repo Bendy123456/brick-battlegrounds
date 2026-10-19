@@ -1,0 +1,27 @@
+name: Preview Anatomical FPS Grip
+on:
+  push:
+    branches: [main]
+    paths:
+      - art/render_hand_preview.py
+      - .github/workflows/preview-anatomical-grip.yml
+  workflow_dispatch:
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y blender python3-numpy
+      - name: Render actual game weapon and new anatomically modeled hand meshes
+        run: blender -b --python-exit-code 1 --python art/render_hand_preview.py
+      - name: Include compact preview for visual review
+        run: |
+          python3 - <<'PY'
+          import base64
+          p='/tmp/vanguard-real-hand-preview.jpg'
+          print('VANGUARD_REAL_HAND_PREVIEW_JPEG_BASE64='+base64.b64encode(open(p,'rb').read()).decode())
+          PY
