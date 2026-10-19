@@ -23,3 +23,14 @@ Download mapping:
 - `tempo` ← `m1911.glb`
 
 The source repository URL and revisions are documented in the importer workflow for reproducibility.
+
+## New anatomical FPS hands (CC0, October 2026)
+
+All nine weapons now use **actual anatomically modeled and skinned hand geometry** rather than the previous generated sphere/capsule fingers.
+
+- Original asset: [Innerscene — Posable anatomical right hand](https://www.innerscene.com/tools/library/3d-parts/posable-anatomical-right-hand-f6098b4f)
+- Source underlying mesh: MakeHuman / MPFB CC0 human hand base, distributed and dedicated to CC0 by Innerscene.
+- Original asset includes 8,120 vertices and a 16-bone hand/finger skeleton.
+- Downloaded via official Innerscene GLB endpoint during the Blender workflow.
+- Modified for the game by baking curled finger poses and mirroring left-hand geometry. Skin and slender bare forearms are adapted to match the game's art direction.
+- This is an adapted third-party artist-modeled asset, **not an original hand-sculpted work made by ChatGPT**. The import and finger posing are automated in Blender for nine gun-specific grips.
