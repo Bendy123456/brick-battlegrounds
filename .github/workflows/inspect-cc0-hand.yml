@@ -1,0 +1,25 @@
+name: Inspect CC0 Anatomical Hand Import
+on:
+  push:
+    branches: [main]
+    paths:
+      - art/inspect_cc0_hand.py
+      - .github/workflows/inspect-cc0-hand.yml
+  workflow_dispatch:
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y blender
+      - name: Fetch original anatomically sculpted CC0 rigged hand
+        run: |
+          curl -fL --retry 3 'https://www.innerscene.com/api/library/posable-anatomical-right-hand-f6098b4f/download' -o /tmp/cc0-posable-hand.glb
+          file /tmp/cc0-posable-hand.glb
+          test "$(stat -c %s /tmp/cc0-posable-hand.glb)" -gt 100000
+      - name: Inspect actual hand mesh and finger armature
+        run: blender -b --python-exit-code 1 --python art/inspect_cc0_hand.py
