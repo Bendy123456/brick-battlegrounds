@@ -273,16 +273,16 @@ export class Engine{
     this.weapon.add(this.muzzle);this.weapon.add(this.muzzleFlash);
     this.muzzle.position.set(0,0,-.85);this.muzzleFlash.position.copy(this.muzzle.position);
    }
-   // Larger real FPS silhouettes, including BOTH posed hands, every finger,
-   // and the barrel socket. Single shared transform keeps grips connected.
-   // 15% larger than the previous release; pistols stay proportionate.
-   weaponArt.scale.setScalar(index>=7?1.70:index===6?1.59:1.63);
+   // Slightly larger hero-weapon presentation. Model, sculpted hands,
+   // safety tip and muzzle socket share one transform so no grip drift.
+   // Rifles +12%, sniper +10%, pistols +11% from the prior build.
+   weaponArt.scale.setScalar(index>=7?1.89:index===6?1.75:1.83);
    // Preserve the weapon-type tuning while moving the whole assembly toward the camera.
    const scale=index===6?.62:index===5?.70:index>=7?.83:index===4?.76:.70;
    model.scale.setScalar(gunParts.length?scale:scale*1.12);
    // Fine framing inside the shared weapon group. Never move the fingers
    // independently of the grip or the exported muzzle anchor.
-   model.position.set(.045,-.012,-.052);
+   model.position.set(.040,-.009,-.053);
    this.weaponCore.add(model);
    // Rifles / shotguns / snipers default to two hands, sidearms to one.
    this.setGrip(this.gripModes.get(index)??(index<7));
@@ -488,16 +488,16 @@ export class Engine{
     Math.min(1,Math.max(0,(1.30-blocker.timeOfImpact)/1.10)):0;
    this.weaponWallClearance=THREE.MathUtils.damp(
     this.weaponWallClearance,wantClearance,20,dt);
-   const targetX=aim?0:sprint?.32:.275;
+   const targetX=aim?0:sprint?.30:.255;
    // Center model-specific optic heights on the true reticle in ADS.
    const aimingY=this.lastWeapon>=7?-.10:this.lastWeapon===6?-.155:
     this.lastWeapon===5?-.13:-.17;
-   const targetY=(aim?aimingY:sliding?-.46:sprint?-.41:-.295)
+   const targetY=(aim?aimingY:sliding?-.44:sprint?-.405:-.275)
     -this.weaponWallClearance*.20;
    // Move the muzzle BACK toward the camera as we approach world geometry.
    // Never place the gun/stock behind the camera near-plane.
    // Retain a meaningful near-plane safety margin even with larger models.
-   const targetZ=(aim?-.80:sliding?-.99:sprint?-1.01:-.86)
+   const targetZ=(aim?-.845:sliding?-1.00:sprint?-1.035:-.815)
     +this.weaponWallClearance*.16;
    // Weapon and BOTH hand rigs are children of weaponCore: no sliding grip
    // or floating fingers when looking around, firing, landing, or aiming.
