@@ -1,0 +1,25 @@
+name: Rapier Collision QA
+on:
+  push:
+    branches: [main]
+    paths:
+      - shared/map.ts
+      - shared/collision.ts
+      - shared/arena-layout.json
+      - server/src/index.ts
+      - client/src/engine.ts
+      - tests/arena-solid-physics.test.ts
+      - .github/workflows/rapier-collision-qa.yml
+  workflow_dispatch:
+jobs:
+  collision:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npx vitest run tests/arena-solid-physics.test.ts --reporter=verbose
+      - run: npm run check
