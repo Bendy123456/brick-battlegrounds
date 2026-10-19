@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - art/render_hand_preview.py
+      - art/weapons/*.blend
       - .github/workflows/preview-anatomical-grip.yml
   workflow_dispatch:
 jobs:
