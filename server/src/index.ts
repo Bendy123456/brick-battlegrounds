@@ -57,8 +57,9 @@ function createParticipant(room:Room,ws:Client|null,index:number,bot=false):Part
  const body=room.world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(spawn.x,spawn.y,spawn.z));
  const collider=room.world.createCollider(RAPIER.ColliderDesc.capsule(.60,.30).setFriction(.8),body);
  const controller=room.world.createCharacterController(.03);
- controller.enableAutostep(.4,.24,true);
- controller.enableSnapToGround(.18);
+ // Slightly broader landing forgiveness prevents rare step-to-deck edge gaps.
+ controller.enableAutostep(.46,.28,true);
+ controller.enableSnapToGround(.30);
  const actor:Actor={id:index?'BLUE':'RED',side:index,x:spawn.x,y:spawn.y,z:spawn.z,yaw:index?Math.PI/2:-Math.PI/2,pitch:0,
  hp:100,kills:0,deaths:0,ammo:WEAPONS[0].mag,mag:WEAPONS[0].mag,weapon:0,alive:true,ads:false,crouch:false,prone:false,sliding:false,sprinting:false,velocity:0,reloadEnd:0};
  const p:Participant={ws,room,index,token:randomBytes(20).toString('hex'),actor,input:inputDefault(),body,collider,controller,motion:newMotion(),stance:'stand',lastFire:0,reloadAt:0,vy:0,grounded:true,deadUntil:0,heardAt:Date.now(),reconnectUntil:0,bot,thinkAt:0,decision:0,ackSeq:0,inputAgeMs:0};
