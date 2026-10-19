@@ -13,7 +13,7 @@ import math
 import re
 from mathutils import Vector, Matrix
 sys.path.insert(0, os.path.dirname(__file__))
-from anatomical_grips import make_grips
+from real_anatomical_grips import make_real_grips
 
 ROOT=os.getcwd()
 INPUT=os.path.join(ROOT,"art","upstream_weapon_sources")
@@ -359,7 +359,7 @@ def make(id,src,length,klass):
         "orange":mat("AIRSOFT_ORANGE_TIP_07","f66511",0,.48),
     }
     # Custom thin-forearm sculpture with nine unique gun-mesh surface contacts.
-    make_grips(id,klass,m,all_meshes,lo,hi)
+    make_real_grips(id,klass,m,all_meshes,lo,hi)
     if id=='vanguard':
         for ob in all_meshes:
             vlo,vhi=mesh_extents([ob])
