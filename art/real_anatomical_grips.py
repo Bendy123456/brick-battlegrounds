@@ -102,6 +102,17 @@ def make_real_grips(weapon_id,klass,materials,gun_meshes,lo,hi):
             ob=bpy.data.objects.new(name,mesh)
             bpy.context.collection.objects.link(ob)
             mesh.materials.clear();mesh.materials.append(materials['skin'])
+            mesh.materials.append(materials['nail'])
+            mesh.update()
+            # Nail-color polygons on the actual skinned fingertip mesh, not
+            # extra primitive-shaped artificial fingers. Keep it subtle.
+            for tip_bone in ('index_03_r','middle_03_r','ring_03_r','pinky_03_r','thumb_03_r'):
+                tip=weighted(mesh,source,tip_bone)
+                if tip is None:continue
+                viable=sorted(mesh.polygons,key=lambda p:(p.center-tip).length_squared)
+                # One or two small faces per digit are sufficient to convey
+                # natural bare nails without overly contrasting blocks.
+                for face in viable[:2]:face.material_index=1
             for poly in mesh.polygons:poly.use_smooth=True
             ob.parent=parent
             ob['fingers']='five bone-posed, connected fingers'
