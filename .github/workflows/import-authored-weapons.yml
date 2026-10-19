@@ -6,7 +6,9 @@ on:
       - art/import_authored_weapons.py
       - art/anatomical_grips.py
       - art/real_anatomical_grips.py
+      - tests/grip-assets.test.ts
       - .github/workflows/import-authored-weapons.yml
+  workflow_dispatch:
 permissions:
   contents: write
 concurrency:
