@@ -139,7 +139,8 @@ export class Engine{
   this.body=this.world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(spawn.x,spawn.y,spawn.z));
   this.collider=this.world.createCollider(RAPIER.ColliderDesc.capsule(.60,.30),this.body);
   this.controller=this.world.createCharacterController(.03);
-  this.controller.enableAutostep(.40,.24,true);this.controller.enableSnapToGround(.18);
+  // Match the server's stair/deck grounding thresholds exactly.
+  this.controller.enableAutostep(.46,.28,true);this.controller.enableSnapToGround(.30);
   if(this.enemy)this.scene.remove(this.enemy);
   this.enemy=buildClassicNinja(new THREE.Color(side?0xd8ca5e:0xd24c46));
   this.enemy.scale.setScalar(1.0);this.scene.add(this.enemy);
