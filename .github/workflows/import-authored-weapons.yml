@@ -5,6 +5,7 @@ on:
     paths:
       - art/import_authored_weapons.py
       - art/anatomical_grips.py
+      - art/real_anatomical_grips.py
       - .github/workflows/import-authored-weapons.yml
 permissions:
   contents: write
@@ -33,11 +34,15 @@ jobs:
             curl -fLSs --retry 3 "$BASE/$item.glb" -o "art/upstream_weapon_sources/$item.glb"
             test "$(stat -c %s art/upstream_weapon_sources/$item.glb)" -gt 25000
           done
+      - name: Retrieve high-resolution CC0 artist-sculpted anatomical hand
+        run: |
+          curl -fLSs --retry 3 'https://www.innerscene.com/api/library/posable-anatomical-right-hand-f6098b4f/download' -o /tmp/cc0-posable-hand.glb
+          test "$(stat -c %s /tmp/cc0-posable-hand.glb)" -gt 100000
       - name: Convert and export 9 individual game-ready Blender viewmodels
         run: |
           blender --background --python-exit-code 1 --python art/import_authored_weapons.py > /tmp/authored-weapons.log 2>&1 || { tail -160 /tmp/authored-weapons.log; exit 1; }
-          grep ANATOMICAL_GRIP_OK /tmp/authored-weapons.log
-          test "$(grep -c ANATOMICAL_GRIP_OK /tmp/authored-weapons.log)" -eq 9
+          grep CC0_REAL_ANATOMICAL_HANDS_OK /tmp/authored-weapons.log
+          test "$(grep -c CC0_REAL_ANATOMICAL_HANDS_OK /tmp/authored-weapons.log)" -eq 9
           grep HAND_AUTHORED_SOURCE_IMPORTED /tmp/authored-weapons.log
           test "$(grep -c HAND_AUTHORED_SOURCE_IMPORTED /tmp/authored-weapons.log)" -eq 9
           test "$(find art/weapons -maxdepth 1 -name '*.blend' | wc -l)" -eq 9
