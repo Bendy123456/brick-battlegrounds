@@ -8,6 +8,7 @@ import {$} from './screen.ts';
 import {settings} from './controls.ts';
 import {newMotion,stepMotion,type Motion} from '../../shared/movement.ts';
 import {sfx} from './audio.ts';
+import {newViewmodelMotion,fireViewmodelMotion,stepViewmodelMotion} from './viewmodel-motion.ts';
 
 const COLORS:Record<string,number>={concrete:0x56636a,metal:0x485969,wood:0x846848,net:0x496b63,foam:0x71884d};
 const toV=(p:any)=>new THREE.Vector3(p.x,p.y,p.z);
@@ -25,7 +26,8 @@ export class Engine{
  muzzleSocket:THREE.Object3D|null=null;muzzleFlash:THREE.Mesh;flashRemaining=0;
  muzzleStreaks:{line:THREE.Line,life:number}[]=[];
  weapon=new THREE.Group();weaponCore=new THREE.Group();muzzle:THREE.PointLight;
- lastWeapon=-1; recoil=0;walkPhase=0;eyeBob=0;frame=0;lastStep=0;
+ lastWeapon=-1; walkPhase=0;eyeBob=0;frame=0;lastStep=0;
+ viewmodelMotion=newViewmodelMotion();
  weaponWallClearance=0;
  // Grip preference is individual for each gun, not global.
  gripModes=new Map<number,boolean>(); gripTwoHanded=true;
@@ -224,6 +226,9 @@ export class Engine{
  }
  setWeapon(index:number){
   if(this.lastWeapon===index)return;this.lastWeapon=index;
+  this.viewmodelMotion=newViewmodelMotion();
+  this.weaponCore.position.set(0,0,0);
+  this.weaponCore.rotation.set(0,0,0);
   this.weaponCore.clear();
   this.muzzleSocket=null;
   const w=WEAPONS[index]||WEAPONS[0],compact=w.role.includes('PISTOL'),long=w.role.includes('BOLT');
@@ -376,7 +381,8 @@ export class Engine{
     for(const [id,m] of this.projectiles)if(!current.has(id)){this.scene.remove(m);this.projectiles.delete(id)}
  }
  flash(){
-  this.recoil+=.11;this.muzzle.intensity=5;this.flashRemaining=.075;this.muzzleFlash.visible=true;
+  fireViewmodelMotion(this.viewmodelMotion,this.lastWeapon);
+  this.muzzle.intensity=5;this.flashRemaining=.075;this.muzzleFlash.visible=true;
   if(!this.muzzleSocket)return;
   // Each shot immediately flashes outward from the model's fitted barrel,
   // while the real projectile keeps server-authoritative hit registration.
@@ -440,7 +446,7 @@ export class Engine{
   if(input){
    const speed=Math.hypot(input.f,input.s);
    this.walkPhase+=dt*speed*(input.sprint?19:12);
-   this.eyeBob+=((this.motion.slideTime>0?0:speed>0?.022*Math.sin(this.walkPhase*2):0)-this.eyeBob)*Math.min(1,dt*12);
+   this.eyeBob+=((this.motion.slideTime>0?0:speed>0?.010*Math.sin(this.walkPhase*2):0)-this.eyeBob)*Math.min(1,dt*12);
    this.camera.rotation.order='YXZ';
    this.camera.rotation.y=input.yaw;this.camera.rotation.x=input.pitch;this.camera.rotation.z=0;
    const sliding=this.motion.slideTime>0||local?.sliding===true;
@@ -488,9 +494,17 @@ export class Engine{
    // Never place the gun/stock behind the camera near-plane.
    const targetZ=(aim?-.85:sliding?-1.02:sprint?-1.08:-.96)
     +this.weaponWallClearance*.16;
+   // Weapon and BOTH hand rigs are children of weaponCore: no sliding grip
+   // or floating fingers when looking around, firing, landing, or aiming.
+   const vm=stepViewmodelMotion(this.viewmodelMotion,{
+    dt,weapon:this.lastWeapon,yaw:input.yaw,pitch:input.pitch,
+    forward:input.f,strafe:input.s,ads:!!aim,sprint:sprinting,
+    slide:sliding,airborne:!this.grounded
+   });
+   this.weaponCore.position.set(vm.x,vm.y,vm.z);
+   this.weaponCore.rotation.set(vm.rx,vm.ry,vm.rz);
    this.weapon.position.lerp(new THREE.Vector3(targetX,targetY,targetZ),Math.min(1,dt*(aim?17:12)));
-   this.recoil=Math.max(0,this.recoil-dt*.83);
-   this.weapon.rotation.x=THREE.MathUtils.lerp(this.weapon.rotation.x,-this.recoil-sprint*.33+(sliding?-.16:0)+this.weaponWallClearance*.25,Math.min(1,dt*14));
+   this.weapon.rotation.x=THREE.MathUtils.lerp(this.weapon.rotation.x,-sprint*.33+(sliding?-.16:0)+this.weaponWallClearance*.25,Math.min(1,dt*14));
    this.weapon.rotation.z=THREE.MathUtils.lerp(this.weapon.rotation.z,sprint*-.32+(sliding?.15:0),Math.min(1,dt*10));
    this.weapon.rotation.y=THREE.MathUtils.lerp(this.weapon.rotation.y,aim?0:-.07,Math.min(1,dt*10));
    this.weapon.position.y+=Math.sin(this.walkPhase)*Math.hypot(input.f,input.s)*(sliding?.003:.012);
