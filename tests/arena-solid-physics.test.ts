@@ -11,6 +11,8 @@ function world(){
   const body=w.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(b.x,b.y,b.z));
   w.createCollider(RAPIER.ColliderDesc.cuboid(b.w/2,b.h/2,b.d/2),body);
  }
+ // Rapier ray queries require a synchronised broad-phase after creating bodies.
+ w.step();
  return w;
 }
 function ray(w:any,from:{x:number,y:number,z:number},direction:{x:number,y:number,z:number},distance:number){
