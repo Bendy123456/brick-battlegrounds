@@ -36,6 +36,7 @@ describe('hand contact and pose exports',()=>{
    expect(two).toContain('short wrist stub');
    expect(one).toContain('short wrist stub');
    expect(two).not.toContain('anatomically tapered slim forearm');
+   expect(nodes.some(n=>n.name?.includes('anatomically tapered slim forearm'))).toBe(false);
    expect(two).not.toContain('finger 4 articulated');
    const handMeshNodes=nodes.filter(n=>n.name?.includes('REAL ANATOMICAL CC0 HAND')&&n.mesh!==undefined);
    expect(handMeshNodes.length).toBe(3);
