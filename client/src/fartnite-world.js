@@ -133,9 +133,10 @@ export function createFighter(color='#db886c',enemy=false,variant=0){
 }
 export function setWeaponVisual(root,kind='ar'){
  const weapon=root.userData?.weapon;
- if(!weapon)return;
+ if(!weapon||weapon.userData.visualKind===kind)return;
  weapon.clear();
  weapon.add(makeWeaponArtwork(kind));
+ weapon.userData.visualKind=kind;
  weapon.rotation.x=0;
 }
 export function animateFighter(root,time,speed,heading,pitch=0){
