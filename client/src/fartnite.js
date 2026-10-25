@@ -648,4 +648,19 @@ window.addEventListener('resize',()=>{
 });
 homeCamera(0);
 renderHUD();
+window.__FARTNITE_ART_QA__=()=>Object.freeze({
+  title:'FartNite',level:'Bramble Island',
+  locations:LANDMARKS.map(l=>l.name),
+  originalBuildingCount:world.obstacles.filter(o=>o.kind==='house').length,
+  instancedEnvironmentSets:world.art.props.length,
+  harvestableObjects:world.harvest.length,
+  characterSkins:skins.map(s=>s.name),
+  weaponFamilies:WEAPONS.map(w=>w.name),
+  liveFPS:statsValue,
+  pixelRatio:qualityScale,
+  drawCalls:renderer.info.render.calls,
+  triangles:renderer.info.render.triangles,
+  particleCount:effects.count(),
+  playerPosition:{x:Math.round(state.position.x),y:Math.round(state.position.y),z:Math.round(state.position.z)}
+});
 requestAnimationFrame(frame);
