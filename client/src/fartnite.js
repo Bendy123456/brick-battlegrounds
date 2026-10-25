@@ -111,7 +111,7 @@ for(let i=0;i<skins.length;i++){
 let statsClock=0,statsFrames=0,statsValue=60,qualityScale=Math.min(window.devicePixelRatio||1,1.5);
 const inputs=new Set();
 const aimDir=new THREE.Vector3(),ray=new THREE.Ray(),tmp=new THREE.Vector3();
-let worldTime=0;
+let worldTime=0,visibleTick=0;
 const notification=(txt)=>{
  const n=document.createElement('div');n.className='notify';n.textContent=txt;$('notifications').appendChild(n);
  window.setTimeout(()=>n.remove(),3100)
@@ -555,11 +555,24 @@ function gameTick(dt){
  if(state.reloadAt&&state.time>=state.reloadAt)finishReload();
  playerMove(dt);botsTick(dt);stormTick(dt);updateUI()
 }
+function updateVisualDistance(dt){
+ visibleTick+=dt;
+ if(visibleTick<.32)return;
+ visibleTick=0;
+ const x=state.mode==='playing'?state.position.x:3;
+ const z=state.mode==='playing'?state.position.z:30;
+ for(const entry of world.obstacles){
+  if(entry.visual)entry.visual.visible=Math.hypot(entry.x-x,entry.z-z)<182;
+  if(entry.object)entry.object.visible=(entry.object.userData.health>0&&Math.hypot(entry.x-x,entry.z-z)<158);
+ }
+}
 function frame(now){
  const dt=Math.min(.045,Math.max(.001,(now-state.last)/1000));state.last=now;worldTime+=dt;
  if(state.mode==='playing'){gameTick(dt)}
  else if(state.mode==='home'||state.mode==='how'){homeCamera(worldTime)}
  effects.tick(dt);
+ world.water.material.uniforms.time.value=worldTime;
+ updateVisualDistance(dt);
  statsFrames++;statsClock+=dt;
  if(statsClock>=3){
   statsValue=Math.round(statsFrames/statsClock);
