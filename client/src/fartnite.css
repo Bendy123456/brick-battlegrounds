@@ -140,3 +140,43 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
  .slot{height:65px;min-width:28px}.slot b{font-size:7px}
  .controls-grid{grid-template-columns:1fr}
 }
+
+
+/* FartNite Art Direction V2 — original editorial UI, sharp contrast, warm painterly highlights */
+#skywash{background:linear-gradient(90deg,#081b2ca9 0%,#0b253b77 34%,transparent 72%),linear-gradient(0deg,#0b253849 0%,transparent 42%);pointer-events:none}
+#home{background:linear-gradient(90deg,#071d30dc 0%,#08243898 36%,transparent 80%),linear-gradient(0deg,#18384c54,transparent 46%)}
+.logo{letter-spacing:-.012em;text-shadow:1px 1px 0 #e1e3ca44,3px 6px 0 #132638}
+.logo span{color:#e9fa89}
+.hero-title{letter-spacing:-.023em;text-shadow:2px 2px 0 #fdf1d82d,5px 8px 0 #082132,11px 15px 30px #021a2ec4}
+.hero-title em{color:#dcf78a}
+.home-center p{color:#e7f2ef;text-shadow:0 2px 8px #0c203b}
+.home-note{color:#edf4d2}
+.home-side{background:linear-gradient(115deg,#081e32e8,#21495abb);border-left:4px solid #e6f18a;border-radius:0 8px 8px 0}
+.play-button{background:linear-gradient(170deg,#f0ffaa,#d6eb76);box-shadow:0 6px 0 #80983e,0 14px 28px #0006;color:#21382b}
+.outline-button{background:#183d55b9;border:2px solid #d9e2d0}
+.match-pill>span,.match-meta span,#selectedWeapon,.slot,.map-line{backdrop-filter:blur(8px)}
+.match-meta span{border-bottom:3px solid #8dd4cf;background:#102b3bcf}
+#selectedWeapon{border-top:2px solid #edf2bb}
+#healthBlock{border-left-color:#dbf583}
+.slot.active{background:#355f57de;box-shadow:0 0 0 2px #c5e58d55,0 -8px 19px #f7e89b43}
+#miniWrap{border-color:#d9e9d6;box-shadow:0 5px 0 #102f3b99,0 11px 29px #0006}
+.skin-picker{margin-top:24px;width:min(530px,100%);padding:14px 0 0;border-top:1px solid #cfe4d065}
+.skin-label{font:900 11px Inter,Arial,sans-serif;letter-spacing:.22em;color:#ecf6e2;margin-bottom:10px}
+#skinPicker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.skin-card{appearance:none;border:2px solid #94abac9c;color:#f1f4ec;background:linear-gradient(150deg,#1b4151df,#0f273bdc);border-radius:5px;padding:10px 7px 8px;min-height:59px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transition:transform .18s,border-color .18s}
+.skin-card>span{font-size:21px;color:var(--skin-color);text-shadow:0 2px 12px var(--skin-color)}
+.skin-card b{font:900 10px 'Barlow Condensed',Impact,sans-serif;letter-spacing:.05em}
+.skin-card:hover{transform:translateY(-3px);border-color:#fff}
+.skin-card.selected{border-color:var(--skin-color);background:linear-gradient(145deg,#406056de,#163543ef);box-shadow:0 0 0 1px var(--skin-color)}
+.quality-tag{position:absolute;left:24px;bottom:8px;color:#e4ead6cf;letter-spacing:.09em;font:800 9px Inter,Arial,sans-serif;text-shadow:0 2px 5px #000;pointer-events:none}
+#reticle.firing>div{background:#ffed94}
+#stormTint{background:linear-gradient(130deg,#493d8c60,#9c6cbe75)}
+@media(max-width:1050px){.quality-tag{bottom:4px}}
+@media(max-width:650px){
+ .skin-picker{margin-top:16px}
+ #skinPicker{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .skin-card{min-height:43px;flex-direction:row;padding:6px}
+ .skin-card>span{font-size:14px}
+ .home-center{padding-top:20px}
+ .quality-tag{left:9px;bottom:84px;font-size:8px}
+}
