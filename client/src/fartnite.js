@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import {createEnvironment,createFighter,setWeaponVisual,animateFighter,terrainHeight,LANDMARKS,ISLAND_RADIUS,createBuild,weaponMesh,box,orb,M} from './fartnite-world.js';
 import {createEffects,createStormShader} from './fartnite-fx.js';
+import {mountLobby,SCOUTS} from './fartnite-lobby.js';
+import {createLobbyShowroom} from './fartnite-showroom.js';
+import './fartnite-lobby.css';
 import './fartnite.css';
 
 // FARTNITE: an original browser battle royale, not a port of third-party art or code.
@@ -47,6 +50,7 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.12;
 $('world').appendChild(renderer.domElement);
 const world=createEnvironment(scene,camera);
+const showroom=createLobbyShowroom(scene);
 const effects=createEffects(scene);
 let player=createFighter('#db886c',false,0);
 let activeSkin=0;
@@ -80,7 +84,7 @@ const WEAPONS=[
 ];
 const RARITY=[{name:'COMMON',color:'#dfede5',mult:1},{name:'UNCOMMON',color:'#7bcb74',mult:1.12},{name:'RARE',color:'#4baff9',mult:1.25},{name:'EPIC',color:'#b77dfa',mult:1.42},{name:'LEGENDARY',color:'#fbc164',mult:1.58}];
 const state={
- mode:'home',last:performance.now(),time:0,health:100,shield:0,wood:40,stone:0,elims:0,
+ mode:'home',matchMode:'survival',last:performance.now(),time:0,health:100,shield:0,wood:40,stone:0,elims:0,
  position:new THREE.Vector3(4,terrainHeight(4,32),32),yaw:2.2,pitch:.06,vy:0,grounded:true,
  gliding:false,speed:0,selected:0,inventory:[null,null,null,null,null,null],
  fireAt:0,reloadAt:0,ads:false,mouseFire:false,build:false,buildKind:'wall',
@@ -88,26 +92,6 @@ const state={
  loot:[],bots:[],builds:[],obstacles:[],hurtUntil:0,nearest:null,toastUntil:0,flashAt:0,
  settingsOpen:false,gamepadFire:false,gamepadAim:false,padPrev:{},padJump:false
 };
-const skins=[
- {name:'MEADOW RUNNER',tag:'fern',color:'#c8df76'},
- {name:'COPPER COURIER',tag:'ember',color:'#e0a27b'},
- {name:'TIDAL SCOUT',tag:'sea',color:'#7bd3db'},
- {name:'VIOLET VOYAGER',tag:'iris',color:'#e3b5e9'}
-];
-const skinPicker=$('skinPicker');
-for(let i=0;i<skins.length;i++){
- const b=document.createElement('button');b.type='button';b.className='skin-card'+(i===0?' selected':'');
- b.style.setProperty('--skin-color',skins[i].color);b.innerHTML='<span>◆</span><b>'+skins[i].name+'</b>';
- b.onclick=()=>{
-  activeSkin=i;
-  for(const child of skinPicker.children)child.classList.remove('selected');
-  b.classList.add('selected');
-  const previous=player;const next=createFighter('#db886c',false,i);
-  next.position.copy(player.position);next.rotation.copy(player.rotation);
-  player.remove(glider);next.add(glider);scene.remove(previous);player=next;scene.add(player);
- };
- skinPicker.appendChild(b);
-}
 let statsClock=0,statsFrames=0,statsValue=60,qualityScale=Math.min(window.devicePixelRatio||1,1.5);
 const inputs=new Set();
 const aimDir=new THREE.Vector3(),ray=new THREE.Ray(),tmp=new THREE.Vector3();
@@ -171,6 +155,7 @@ function pickup(){
   notification('+42 AMMO')
  }
  scene.remove(p.mesh);state.loot.splice(state.loot.indexOf(p),1);state.nearest=null;
+ lobby.record('loot');
  renderHUD()
 }
 function buildHUD(){
@@ -220,34 +205,36 @@ function cameraToPlayer(dt){
  camera.lookAt(p.x+fx*(state.gliding?25:24),p.y+(state.gliding?-21:2.2)+state.pitch*22,p.z+fz*(state.gliding?25:24));
 }
 function homeCamera(t){
- player.position.set(3,terrainHeight(3,30),30);player.rotation.y=.35;
- animateFighter(player,t,0,0);
+ player.visible=false;
  glider.visible=false;
- camera.position.set(87+Math.sin(t*.13)*5,40+Math.sin(t*.19)*1.6,138+Math.cos(t*.13)*6);
- camera.lookAt(-28,8,-26);
+ showroom.update(camera,t,lobby?.motion?.()!==false);
 }
-function reset(){
+function reset(mode='survival'){
+ showroom.hide();camera.fov=72;camera.updateProjectionMatrix();
+ player.visible=true;
  for(const entry of state.loot)scene.remove(entry.mesh);
  for(const bot of state.bots)scene.remove(bot.mesh);
  for(const b of state.builds)scene.remove(b.mesh);
  state.bots=[];state.builds=[];state.loot=[];effects.clear();
- Object.assign(state,{mode:'playing',time:0,health:100,shield:0,wood:40,stone:0,elims:0,
+ Object.assign(state,{mode:'playing',matchMode:mode,time:0,health:100,shield:0,wood:40,stone:0,elims:0,
   position:new THREE.Vector3(rand(-65,65),95,rand(-65,65)),yaw:Math.PI*.4,pitch:-.03,vy:0,grounded:false,gliding:true,speed:0,
   selected:0,inventory:[null,null,null,null,null,null],fireAt:0,reloadAt:0,ads:false,mouseFire:false,build:false,buildKind:'wall',
   storm:{center:{x:0,z:0},radius:224,phase:0,elapsed:0,wait:40,shrinking:false,from:224,to:224,nextCenter:{x:0,z:0}},nearest:null});
- spawnLoot();spawnBots();
+ spawnLoot();spawnBots(mode==='training'?9:19);
  player.visible=true;glider.visible=true;effects.glide(state.position.x,state.position.y,state.position.z);
  $('notifications').innerHTML='';showOnly('hud');camera.position.set(state.position.x+10,state.position.y+8,state.position.z+12);
  renderHUD();message('STEER YOUR GLIDER • LAND AND FIND A WEAPON',5);
  try{renderer.domElement.requestPointerLock()}catch{}
 }
 function toMenu(){
+ showroom.show();player.visible=false;
+ lobby.switchTab('PLAY');
  state.mode='home';state.mouseFire=false;state.build=false;inputs.clear();
  if(document.pointerLockElement)document.exitPointerLock();
  showOnly('home');
 }
-function spawnBots(){
- for(let i=0;i<19;i++){
+function spawnBots(count=19){
+ for(let i=0;i<count;i++){
   const loc=LANDMARKS[i%LANDMARKS.length];
   const x=loc.x+rand(-30,30),z=loc.z+rand(-30,30);
   const mesh=createFighter(undefined,true,i%4);mesh.position.set(x,terrainHeight(x,z),z);scene.add(mesh);
@@ -260,6 +247,8 @@ function lose(){
  state.health=0;endMatch(false)
 }
 function endMatch(win){
+ if(state.mode!=='playing')return;
+ lobby.recordMatch({win,placement:win?1:state.bots.filter(b=>b.alive).length+1,elims:state.elims});
  state.mode='ended';state.mouseFire=false;if(document.pointerLockElement)document.exitPointerLock();
  $('endSmall').textContent=win?'LAST SURVIVOR':'YOU WERE ELIMINATED';
  $('endTitle').textContent=win?'ISLAND CHAMPION!':'BACK TO THE LOBBY';
@@ -383,6 +372,7 @@ function swingTool(){
  }
  if(candidate){
   candidate.userData.health--;
+  lobby.record('harvest');
   effects.impact(candidate.position.x,candidate.position.y+2,candidate.position.z,candidate.userData.material);
   const kind=candidate.userData.material==='stone'?'stone':'wood';
   state[kind]+=10;notification('+10 '+kind.toUpperCase());
@@ -443,6 +433,7 @@ function createStructure(){
  if(Math.hypot(x,z)>ISLAND_RADIUS-10){notification('BUILD INSIDE THE ISLAND');return}
  const g=createBuild(scene,x,z,state.yaw,kind);
  state.builds.push({x,z,kind,yaw:state.yaw,mesh:g});
+ lobby.record('builds');
  effects.build(x,terrainHeight(x,z),z);
  const wood=Math.min(need,state.wood);state.wood-=wood;state.stone-=need-wood;
  notification(kind.toUpperCase()+' PLACED');renderHUD()
@@ -654,8 +645,19 @@ function toggleMap(){
  if(state.mode==='playing'){state.mode='map';state.mouseFire=false;drawMap($('fullmap'),true);showOnly('bigmap');if(document.pointerLockElement)document.exitPointerLock()}
  else if(state.mode==='map'){state.mode='playing';showOnly('hud');try{renderer.domElement.requestPointerLock()}catch{}}
 }
-$('play').onclick=reset;
-$('how').onclick=()=>{state.mode='how';showOnly('instructions')};
+const lobby=mountLobby($('home'),{
+ play:mode=>reset(mode),
+ onSkin:index=>{
+  activeSkin=index;
+  const previous=player,next=createFighter(undefined,false,index);
+  next.position.copy(previous.position);next.rotation.copy(previous.rotation);
+  previous.remove(glider);next.add(glider);scene.remove(previous);player=next;scene.add(next);
+  showroom.setSkin(index);
+ },
+ onAura:a=>showroom.setAura(a),
+ onSettings:s=>{renderer.shadowMap.enabled=s.shadows;$('qualityStats').style.display=s.stats?'':'none'},
+ how:()=>{state.mode='how';showOnly('instructions')}
+});
 $('backFromHow').onclick=toMenu;
 $('resume').onclick=resumeGame;
 $('leave').onclick=toMenu;
@@ -705,12 +707,12 @@ window.addEventListener('resize',()=>{
 homeCamera(0);
 renderHUD();
 window.__FARTNITE_ART_QA__=()=>Object.freeze({
-  title:'FartNite',level:'Bramble Island',
+  title:'FartNite',level:'Bramble Island',lobbyMode:lobby.getMode(),activeSkin:SCOUTS[activeSkin].name,
   locations:LANDMARKS.map(l=>l.name),
   originalBuildingCount:world.obstacles.filter(o=>o.kind==='house').length,
   instancedEnvironmentSets:world.art.props.length,
   harvestableObjects:world.harvest.length,
-  characterSkins:skins.map(s=>s.name),
+  characterSkins:SCOUTS.map(s=>s.name),
   weaponFamilies:WEAPONS.map(w=>w.name),
   liveFPS:statsValue,
   pixelRatio:qualityScale,
