@@ -188,7 +188,7 @@ function buildHUD(){
 }
 function renderHUD(){
  const h=state.inventory[state.selected];
- setWeaponVisual(player,h?WEAPONS[h.weaponId].id:'ar');
+ setWeaponVisual(player,h?WEAPONS[h.weaponId].id:'harvest');
  $('healthFill').style.width=clamp(state.health,0,100)+'%';
  $('shieldFill').style.width=clamp(state.shield,0,100)+'%';
  $('healthValue').textContent=Math.ceil(state.health);
