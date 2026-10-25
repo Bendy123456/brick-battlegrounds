@@ -28,7 +28,7 @@ export function attachPartyServer(httpServer){
  }
  function broadcast(room){
   const members=[...room.members.entries()].map(([id,m])=>({id,name:m.name,skin:m.skin}));
-  for(const m of room.members.values())send(m.ws,{type:'party',code:room.code,hostId:room.hostId,selfId:m.id,members})
+  for(const [id,m] of room.members)send(m.ws,{type:'party',code:room.code,hostId:room.hostId,selfId:id,members})
  }
  function code(){
   let value;
