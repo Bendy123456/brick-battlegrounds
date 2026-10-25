@@ -19,11 +19,11 @@ export function createLobbyShowroom(scene){
  floorOuter.rotation.x=-Math.PI/2;floorOuter.position.y=-.18;root.add(floorOuter);
  const stageGlow=new THREE.Mesh(new THREE.PlaneGeometry(34,22),new THREE.MeshBasicMaterial({color:'#123e89',transparent:true,opacity:.08,depthWrite:false}));
  stageGlow.position.set(0,4,-14);root.add(stageGlow);
- const points=[-3.3,0,3.3],fighters=[],lamps=[],halos=[],rotators=[];
+ const points=[-3.3,0,3.3],fighters=[null,null,null],stands=[],lamps=[],halos=[],rotators=[];
  let auraColor='#42ebff',skin=0;
  for(let i=0;i<3;i++){
   const x=points[i],front=i===1?2.2:0;
-  const stand=new THREE.Group();stand.position.set(x,0,front);root.add(stand);
+  const stand=new THREE.Group();stand.position.set(x,0,front);root.add(stand);stand.visible=i===1;stands.push(stand);
   const base=new THREE.Mesh(new THREE.CylinderGeometry(i===1?1.87:1.45,i===1?1.93:1.52,.3,46),mat('#314968',{metalness:.6,roughness:.22}));
   base.position.y=-.03;base.receiveShadow=true;stand.add(base);
   const bottom=new THREE.Mesh(new THREE.CylinderGeometry(i===1?1.72:1.32,i===1?1.72:1.32,.09,46),new THREE.MeshBasicMaterial({color:'#6b98b4'}));
@@ -36,10 +36,12 @@ export function createLobbyShowroom(scene){
    new THREE.MeshBasicMaterial({color:'#37c5ff',transparent:true,opacity:i===1?.105:.045,side:THREE.DoubleSide,depthWrite:false}));
   beam.position.y=2.37;stand.add(beam);halos.push(beam);
   const light=new THREE.PointLight('#48dfff',i===1?9:5,i===1?8:6,1.8);light.position.set(0,.65,.1);stand.add(light);lamps.push(light);
-  const fighter=createFighter(undefined,false,i===1?0:i===0?2:1);
-  fighter.userData.weapon.visible=false;
-  fighter.position.y=.27;fighter.rotation.y=i===1?-.10:i===0?.22:-.20;
-  stand.add(fighter);fighters.push(fighter);
+  if(i===1){
+   const fighter=createFighter(undefined,false,0);
+   fighter.userData.weapon.visible=false;
+   fighter.position.y=.27;fighter.rotation.y=-.10;
+   stand.add(fighter);fighters[i]=fighter
+  }
  }
  for(const x of [-8.2,8.2]){
   const pillar=new THREE.Mesh(new THREE.BoxGeometry(.17,18,.3),new THREE.MeshBasicMaterial({color:'#193a77',transparent:true,opacity:.35}));
@@ -48,13 +50,23 @@ export function createLobbyShowroom(scene){
  const key=new THREE.PointLight('#87dafa',45,34,1.3);key.position.set(0,9,10);root.add(key);
  const rim=new THREE.PointLight('#486bdc',24,30,1.6);rim.position.set(-3,8,-7);root.add(rim);
  const warm=new THREE.PointLight('#edb19b',10,21,1.4);warm.position.set(4,6,3);root.add(warm);
- const setSkin=index=>{
-  skin=index;
-  const old=fighters[1],p=old.parent;
+ function setFighter(slot,index){
+  const stand=stands[slot],old=fighters[slot];
+  if(old?.userData?.variant===index){stand.visible=true;return}
+  if(old)stand.remove(old);
   const next=createFighter(undefined,false,index);
   next.userData.weapon.visible=false;
-  next.position.copy(old.position);next.rotation.copy(old.rotation);
-  p.remove(old);p.add(next);fighters[1]=next
+  next.position.y=.27;next.rotation.y=slot===1?-.10:slot===0?.22:-.20;
+  stand.add(next);fighters[slot]=next;stand.visible=true;
+ }
+ const setSkin=index=>{skin=index;setFighter(1,index)};
+ const setPartyMembers=members=>{
+  // Always show self at center. Side fighters exist ONLY for people reported by the party server.
+  for(let i=0;i<2;i++){
+   const slot=i===0?0:2,member=members?.[i];
+   if(!member){stands[slot].visible=false;continue}
+   setFighter(slot,member.skin)
+  }
  };
  const setAura=a=>{
   auraColor=a?.color||'#42ebff';
@@ -69,6 +81,7 @@ export function createLobbyShowroom(scene){
   camera.lookAt(ORIGIN,2.35,0);
   for(let i=0;i<3;i++){
    const fighter=fighters[i];
+   if(!fighter||!stands[i].visible)continue;
    if(animate){
     fighter.position.y=.27+Math.sin(t*(i===1?1.75:1.2)+i*1.4)*.06;
     animateFighter(fighter,t+i*.3,0,0)
@@ -77,5 +90,5 @@ export function createLobbyShowroom(scene){
   }
   root.visible=true
  }
- return {root,update,setSkin,setAura,hide(){root.visible=false},show(){root.visible=true},getSkin(){return skin}};
+ return {root,update,setSkin,setPartyMembers,setAura,hide(){root.visible=false},show(){root.visible=true},getSkin(){return skin}};
 }
