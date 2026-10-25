@@ -194,3 +194,28 @@ test('solo lobby shows no fake party members; actual joins and leaves control si
   await Promise.all([hostContext.close(),guestContext.close(),guest2Context.close()]);
  }
 });
+
+
+test('new smooth mannequin body base carries across both genders and into gameplay',async({page})=>{
+ const errors:string[]=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');
+ // Showcase first the starter male Copper Courier with neutral, slimmer limbs.
+ await page.locator('[data-tab="LOCKER"]').click();
+ await page.locator('[data-skin="1"]').click();
+ await page.locator('#fnClose').click();
+ await expect(page.locator('#fnSkinName')).toHaveText('COPPER COURIER');
+ await expect.poll(()=>page.evaluate(()=>(window as any).__FARTNITE_ART_QA__?.().bodyGender)).toBe('male');
+ await page.screenshot({path:'artifacts/fartnite-smooth-male-body.png',animations:'disabled'});
+ // The female Meadow Runner must use the same updated rig topology.
+ await page.locator('[data-tab="LOCKER"]').click();
+ await page.locator('[data-skin="0"]').click();
+ await page.locator('#fnClose').click();
+ await expect.poll(()=>page.evaluate(()=>(window as any).__FARTNITE_ART_QA__?.().bodyGender)).toBe('female');
+ await page.screenshot({path:'artifacts/fartnite-smooth-female-body.png',animations:'disabled'});
+ await page.locator('#play').click();
+ await expect(page.locator('#hud')).toBeVisible();
+ const body=await page.evaluate(()=>(window as any).__FARTNITE_ART_QA__?.().bodyBase);
+ expect(body).toBe('smooth-humanoid-v2');
+ expect(errors).toEqual([]);
+});
