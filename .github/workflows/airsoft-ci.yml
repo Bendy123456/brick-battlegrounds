@@ -1,19 +1,19 @@
-name: Airsoft Arena CI
+name: FartNite browser battle royale CI
 on:
   push:
-    branches: [airsoft-v1, airsoft-blender-art, fix-sprint-floor-stutter, fix-input-sync-raf, airsoft-nine-blender-weapons, airsoft-black-barearms-noattachments, arena-v2-blender-professional, arena-v2-visual-overhaul, arena-v3-cover-circuit, main]
+    branches: [main]
   workflow_dispatch:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - run: npm install --no-audit --no-fund
-      - run: npm test
       - run: npm run check
+      - run: npm test
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
