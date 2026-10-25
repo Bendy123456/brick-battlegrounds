@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import {createEnvironment,createFighter,animateFighter,terrainHeight,LANDMARKS,ISLAND_RADIUS,createBuild,weaponMesh,box,orb,M} from './fartnite-world.js';
+import {createEnvironment,createFighter,setWeaponVisual,animateFighter,terrainHeight,LANDMARKS,ISLAND_RADIUS,createBuild,weaponMesh,box,orb,M} from './fartnite-world.js';
+import {createEffects,createStormShader} from './fartnite-fx.js';
 import './fartnite.css';
 
 // FARTNITE: an original browser battle royale, not a port of third-party art or code.
@@ -8,7 +9,7 @@ root.innerHTML=[
 '<div id="world"></div><div id="skywash"></div>',
 '<section id="home" class="screen"><div class="home-top"><div class="logo">FART<span>NITE</span><small>ORIGINAL BATTLE ROYALE</small></div><div class="home-right">SEASON ZERO <i></i> SOLO SURVIVAL</div></div>',
 '<div class="home-center"><div class="eyebrow">WELCOME TO THE ISLAND</div><div class="hero-title">DROP IN.<br><em>OUTLAST.</em><br>WIN.</div><p>Explore a huge original island, scavenge for gear, construct cover, and survive a changing storm. Every match is a fresh run.</p>',
-'<div class="home-actions"><button id="play" class="play-button"><span>▶</span> PLAY SOLO</button><button id="how" class="outline-button">HOW TO PLAY</button></div><div class="home-note">SOLO PREVIEW • 19 AI RIVALS • DESKTOP / CONTROLLER</div></div>',
+'<div class="home-actions"><button id="play" class="play-button"><span>▶</span> PLAY SOLO</button><button id="how" class="outline-button">HOW TO PLAY</button></div><div class="home-note">SOLO PREVIEW • 19 AI RIVALS • DESKTOP / CONTROLLER</div><div class="skin-picker"><div class="skin-label">CHOOSE A FIELD SCOUT</div><div id="skinPicker"></div></div></div>',
 '<div class="home-side"><div class="side-count">20<small>CONTENDERS</small></div><div class="side-sep"></div><span>6 UNIQUE LOCATIONS</span><span>5 WEAPON CLASSES</span><span>BUILD • LOOT • SURVIVE</span></div>',
 '<div class="home-footer">FARTNITE // 01 <span>ALL MAP, ART &amp; BRANDING ARE ORIGINAL</span> READY TO DROP</div></section>',
 '<section id="instructions" class="screen hidden"><div class="instruction-card"><div class="eyebrow">FIELD MANUAL / 01</div><h2>THE RULES ARE SIMPLE.</h2><p>Choose your landing spot, grab weapons, fight other contenders and stay within the moving safe zone. Be the last one standing.</p>',
@@ -23,7 +24,7 @@ root.innerHTML=[
 '<div class="bottom-left"><div id="healthBlock"><div class="barrow"><span>✚</span><div class="bar"><div id="healthFill" class="fill"></div></div><b id="healthValue">100</b></div><div class="barrow shield-row"><span>◈</span><div class="bar"><div id="shieldFill" class="fill"></div></div><b id="shieldValue">0</b></div></div><div id="materials">WOOD <b id="woodText">40</b> <i>•</i> STONE <b id="stoneText">0</b></div></div>',
 '<div class="bottom-center"><div id="selectedWeapon"><b id="weaponName">HARVEST TOOL</b><span id="ammoText">BREAK OBJECTS FOR MATERIALS</span></div><div id="hotbar"></div><div id="buildBar" class="hidden">BUILD MODE <span id="buildChoice">WALL</span> • 10 MATERIALS • V TO EXIT</div></div>',
 '<div class="bottom-right"><div class="tip">WASD MOVE <span>SHIFT SPRINT</span></div><div class="tip">E PICK UP <span>V BUILD</span></div></div>',
-'<div id="damageFlash"></div><div id="stormTint"></div></section>',
+'<div class="quality-tag" id="qualityStats" aria-live="off">RENDER INITIALIZING</div><div id="damageFlash"></div><div id="stormTint"></div></section>',
 '<section id="bigmap" class="screen hidden"><div class="map-modal"><div class="map-heading"><div><small>TACTICAL MAP / ISLAND 01</small><h2>ISLAND OVERVIEW</h2></div><button id="closeMap" class="outline-button">CLOSE • M</button></div><canvas id="fullmap" width="600" height="600"></canvas><p>White ring = safe zone. You are the bright arrow. Keep moving toward safety.</p></div></section>',
 '<section id="pause" class="screen hidden"><div class="dialog"><small>FARTNITE / SESSION</small><h2>PAUSED</h2><p>The island will be here when you return.</p><button id="resume" class="play-button">RESUME GAME</button><button id="leave" class="outline-button">BACK TO LOBBY</button></div></section>',
 '<section id="end" class="screen hidden"><div class="dialog end-dialog"><small id="endSmall">MATCH COMPLETE</small><h2 id="endTitle">WELL PLAYED</h2><p id="endSummary">You made a run for it.</p><div class="result-metrics"><div><b id="finalPlace">#1</b><span>PLACEMENT</span></div><div><b id="finalElims">0</b><span>ELIMINATIONS</span></div></div><button id="again" class="play-button">PLAY AGAIN</button><button id="endHome" class="outline-button">RETURN TO LOBBY</button></div></section>',
@@ -45,8 +46,10 @@ renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.12;
 $('world').appendChild(renderer.domElement);
-const world=createEnvironment(scene);
-const player=createFighter();
+const world=createEnvironment(scene,camera);
+const effects=createEffects(scene);
+let player=createFighter('#db886c',false,0);
+let activeSkin=0;
 scene.add(player);
 const glider=new THREE.Group();
 for(let i=-2;i<=2;i++){
@@ -58,11 +61,15 @@ for(const x of [-2.4,2.4]){
  const rope=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0xffffff}));
  glider.add(rope)
 }
+for(let i=-2;i<=2;i++){
+ const pendant=box(glider,i*1.45,6.40,1.1,.17,.11,.44,i%2===0?M.gold:M.red);
+ pendant.rotation.x=.16;
+}
 player.add(glider);
 const ringGeo=new THREE.TorusGeometry(1,.1,5,156);
 const ring=new THREE.Mesh(ringGeo,new THREE.MeshBasicMaterial({color:'#a363ed',transparent:true,opacity:.86,depthWrite:false}));
 ring.rotation.x=-Math.PI/2;scene.add(ring);
-const stormWall=new THREE.Mesh(new THREE.CylinderGeometry(1,1,90,128,1,true),new THREE.MeshBasicMaterial({color:'#9058c9',transparent:true,opacity:.16,side:THREE.DoubleSide,depthWrite:false}));
+const stormWall=new THREE.Mesh(new THREE.CylinderGeometry(1,1,90,128,1,true),createStormShader());
 scene.add(stormWall);
 const WEAPONS=[
  {id:'ar',name:'TRAILBLAZER AR',rate:.14,damage:22,mag:30,reload:2.1,range:115,spread:.019},
@@ -81,6 +88,27 @@ const state={
  loot:[],bots:[],builds:[],obstacles:[],hurtUntil:0,nearest:null,toastUntil:0,flashAt:0,
  settingsOpen:false,gamepadFire:false,gamepadAim:false,padPrev:{},padJump:false
 };
+const skins=[
+ {name:'MEADOW RUNNER',tag:'fern',color:'#c8df76'},
+ {name:'COPPER COURIER',tag:'ember',color:'#e0a27b'},
+ {name:'TIDAL SCOUT',tag:'sea',color:'#7bd3db'},
+ {name:'VIOLET VOYAGER',tag:'iris',color:'#e3b5e9'}
+];
+const skinPicker=$('skinPicker');
+for(let i=0;i<skins.length;i++){
+ const b=document.createElement('button');b.type='button';b.className='skin-card'+(i===0?' selected':'');
+ b.style.setProperty('--skin-color',skins[i].color);b.innerHTML='<span>◆</span><b>'+skins[i].name+'</b>';
+ b.onclick=()=>{
+  activeSkin=i;
+  for(const child of skinPicker.children)child.classList.remove('selected');
+  b.classList.add('selected');
+  const previous=player;const next=createFighter('#db886c',false,i);
+  next.position.copy(player.position);next.rotation.copy(player.rotation);
+  player.remove(glider);next.add(glider);scene.remove(previous);player=next;scene.add(player);
+ };
+ skinPicker.appendChild(b);
+}
+let statsClock=0,statsFrames=0,statsValue=60,qualityScale=Math.min(window.devicePixelRatio||1,1.5);
 const inputs=new Set();
 const aimDir=new THREE.Vector3(),ray=new THREE.Ray(),tmp=new THREE.Vector3();
 let worldTime=0;
@@ -160,6 +188,7 @@ function buildHUD(){
 }
 function renderHUD(){
  const h=state.inventory[state.selected];
+ setWeaponVisual(player,h?WEAPONS[h.weaponId].id:'ar');
  $('healthFill').style.width=clamp(state.health,0,100)+'%';
  $('shieldFill').style.width=clamp(state.shield,0,100)+'%';
  $('healthValue').textContent=Math.ceil(state.health);
@@ -198,13 +227,13 @@ function reset(){
  for(const entry of state.loot)scene.remove(entry.mesh);
  for(const bot of state.bots)scene.remove(bot.mesh);
  for(const b of state.builds)scene.remove(b.mesh);
- state.bots=[];state.builds=[];state.loot=[];
+ state.bots=[];state.builds=[];state.loot=[];effects.clear();
  Object.assign(state,{mode:'playing',time:0,health:100,shield:0,wood:40,stone:0,elims:0,
   position:new THREE.Vector3(rand(-65,65),95,rand(-65,65)),yaw:Math.PI*.4,pitch:-.03,vy:0,grounded:false,gliding:true,speed:0,
   selected:0,inventory:[null,null,null,null,null,null],fireAt:0,reloadAt:0,ads:false,mouseFire:false,build:false,buildKind:'wall',
   storm:{center:{x:0,z:0},radius:224,phase:0,elapsed:0,wait:40,shrinking:false,from:224,to:224,nextCenter:{x:0,z:0}},nearest:null});
  spawnLoot();spawnBots();
- player.visible=true;glider.visible=true;
+ player.visible=true;glider.visible=true;effects.glide(state.position.x,state.position.y,state.position.z);
  $('notifications').innerHTML='';showOnly('hud');camera.position.set(state.position.x+10,state.position.y+8,state.position.z+12);
  renderHUD();message('STEER YOUR GLIDER • LAND AND FIND A WEAPON',5);
  try{renderer.domElement.requestPointerLock()}catch{}
@@ -218,7 +247,7 @@ function spawnBots(){
  for(let i=0;i<19;i++){
   const loc=LANDMARKS[i%LANDMARKS.length];
   const x=loc.x+rand(-30,30),z=loc.z+rand(-30,30);
-  const mesh=createFighter(undefined,true);mesh.position.set(x,terrainHeight(x,z),z);scene.add(mesh);
+  const mesh=createFighter(undefined,true,i%4);mesh.position.set(x,terrainHeight(x,z),z);scene.add(mesh);
   state.bots.push({x,z,mesh,alive:true,hp:75+Math.round(rand(0,30)),shield:Math.random()<.25?25:0,yaw:rand(0,TAU),
    wanderAt:0,heading:rand(0,TAU),fireAt:rand(.2,2),lastHit:0,shotCount:0,aim:rand(.35,.73)})
  }
@@ -294,13 +323,14 @@ function playerMove(dt){
  const surface=buildSupportHeight(state.position.x,state.position.z,terrainHeight(state.position.x,state.position.z),state.position.y);
  if(state.gliding){
   state.position.y=Math.max(surface, state.position.y-dt*(keys.has('Space')?21:13));
-  if(state.position.y<=surface+.08){state.gliding=false;state.grounded=true;state.position.y=surface;notification('TOUCHDOWN • SEARCH FOR LOOT')}
+  if(state.position.y<=surface+.08){state.gliding=false;state.grounded=true;state.position.y=surface;effects.land(state.position.x,surface,state.position.z);notification('TOUCHDOWN • SEARCH FOR LOOT')}
  }else{
   state.vy-=24*dt;state.position.y+=state.vy*dt;
   if(state.position.y<=surface){state.position.y=surface;state.vy=0;state.grounded=true}
  }
  player.position.copy(state.position);player.rotation.y=state.yaw;
  glider.visible=state.gliding;
+ if(state.gliding&&Math.floor(state.time*14)%3===0)effects.glide(state.position.x,state.position.y,state.position.z);
  animateFighter(player,state.time,state.speed,state.yaw,state.pitch);
  if((state.mouseFire||state.gamepadFire)&&state.mode==='playing')fire();
  let nearest=null,d=3.6;
@@ -350,6 +380,7 @@ function swingTool(){
  }
  if(candidate){
   candidate.userData.health--;
+  effects.impact(candidate.position.x,candidate.position.y+2,candidate.position.z,candidate.userData.material);
   const kind=candidate.userData.material==='stone'?'stone':'wood';
   state[kind]+=10;notification('+10 '+kind.toUpperCase());
   candidate.scale.multiplyScalar(.93);
@@ -368,6 +399,7 @@ function shoot(){
  item.ammo--;
  const origin=camera.position.clone(),dir=new THREE.Vector3();
  camera.getWorldDirection(dir);
+ effects.muzzle(state.position.x+Math.sin(state.yaw)*1.1,state.position.y+2.45,state.position.z+Math.cos(state.yaw)*1.1,dir);
  const pelletCount=config.pellets||1;
  for(let p=0;p<p<pelletCount;p++){
   const v=dir.clone();
@@ -408,6 +440,7 @@ function createStructure(){
  if(Math.hypot(x,z)>ISLAND_RADIUS-10){notification('BUILD INSIDE THE ISLAND');return}
  const g=createBuild(scene,x,z,state.yaw,kind);
  state.builds.push({x,z,kind,yaw:state.yaw,mesh:g});
+ effects.build(x,terrainHeight(x,z),z);
  const wood=Math.min(need,state.wood);state.wood-=wood;state.stone-=need-wood;
  notification(kind.toUpperCase()+' PLACED');renderHUD()
 }
@@ -475,6 +508,7 @@ function stormTick(dt){
  }
  ring.position.set(s.center.x,terrainHeight(s.center.x,s.center.z)+1.4,s.center.z);
  ring.scale.set(s.radius,s.radius,1);
+ stormWall.material.uniforms.time.value=state.time;
  stormWall.position.set(s.center.x,40,s.center.z);
  stormWall.scale.set(s.radius,1,s.radius);
  const outside=Math.hypot(state.position.x-s.center.x,state.position.z-s.center.z)>s.radius;
@@ -525,6 +559,17 @@ function frame(now){
  const dt=Math.min(.045,Math.max(.001,(now-state.last)/1000));state.last=now;worldTime+=dt;
  if(state.mode==='playing'){gameTick(dt)}
  else if(state.mode==='home'||state.mode==='how'){homeCamera(worldTime)}
+ effects.tick(dt);
+ statsFrames++;statsClock+=dt;
+ if(statsClock>=3){
+  statsValue=Math.round(statsFrames/statsClock);
+  const drawCalls=renderer.info.render.calls;
+  if(statsValue<42&&qualityScale>.8)qualityScale=Math.max(.75,qualityScale-.14);
+  else if(statsValue>58&&qualityScale<Math.min(window.devicePixelRatio||1,1.5))qualityScale=Math.min(1.5,qualityScale+.08);
+  renderer.setPixelRatio(qualityScale);
+  $('qualityStats').textContent='RENDER '+statsValue+' FPS • '+drawCalls+' DRAWS • '+(qualityScale<1?'PERFORMANCE':'BALANCED')+' MODE';
+  statsClock=0;statsFrames=0;
+ }
  renderer.render(scene,camera);
  requestAnimationFrame(frame)
 }
@@ -586,7 +631,7 @@ window.addEventListener('mouseup',e=>{
 });
 window.addEventListener('resize',()=>{
  camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();
- renderer.setSize(window.innerWidth,window.innerHeight);renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5))
+ renderer.setSize(window.innerWidth,window.innerHeight);renderer.setPixelRatio(qualityScale)
 });
 homeCamera(0);
 renderHUD();
