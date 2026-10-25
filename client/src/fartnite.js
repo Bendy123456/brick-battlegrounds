@@ -247,6 +247,20 @@ const collision=(x,z,r=.75)=>{
  }
  return false
 };
+function buildSupportHeight(x,z,ground,currentY){
+ let highest=ground;
+ for(const b of state.builds){
+  if(b.kind==='wall')continue;
+  const dx=x-b.x,dz=z-b.z;
+  const localX=dx*Math.cos(b.yaw)-dz*Math.sin(b.yaw);
+  const localZ=dx*Math.sin(b.yaw)+dz*Math.cos(b.yaw);
+  if(Math.abs(localX)>2.92||Math.abs(localZ)>(b.kind==='floor'?2.92:3.25))continue;
+  const foot=terrainHeight(b.x,b.z);
+  const support=b.kind==='floor'?foot+.52:foot+2.0+localZ*.506;
+  if(currentY>=support-1.0)highest=Math.max(highest,support);
+ }
+ return highest;
+}
 function playerMove(dt){
  const keys=inputs;
  let forward=(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0);
@@ -277,7 +291,7 @@ function playerMove(dt){
  let x=state.position.x+vx*dt,z=state.position.z+vz*dt;
  if(!collision(x,state.position.z,.65))state.position.x=x;
  if(!collision(state.position.x,z,.65))state.position.z=z;
- const surface=terrainHeight(state.position.x,state.position.z);
+ const surface=buildSupportHeight(state.position.x,state.position.z,terrainHeight(state.position.x,state.position.z),state.position.y);
  if(state.gliding){
   state.position.y=Math.max(surface, state.position.y-dt*(keys.has('Space')?21:13));
   if(state.position.y<=surface+.08){state.gliding=false;state.grounded=true;state.position.y=surface;notification('TOUCHDOWN • SEARCH FOR LOOT')}
@@ -393,7 +407,7 @@ function createStructure(){
  const fx=Math.sin(state.yaw),fz=Math.cos(state.y),x=Math.round((state.position.x+fx*7)/3)*3,z=Math.round((state.position.z+fz*7)/3)*3;
  if(Math.hypot(x,z)>ISLAND_RADIUS-10){notification('BUILD INSIDE THE ISLAND');return}
  const g=createBuild(scene,x,z,state.yaw,kind);
- state.builds.push({x,z,kind,mesh:g});
+ state.builds.push({x,z,kind,yaw:state.yaw,mesh:g});
  const wood=Math.min(need,state.wood);state.wood-=wood;state.stone-=need-wood;
  notification(kind.toUpperCase()+' PLACED');renderHUD()
 }
