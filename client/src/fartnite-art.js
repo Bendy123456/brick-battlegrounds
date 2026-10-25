@@ -286,6 +286,16 @@ export function makeCharacterDetails(root,variant=0,isEnemy=false){
 }
 export function makeWeaponArtwork(kind='ar'){
  const g=new THREE.Group();
+ if(kind==='harvest'){
+  // Original compact trail-mallet / field pick: rounded teal head, amber grips.
+  const handle=block(g,0,-.05,0,.16,.16,1.25,'#a36b49');
+  cylinder(g,0,.03,.45,.29,.26,.24,'#3e7c86').rotation.x=Math.PI/2;
+  block(g,0,.03,.69,.18,.19,.44,'#ddc17a');
+  block(g,0,-.20,-.33,.17,.39,.22,'#3f786e');
+  ball(g,0,.02,.79,.15,.15,.15,'#d1eee1');
+  return g
+ }
+
  const shell=material('#425867',.46),metal=material('#263f4f',.34),accent=material('#e3b96f',.55);
  // Distinct original silhouettes for every weapon class, no reproduction of recognizable IP weapons.
  const cfg={
