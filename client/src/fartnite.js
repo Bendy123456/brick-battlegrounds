@@ -4,6 +4,7 @@ import {createEffects,createStormShader} from './fartnite-fx.js';
 import {mountLobby,SCOUTS} from './fartnite-lobby.js';
 import {createLobbyShowroom} from './fartnite-showroom.js';
 import './fartnite-lobby.css';
+import './fartnite-skins.css';
 import './fartnite.css';
 
 // FARTNITE: an original browser battle royale, not a port of third-party art or code.
@@ -237,7 +238,7 @@ function spawnBots(count=19){
  for(let i=0;i<count;i++){
   const loc=LANDMARKS[i%LANDMARKS.length];
   const x=loc.x+rand(-30,30),z=loc.z+rand(-30,30);
-  const mesh=createFighter(undefined,true,i%4);mesh.position.set(x,terrainHeight(x,z),z);scene.add(mesh);
+  const mesh=createFighter(undefined,true,(i*7+3)%SCOUTS.length);mesh.position.set(x,terrainHeight(x,z),z);scene.add(mesh);
   state.bots.push({x,z,mesh,alive:true,hp:75+Math.round(rand(0,30)),shield:Math.random()<.25?25:0,yaw:rand(0,TAU),
    wanderAt:0,heading:rand(0,TAU),fireAt:rand(.2,2),lastHit:0,shotCount:0,aim:rand(.35,.73)})
  }
@@ -654,6 +655,7 @@ const lobby=mountLobby($('home'),{
   previous.remove(glider);next.add(glider);scene.remove(previous);player=next;scene.add(next);
   showroom.setSkin(index);
  },
+ onPreview:index=>showroom.setSkin(index),
  onAura:a=>showroom.setAura(a),
  onSettings:s=>{renderer.shadowMap.enabled=s.shadows;$('qualityStats').style.display=s.stats?'':'none'},
  how:()=>{state.mode='how';showOnly('instructions')}
