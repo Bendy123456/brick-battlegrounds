@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {COLOR,makeArchitecture,makeCharacterDetails,makeWeaponArtwork,polishEnvironment} from './fartnite-art.js';
+import {COLOR,makeArchitecture,makeCharacterDetails,makeWeaponArtwork,polishEnvironment,paintedWaterMaterial} from './fartnite-art.js';
 
 // All art in FartNite is original procedural geometry. No third-party game assets.
 export const SIZE=520, ISLAND_RADIUS=246;
@@ -162,7 +162,7 @@ export function createEnvironment(scene,camera){
  sun.shadow.mapSize.set(1536,1536);sun.shadow.radius=3.4;sun.shadow.camera.left=-230;sun.shadow.camera.right=230;
  sun.shadow.camera.top=230;sun.shadow.camera.bottom=-230;sun.shadow.camera.near=1;sun.shadow.camera.far=430;
  sun.shadow.bias=-.0003;scene.add(sun);
- const water=new THREE.Mesh(new THREE.PlaneGeometry(2200,2200),new THREE.MeshStandardMaterial({color:'#289cc0',metalness:.14,roughness:.34,emissive:'#0c6183',emissiveIntensity:.13}));
+ const water=new THREE.Mesh(new THREE.PlaneGeometry(2200,2200),paintedWaterMaterial());
  water.rotation.x=-PI/2;water.position.y=-7;scene.add(water);
  const segments=118,geo=new THREE.PlaneGeometry(SIZE,SIZE,segments,segments);
  geo.rotateX(-PI/2);
@@ -195,7 +195,7 @@ export function createEnvironment(scene,camera){
    if(Math.hypot(x,z)>235)continue;
    const style=loc.kind==='industrial'?3:loc.kind==='farm'?2:loc.kind==='port'?j%3===0?5:1:loc.kind==='outpost'?j===0?5:4:j%5;
    const ob=house(scene,x,z,style,angle+PI);
-   obstacles.push({x,z,radius:ob.userData.radius||5.4,kind:'house'});
+   obstacles.push({x,z,radius:ob.userData.radius||5.4,kind:'house',visual:ob});
   }
   const marker=new THREE.Group();marker.position.set(loc.x,terrainHeight(loc.x,loc.z),loc.z);
   cylinder(marker,0,.55,0,4,4,1.1,M.paleWood,12);
