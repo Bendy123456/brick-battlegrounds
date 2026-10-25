@@ -70,3 +70,21 @@ Older source files were deliberately retained rather than deleted.
 ## Naming and IP note
 
 General game concepts and mechanics can be used to create original games, but copyrighted graphics, audio, levels, maps, character designs, and other protected expression should not be copied. FartNite is an independent prototype with original art and naming within the game. The currently requested project name may still pose trademark/confusion questions given its similarity to Fortnite; verify independently before a public commercial release.
+
+## Classic-layout lobby overhaul
+
+FartNite now opens in an original 3D field-scout lobby with top navigation tabs, a left season/progression card, a central original-character showroom with luminous platforms, a right mission/Ready panel and footer. The interface uses user-supplied reference composition but original art and wording.
+
+Working tabs: Lobby, Field Pass, Challenges, Locker, Supply Shop, Profile, Records and Settings.
+
+- Locker: select four original field scouts, with the appearance carried into solo matches; equip unlocked original stage light colors.
+- Field Pass: earn XP from matches and claim level-based local credit rewards.
+- Challenges: track drops, loot pickups, harvesting, building, eliminations and victories, with credit rewards.
+- Supply Shop: optional original stage lighting themes purchased using earned in-game credits. No real payment or external accounts.
+- Profile and Records: local statistics and last ten solo games only, not a fake global leaderboard.
+- Settings: shadows, lobby motion, and in-game FPS stats.
+- Ready: Island Survival with 19 AI, or Scout Training with 9 AI. These are genuinely separate local solo modes; online squads are not yet implemented.
+
+Backup branch: backup-fartnite-before-classic-lobby.
+
+New modules: client/src/fartnite-lobby.js, client/src/fartnite-lobby.css, client/src/fartnite-showroom.js. Browser tests cover tab interactions and persistence.
