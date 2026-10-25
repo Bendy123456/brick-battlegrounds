@@ -14,14 +14,15 @@ const footShape=new THREE.SphereGeometry(1,16,12);
 function finishFor(index){
  // Small neutral-tone variations make each of 25 slots a separate blank mannequin
  // while deliberately avoiding outfit colors and skin-like materials.
- const shades=['#bec6d0','#c3cad3','#b8c1cb','#ccd1d9','#bfc8d2'];
- const color=shades[index%shades.length];
- if(!materialCache.has(color)){
-  materialCache.set(color,new THREE.MeshStandardMaterial({
-   color,metalness:0,roughness:.86,flatShading:false
+ const key=index;
+ if(!materialCache.has(key)){
+  const neutral=new THREE.Color('#c3cbd3');
+  neutral.offsetHSL(0,0,(((index*11)%25)-12)*.004);
+  materialCache.set(key,new THREE.MeshStandardMaterial({
+   color:neutral,metalness:0,roughness:.88,flatShading:false
   }));
  }
- return materialCache.get(color);
+ return materialCache.get(key);
 }
 function part(group,geometry,mat,x,y,z,sx,sy,sz){
  const obj=new THREE.Mesh(geometry,mat);
@@ -73,8 +74,10 @@ export function createDetailedFighter(variant=0,enemy=false){
 
  // All 25 remain selectable IDs, with small individual scale differences and
  // both real gender shapes; no prior costume material or accessory survives.
- const scale=[.99,1.015,1.0,.985,1.025][skin.id%5];
+ const scale=.959+((skin.id*7)%25)*.0029;
  root.scale.setScalar(scale);
+ torso.scale.x=.973+((skin.id*13)%25)*.0022;
+ head.scale.setScalar(.976+((skin.id*9)%25)*.0021);
  root.userData={
   torso,armL,armR,legL,legR,weapon,head,torsoMesh,enemy,
   variant:skin.id,skin,profile:gender,bodyBase:BODY_BASE_VERSION,
