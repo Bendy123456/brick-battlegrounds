@@ -97,7 +97,7 @@ test('all 25 detailed 3D cosmetics appear and a purchased skin equips in both lo
  const errors:string[]=[];
  page.on('pageerror',e=>errors.push(e.message));
  await page.goto('/');
- const names=await page.evaluate(()=>window.__FARTNITE_ART_QA__?.().characterSkins||[]);
+ const names=await page.evaluate(()=>(window as any).__FARTNITE_ART_QA__?.().characterSkins||[]);
  expect(names).toHaveLength(25);
  await page.locator('[data-tab="LOCKER"]').click();
  await expect(page.locator('[data-skin]')).toHaveCount(25);
@@ -122,7 +122,7 @@ test('all 25 detailed 3D cosmetics appear and a purchased skin equips in both lo
  await expect(page.locator('#fnSkinName')).toHaveText('NEON FRONTIER');
  await page.locator('#play').click();
  await expect(page.locator('#hud')).toBeVisible();
- const live=await page.evaluate(()=>window.__FARTNITE_ART_QA__?.());
+ const live=await page.evaluate(()=>(window as any).__FARTNITE_ART_QA__?.());
  expect(live?.activeSkin).toBe('Neon Frontier');
  expect(errors).toEqual([]);
 });
