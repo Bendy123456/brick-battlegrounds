@@ -317,3 +317,35 @@ export function makeWeaponArtwork(kind='ar'){
  }
  return g
 }
+
+
+export function paintedWaterMaterial(){
+ const shader=new THREE.ShaderMaterial({
+  uniforms:{time:{value:0}},
+  side:THREE.DoubleSide,depthWrite:true,
+  vertexShader:'
+   varying vec3 vWorld;varying float vDepth;
+   void main(){
+    vec4 world=modelMatrix*vec4(position,1.);
+    vWorld=world.xyz;vec4 mv=modelViewMatrix*vec4(position,1.);
+    vDepth=-mv.z;gl_Position=projectionMatrix*mv;
+   }'.replace(/\n\s+/g,' '),
+  fragmentShader:'
+   uniform float time;varying vec3 vWorld;varying float vDepth;
+   void main(){
+    float a=sin(vWorld.x*.072+vWorld.z*.055+time*.45);
+    float b=sin(vWorld.x*.15-vWorld.z*.084-time*.64);
+    float c=sin(vWorld.z*.33+vWorld.x*.13+time*.7);
+    float foam=smoothstep(.83,.99,(a*.38+b*.31+c*.31)*.5+.5);
+    vec3 deep=vec3(.07,.45,.62);
+    vec3 shallow=vec3(.15,.67,.75);
+    float roll=.48+.2*a+.15*b;
+    vec3 color=mix(deep,shallow,clamp(roll,0.,1.));
+    color=mix(color,vec3(.62,.85,.81),foam*.37);
+    float haze=smoothstep(190.,690.,vDepth);
+    color=mix(color,vec3(.66,.83,.83),haze*.95);
+    gl_FragColor=vec4(color,1.);
+   }'.replace(/\n\s+/g,' ')
+ });
+ return shader
+}
