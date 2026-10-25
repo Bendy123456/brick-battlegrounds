@@ -205,23 +205,26 @@ function renderHUD(){
 }
 function showOnly(name){
  for(const id of ['home','instructions','hud','bigmap','pause','end'])$(id).classList.toggle('hidden',id!==name);
+ $('notifications').classList.toggle('hidden',name!=='hud');
  if(name==='hud')$('hud').classList.remove('hidden')
 }
 function cameraToPlayer(dt){
  const p=state.position;
  const fx=Math.sin(state.yaw),fz=Math.cos(state.yaw);
  const rightX=Math.cos(state.yaw),rightZ=-Math.sin(state.yaw);
- const shoulder=state.ads?1.0:1.65,back=state.ads?4.3:8.3;
- const target=new THREE.Vector3(p.x+rightX*shoulder-fx*back,p.y+(state.ads?3.7:5.3)+state.pitch*5.2,p.z+rightZ*shoulder-fz*back);
+ const shoulder=state.gliding?.7:state.ads?1.0:1.65;
+ const back=state.gliding?16:state.ads?4.3:8.3;
+ const height=state.gliding?8.6:state.ads?3.7:5.3;
+ const target=new THREE.Vector3(p.x+rightX*shoulder-fx*back,p.y+height+state.pitch*5.2,p.z+rightZ*shoulder-fz*back);
  camera.position.lerp(target,Math.min(1,dt*15));
- camera.lookAt(p.x+fx*24,p.y+2.2+state.pitch*22,p.z+fz*24);
+ camera.lookAt(p.x+fx*(state.gliding?25:24),p.y+(state.gliding?-21:2.2)+state.pitch*22,p.z+fz*(state.gliding?25:24));
 }
 function homeCamera(t){
  player.position.set(3,terrainHeight(3,30),30);player.rotation.y=.35;
  animateFighter(player,t,0,0);
  glider.visible=false;
- camera.position.set(16+Math.sin(t*.12)*2,8,52+Math.cos(t*.12)*2);
- camera.lookAt(-8,4,0);
+ camera.position.set(87+Math.sin(t*.13)*5,40+Math.sin(t*.19)*1.6,138+Math.cos(t*.13)*6);
+ camera.lookAt(-28,8,-26);
 }
 function reset(){
  for(const entry of state.loot)scene.remove(entry.mesh);
