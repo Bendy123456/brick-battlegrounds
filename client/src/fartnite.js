@@ -521,27 +521,80 @@ function stormTick(dt){
  if(s.radius<=1){if(state.health>0&&state.bots.some(b=>b.alive))hitPlayer(dt*25)}
 }
 function drawMap(canvas,full=false){
- const ctx=canvas.getContext('2d'),w=canvas.width;
+ const ctx=canvas.getContext('2d'),w=canvas.width,unit=w/520;
  ctx.clearRect(0,0,w,w);
- ctx.fillStyle='#357aa0';ctx.fillRect(0,0,w,w);
- const pt=(x,z)=>[w/2+x/520*w,w/2+z/520*w];
- const [cx,cy]=pt(0,0);ctx.beginPath();ctx.arc(cx,cy,245/520*w,0,TAU);ctx.fillStyle='#76b65a';ctx.fill();
- ctx.strokeStyle='#ddc89f';ctx.lineWidth=full?6:3;
- for(let i=1;i<LANDMARKS.length;i++){
-  const [ax,ay]=pt(LANDMARKS[0].x,LANDMARKS[0].z),[bx,by]=pt(LANDMARKS[i].x,LANDMARKS[i].z);
-  ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke()
+ const pt=(x,z)=>[w*.5+x*unit,w*.5+z*unit];
+ const water=ctx.createLinearGradient(0,0,w,w);
+ water.addColorStop(0,'#267c9e');water.addColorStop(.5,'#348cad');water.addColorStop(1,'#246e92');
+ ctx.fillStyle=water;ctx.fillRect(0,0,w,w);
+ const coastPoint=(a,r=242)=>{
+  const ripple=4.4*Math.sin(a*6+.7)+2.1*Math.sin(a*13+.5)+1.7*Math.sin(a*27);
+  return pt(Math.cos(a)*(r+ripple),Math.sin(a)*(r+ripple));
+ };
+ function coastline(radius,color){
+  ctx.beginPath();
+  for(let n=0;n<=170;n++){
+   const p=coastPoint(n*Math.PI*2/170,radius);
+   if(n===0)ctx.moveTo(...p);else ctx.lineTo(...p)
+  }
+  ctx.closePath();ctx.fillStyle=color;ctx.fill()
  }
- for(const l of LANDMARKS){
-  const [x,y]=pt(l.x,l.z);ctx.fillStyle='#f0dcb3';ctx.fillRect(x-4,y-4,8,8);
-  if(full){ctx.font='bold 10px sans-serif';ctx.fillStyle='#183d4c';ctx.textAlign='center';ctx.fillText(l.name,x,y+17)}
+ coastline(246,'#e7d09a');
+ coastline(236,'#579b56');
+ const inside=(x,z)=>Math.hypot(x,z)<227;
+ // Multi-scale tinted meadows and brush clusters—cartography authored for this island.
+ for(let i=0;i<180;i++){
+  const x=Math.sin(i*23.971)*218,z=Math.cos(i*17.333+i*.7)*214;
+  if(!inside(x,z))continue;
+  const [px,py]=pt(x,z);
+  ctx.globalAlpha=.2+(i%4)*.035;
+  ctx.fillStyle=i%3===0?'#d4c27d':i%3===1?'#aed26b':'#398753';
+  ctx.beginPath();ctx.ellipse(px,py,(4+i%7)*unit,(2+i%5)*unit,(i*.4)%6.28,0,Math.PI*2);ctx.fill()
+ }
+ ctx.globalAlpha=1;
+ // A gentle hand-charted route network with curved bends, no copied geographical data.
+ for(let i=1;i<LANDMARKS.length;i++){
+  const a=LANDMARKS[0],b=LANDMARKS[i];
+  const [ax,ay]=pt(a.x,a.z),[bx,by]=pt(b.x,b.z);
+  const dx=bx-ax,dy=by-ay;
+  const bend=(i%2===0?1:-1)*unit*12;
+  const cx=(ax+bx)*.5-dy/Math.hypot(dx,dy)*bend;
+  const cy=(ay+by)*.5+dx/Math.hypot(dx,dy)*bend;
+  ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.strokeStyle='#9b744e';ctx.lineWidth=full?9:4;
+  ctx.beginPath();ctx.moveTo(ax,ay);ctx.quadraticCurveTo(cx,cy,bx,by);ctx.stroke();
+  ctx.strokeStyle='#e0c795';ctx.lineWidth=full?6:2.7;ctx.stroke()
+ }
+ // Decorative woods and scattered elevation markings around the original locations.
+ for(let i=0;i<(full?130:70);i++){
+  const x=Math.sin(i*31.27)*224,z=Math.cos(i*11.19)*219;
+  if(!inside(x,z)||LANDMARKS.some(l=>Math.hypot(l.x-x,l.z-z)<16))continue;
+  const [px,py]=pt(x,z);const rr=(full?2.7:1.4)+(i%3)*.22;
+  ctx.fillStyle=i%3===0?'#39764b':'#3b8450';
+  ctx.beginPath();ctx.arc(px,py,rr,0,Math.PI*2);ctx.fill();
+  if(full){ctx.fillStyle='#92b56b';ctx.beginPath();ctx.arc(px-1,py-1,rr*.42,0,Math.PI*2);ctx.fill()}
+ }
+ for(let i=0;i<LANDMARKS.length;i++){
+  const l=LANDMARKS[i],[x,y]=pt(l.x,l.z);
+  ctx.fillStyle='#f3d8a0';ctx.strokeStyle='#774e3b';ctx.lineWidth=1.5;
+  ctx.fillRect(x-5,y-5,10,10);ctx.strokeRect(x-5,y-5,10,10);
+  if(full){
+   ctx.textAlign='center';ctx.font='bold 11px Inter,Arial,sans-serif';
+   const text=l.name,tw=ctx.measureText(text).width,pad=5;
+   const labelY=y+(i===4?-18:22);
+   ctx.fillStyle='#142e3ccf';
+   ctx.fillRect(x-tw/2-pad,labelY-11,tw+pad*2,17);
+   ctx.fillStyle='#f7eed3';ctx.fillText(text,x,labelY+1)
+  }
  }
  const [sx,sy]=pt(state.storm.center.x,state.storm.center.z);
- ctx.beginPath();ctx.arc(sx,sy,state.storm.radius/520*w,0,TAU);
- ctx.strokeStyle='#f4f0ff';ctx.lineWidth=full?5:3;ctx.stroke();
+ ctx.beginPath();ctx.arc(sx,sy,state.storm.radius*unit,0,Math.PI*2);
+ ctx.strokeStyle='#413b7c99';ctx.lineWidth=full?9:5;ctx.stroke();
+ ctx.strokeStyle='#f4f8e8';ctx.lineWidth=full?4:2;ctx.stroke();
  const [px,py]=pt(state.position.x,state.position.z);
  ctx.save();ctx.translate(px,py);ctx.rotate(-state.yaw);
- ctx.fillStyle='#ffffff';ctx.strokeStyle='#173b56';ctx.lineWidth=2;
- ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(-6,7);ctx.lineTo(0,4);ctx.lineTo(6,7);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+ ctx.fillStyle='#edff86';ctx.strokeStyle='#153c4a';ctx.lineWidth=2;
+ ctx.beginPath();ctx.moveTo(0,-10);ctx.lineTo(-7,8);ctx.lineTo(0,3);ctx.lineTo(7,8);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
 }
 function updateUI(){
  $('locationName').textContent='WILDERNESS';
