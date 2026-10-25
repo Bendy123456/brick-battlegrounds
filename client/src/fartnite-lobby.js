@@ -138,7 +138,7 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how,onPreview,onP
   const intro=text=>'<p class="fn-tab-intro">'+text+'</p>';
   let html='';
   if(tabName==='LOCKER'){
-   html=intro('25 ORIGINAL 3D SKINS • Eight starters are yours. All 25 appear here. Click any locked skin to preview it on the stage; unlock it in Supply Shop.')+
+   html=intro('25 BLANK HUMANOID MODELS • All characters now use plain, featureless boy or girl bodies. No outfits, hair or accessories. Select a model to preview.')+
     '<div class="fn-roster-count"><strong>'+data.ownedSkins.length+' / '+SKINS.length+' OWNED</strong><span>'+SKINS.filter(s=>s.gender==='female').length+' FEMALE • '+SKINS.filter(s=>s.gender==='male').length+' MALE • LOCAL SAVE</span></div>'+
     '<div class="fn-scouter-grid">'+SCOUTS.map(skinTile).join('')+'</div>'+
     '<h3 class="fn-subhead">PLATFORM AURA</h3><div class="fn-aura-grid">'+AURAS.filter(a=>data.owned.includes(a.id)).map(a=>'<button class="fn-aura-tile '+(data.aura===a.id?'selected':'')+'" style="--swatch:'+a.color+'" data-aura="'+a.id+'"><i></i><b>'+a.name+'</b><small>'+(data.aura===a.id?'ACTIVE':'EQUIP')+'</small></button>').join('')+'</div>'
@@ -153,8 +153,8 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how,onPreview,onP
     return '<div class="fn-mission"><div><b>'+q.name+'</b><small>'+q.text+'</small><i><em style="width:'+pct(n,q.goal)+'%"></em></i></div><strong>'+n+'/'+q.goal+'</strong>'+cardButton(claimed?'CLAIMED':n===q.goal?'CLAIM +'+q.reward:'+'+q.reward,'data-quest="'+q.id+'"',claimed||n!==q.goal)+'</div>'
    }).join('')+'</div>'
   }else if(tabName==='SHOP'){
-   html=intro('17 ORIGINAL SHOP SKINS • Unlocked with credits from matches and challenges. Every skin stays visible in the Locker. No purchases with real money.')+
-    '<h3 class="fn-subhead">ORIGINAL CHARACTER SKINS</h3><div class="fn-skin-shop-grid">'+SHOP_SKINS.map(s=>{
+   html=intro('17 BLANK HUMANOID MODELS • Each model now has a smooth, unadorned mannequin body. Unlock with earned credits. No real-money purchases.')+
+    '<h3 class="fn-subhead">BLANK HUMANOID BODIES</h3><div class="fn-skin-shop-grid">'+SHOP_SKINS.map(s=>{
      const owned=data.ownedSkins.includes(s.id),equipped=data.skin===s.id;
      return '<article class="fn-shop-skin" style="--swatch:'+s.accent+';--rarity:'+SKIN_RARITIES[s.rarity]+'"><div class="fn-skin-shop-avatar" data-skin-thumb="'+s.id+'"><i class="fn-portrait-head"></i><i class="fn-portrait-body"></i><i class="fn-portrait-legs"></i></div><small>'+s.rarity.toUpperCase()+' • '+s.gender.toUpperCase()+'</small><h3>'+s.name.toUpperCase()+'</h3>'+cardButton(equipped?'EQUIPPED':owned?'EQUIP':'✦ '+s.price+' CREDITS','data-buy-skin="'+s.id+'"',equipped||(!owned&&data.credits<s.price))+'</article>'
     }).join('')+'</div><h3 class="fn-subhead">PLATFORM AURAS</h3><div class="fn-shop-grid">'+AURAS.map(a=>{
