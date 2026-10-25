@@ -129,7 +129,7 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how,onPreview}){
   let html='';
   if(tabName==='LOCKER'){
    html=intro('25 ORIGINAL 3D SKINS • Eight starters are yours. All 25 appear here. Click any locked skin to preview it on the stage; unlock it in Supply Shop.')+
-    '<div class="fn-roster-count"><strong>'+data.ownedSkins.length+' / 25 OWNED</strong><span>12 FEMALE • 13 MALE • LOCAL SAVE</span></div>'+
+    '<div class="fn-roster-count"><strong>'+data.ownedSkins.length+' / '+SKINS.length+' OWNED</strong><span>'+SKINS.filter(s=>s.gender==='female').length+' FEMALE • '+SKINS.filter(s=>s.gender==='male').length+' MALE • LOCAL SAVE</span></div>'+
     '<div class="fn-scouter-grid">'+SCOUTS.map(skinTile).join('')+'</div>'+
     '<h3 class="fn-subhead">PLATFORM AURA</h3><div class="fn-aura-grid">'+AURAS.filter(a=>data.owned.includes(a.id)).map(a=>'<button class="fn-aura-tile '+(data.aura===a.id?'selected':'')+'" style="--swatch:'+a.color+'" data-aura="'+a.id+'"><i></i><b>'+a.name+'</b><small>'+(data.aura===a.id?'ACTIVE':'EQUIP')+'</small></button>').join('')+'</div>'
   }else if(tabName==='PASS'){
