@@ -102,6 +102,7 @@ test('all 25 detailed 3D cosmetics appear and a purchased skin equips in both lo
  await page.locator('[data-tab="LOCKER"]').click();
  await expect(page.locator('[data-skin]')).toHaveCount(25);
  await expect(page.locator('.fn-scout-tile.locked')).toHaveCount(17);
+ await expect(page.locator('.fn-skin-portrait .fn-actual-model-thumbnail')).toHaveCount(25,{timeout:30000});
  await page.screenshot({path:'artifacts/fartnite-25-skin-locker.png',animations:'disabled'});
  await expect(page.locator('.fn-scout-tile:not(.locked)')).toHaveCount(8);
  await page.locator('[data-skin="8"]').click();
@@ -114,6 +115,7 @@ test('all 25 detailed 3D cosmetics appear and a purchased skin equips in both lo
  await page.reload();
  await page.locator('[data-tab="SHOP"]').click();
  await expect(page.locator('.fn-shop-skin')).toHaveCount(17);
+ await expect(page.locator('.fn-skin-shop-avatar .fn-actual-model-thumbnail')).toHaveCount(17,{timeout:30000});
  await page.screenshot({path:'artifacts/fartnite-17-skin-shop.png',animations:'disabled'});
  await page.locator('[data-buy-skin="8"]').click();
  await page.locator('[data-tab="LOCKER"]').click();
