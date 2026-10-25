@@ -60,12 +60,13 @@ test('classic position lobby tabs, usable locker, mode and persistence',async({p
  await page.screenshot({path:'artifacts/fartnite-classic-lobby.png',animations:'disabled'});
  await page.locator('[data-tab="LOCKER"]').click();
  await expect(page.locator('#fnPanelHeading')).toHaveText('LOCKER');
- await expect(page.locator('[data-skin]')).toHaveCount(4);
+ await expect(page.locator('[data-skin]')).toHaveCount(25);
  await page.locator('[data-skin="2"]').click();
  await expect(page.locator('.fn-scout-tile.selected')).toContainText('TIDAL SCOUT');
  await page.locator('[data-tab="SHOP"]').click();
  await expect(page.locator('#fnPanelHeading')).toHaveText('SHOP');
  await expect(page.locator('.fn-shop-card')).toHaveCount(4);
+ await expect(page.locator('.fn-shop-skin')).toHaveCount(17);
  await page.locator('[data-tab="PASS"]').click();
  await expect(page.locator('.fn-pass-row')).toHaveCount(5);
  await page.locator('[data-tab="CHALLENGES"]').click();
@@ -88,5 +89,40 @@ test('classic position lobby tabs, usable locker, mode and persistence',async({p
  await page.locator('#play').click();
  await expect(page.locator('#hud')).toBeVisible();
  await expect(page.locator('#aliveText')).toHaveText('10');
+ expect(errors).toEqual([]);
+});
+
+
+test('all 25 detailed 3D cosmetics appear and a purchased skin equips in both lobby and gameplay',async({page})=>{
+ const errors:string[]=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');
+ const names=await page.evaluate(()=>window.__FARTNITE_ART_QA__?.().characterSkins||[]);
+ expect(names).toHaveLength(25);
+ await page.locator('[data-tab="LOCKER"]').click();
+ await expect(page.locator('[data-skin]')).toHaveCount(25);
+ await expect(page.locator('.fn-scout-tile.locked')).toHaveCount(17);
+ await expect(page.locator('.fn-scout-tile:not(.locked)')).toHaveCount(8);
+ await page.locator('[data-skin="8"]').click();
+ await expect(page.locator('#fnNotice')).toContainText('UNLOCK IN SUPPLY SHOP');
+ await page.evaluate(()=>{
+  const k='fartnite_lobby_season_zero_v1';
+  const o=JSON.parse(localStorage.getItem(k)||'{}');o.credits=1000;
+  localStorage.setItem(k,JSON.stringify(o))
+ });
+ await page.reload();
+ await page.locator('[data-tab="SHOP"]').click();
+ await expect(page.locator('.fn-shop-skin')).toHaveCount(17);
+ await page.locator('[data-buy-skin="8"]').click();
+ await page.locator('[data-tab="LOCKER"]').click();
+ await expect(page.locator('.fn-scout-tile:not(.locked)')).toHaveCount(9);
+ await page.locator('[data-skin="8"]').click();
+ await expect(page.locator('.fn-scout-tile.selected')).toContainText('NEON FRONTIER');
+ await page.reload();
+ await expect(page.locator('#fnSkinName')).toHaveText('NEON FRONTIER');
+ await page.locator('#play').click();
+ await expect(page.locator('#hud')).toBeVisible();
+ const live=await page.evaluate(()=>window.__FARTNITE_ART_QA__?.());
+ expect(live?.activeSkin).toBe('Neon Frontier');
  expect(errors).toEqual([]);
 });
