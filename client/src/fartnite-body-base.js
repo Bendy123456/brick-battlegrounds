@@ -78,7 +78,7 @@ function interpolate(rows,y){
 function shapeGeometry(gender,part){
  const key=gender+'-'+part;
  if(cache.has(key))return cache.get(key);
- const rows=profile[gender][part],rings=part==='body'?47:part==='leg'?38:part==='arm'?35:17;
+ const rows=[...profile[gender][part]].sort((a,b)=>a[0]-b[0]),rings=part==='body'?47:part==='leg'?38:part==='arm'?35:17;
  const sides=part==='body'?24:16;
  const coords=[],uvs=[],indices=[];
  for(let j=0;j<=rings;j++){
@@ -101,7 +101,7 @@ function shapeGeometry(gender,part){
  for(let j=0;j<rings;j++)for(let k=0;k<sides;k++){
   const a=j*(sides+1)+k,b=a+sides+1;
   // outward winding for the y-up ring orientation
-  indices.push(a,a+1,b,b,a+1,b+1)
+  indices.push(a,b,a+1,b,b+1,a+1)
  }
  // End caps for closed silhouettes in all supported renderers.
  const geometry=new THREE.BufferGeometry();
