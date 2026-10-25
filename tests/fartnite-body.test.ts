@@ -1,46 +1,48 @@
 import {describe,it,expect} from 'vitest';
+import * as THREE from 'three';
 import {SKINS} from '../client/src/fartnite-skins.js';
 import {createDetailedFighter} from '../client/src/fartnite-character.js';
 import {BODY_BASE_VERSION,BODY_PROPORTIONS} from '../client/src/fartnite-body-base.js';
 
-describe('25 characters use blank featureless male/female mannequin bodies',()=>{
- it('builds every original skin on the correct gender body, with working animation pivots',()=>{
+describe('one-piece seamless humanoid models for every character slot',()=>{
+ it('builds all 25 male and female blank skins with one continuous geometry, no stacked parts',()=>{
   expect(SKINS).toHaveLength(25);
-  const meshes=[];
+  const geometries=new Map<string,THREE.BufferGeometry>();
   for(let i=0;i<SKINS.length;i++){
-   const root=createDetailedFighter(i,false);
-   const rig=root.userData;
+   const model=createDetailedFighter(i,false);
+   const rig=model.userData;
    expect(rig.variant).toBe(i);
    expect(rig.profile).toBe(SKINS[i].gender);
    expect(rig.bodyBase).toBe(BODY_BASE_VERSION);
-   expect(rig.appearance).toBe('blank-humanoid');
+   expect(rig.appearance).toBe('seamless-blank-humanoid');
    expect(rig.accessoryCount).toBe(0);
-   expect(rig.torso.children.some(x=>x.userData?.kind==='cosmetic')).toBe(false);
-   expect(rig.torso.children.filter(x=>x.isMesh&&x!==rig.torsoMesh).length).toBe(2); // neck, featureless head
-   expect(rig.armL.children.filter(x=>x.isMesh).length).toBe(3); // continuous arm, palm, thumb
-   expect(rig.legL.children.filter(x=>x.isMesh).length).toBe(2); // smooth leg, bare foot
-   expect(rig.torsoMesh.material).toBe(rig.head.material);
-   expect(rig.legL.children[0].material).toBe(rig.torsoMesh.material);
-   expect(rig.skin.gender).toBe(SKINS[i].gender);
-   for(const joint of ['torso','armL','armR','legL','legR','weapon'])expect(rig[joint]).toBeDefined();
-   const body=rig.torso.children.find(x=>x.isMesh&&x.geometry?.attributes?.position?.count>1000);
-   const upperArm=rig.armL.children.find(x=>x.isMesh&&x.geometry?.attributes?.position?.count>500);
-   const leg=rig.legL.children.find(x=>x.isMesh&&x.geometry?.attributes?.position?.count>500);
-   expect(body,'missing smooth torso on '+SKINS[i].name).toBeDefined();
-   expect(upperArm,'missing smooth arm on '+SKINS[i].name).toBeDefined();
-   expect(leg,'missing smooth leg on '+SKINS[i].name).toBeDefined();
-   expect(body.geometry.attributes.normal.count).toBeGreaterThan(500);
-   expect(Number.isFinite(root.scale.x)).toBe(true);
-   meshes.push({body:body.geometry,arm:upperArm.geometry,leg:leg.geometry});
+   expect(rig.anatomyDrawMeshes).toBe(1);
+   expect(rig.body).toBeInstanceOf(THREE.SkinnedMesh);
+   expect(rig.body.name).toBe('OnePieceSmoothHumanoid');
+   expect(rig.body.geometry.userData.unified).toBe(true);
+   expect(rig.body.geometry.userData.algorithm).toBe('smooth-implicit-isosurface');
+   expect(rig.body.geometry.attributes.position.count).toBeGreaterThan(1200);
+   expect(rig.body.geometry.attributes.normal.count).toBe(rig.body.geometry.attributes.position.count);
+   expect(rig.body.geometry.attributes.skinWeight.count).toBe(rig.body.geometry.attributes.position.count);
+   expect(rig.body.skeleton.bones).toHaveLength(6);
+   expect(rig.body.material).toBeDefined();
+   expect(model.children.filter(child=>child.isSkinnedMesh)).toHaveLength(1);
+   expect(model.children.filter(child=>child.isMesh&&!child.isSkinnedMesh)).toHaveLength(0);
+   for(const joint of ['torso','armL','armR','legL','legR','weapon'])
+    expect(rig[joint]).toBeDefined();
+   expect(rig.torso).toBeInstanceOf(THREE.Bone);
+   expect(rig.armL).toBeInstanceOf(THREE.Bone);
+   expect(rig.legR).toBeInstanceOf(THREE.Bone);
+   expect(Number.isFinite(model.scale.x)).toBe(true);
+   if(geometries.has(rig.profile))
+    expect(rig.body.geometry).toBe(geometries.get(rig.profile));
+   else geometries.set(rig.profile,rig.body.geometry);
   }
-  // All 25 blank bodies reuse just two gender-specific sets of mesh geometries.
-  for(const kind of ['body','arm','leg']){
-   expect(new Set(meshes.map(x=>x[kind])).size).toBe(2)
-  }
+  expect(geometries.size).toBe(2);
  });
- it('makes masculine and feminine body templates lean rather than bulked up',()=>{
+ it('preserves slimmer mannequin proportions without visible muscular overlays',()=>{
   expect(BODY_PROPORTIONS.male.shoulder).toBeGreaterThan(BODY_PROPORTIONS.female.shoulder);
-  expect(BODY_PROPORTIONS.male.wrist).toBeLessThan(.10);
+  expect(BODY_PROPORTIONS.male.wrist).toBeLessThan(.1);
   expect(BODY_PROPORTIONS.female.wrist).toBeLessThan(.09);
   expect(BODY_PROPORTIONS.male.thigh).toBeLessThan(.24);
  });
