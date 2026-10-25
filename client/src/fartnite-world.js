@@ -153,7 +153,7 @@ function pond(scene,x,z,r){
  const mesh=new THREE.Mesh(new THREE.CircleGeometry(r,40),new THREE.MeshStandardMaterial({color:'#2ba6b0',metalness:.13,roughness:.24,transparent:true,opacity:.92}));
  mesh.rotation.x=-PI/2;mesh.position.set(x,terrainHeight(x,z)+.18,z);scene.add(mesh);
 }
-export function createEnvironment(scene){
+export function createEnvironment(scene,camera){
  scene.background=new THREE.Color('#92cbe5');
  scene.fog=new THREE.FogExp2('#b6d6ce',0.00185);
  const hemi=new THREE.HemisphereLight('#c8e8ff','#8b9e68',1.82);scene.add(hemi);
@@ -219,7 +219,7 @@ export function createEnvironment(scene){
   orb(cloud,8,0,0,7,3,5,cloudMat);
   cloud.position.set(x,y,z);cloud.castShadow=false;scene.add(cloud)
  }
- const art=polishEnvironment(scene,null,terrainHeight,LANDMARKS);
+ const art=polishEnvironment(scene,camera,terrainHeight,LANDMARKS);
  return {obstacles,harvest,water,land,sun,locations,art};
 }
 export function createBuild(scene,x,z,yaw,kind){
