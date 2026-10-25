@@ -13,7 +13,7 @@ export function createSkinThumbnailLoader(home){
    if(!src||el.querySelector('img'))return;
    const image=document.createElement('img');
    image.className='fn-actual-model-thumbnail';
-   image.alt='3D model of '+SKINS[index].name;
+   image.alt='Blank humanoid 3D body for '+SKINS[index].name;
    image.decoding='async';image.src=src;el.appendChild(image)
   })
  }
