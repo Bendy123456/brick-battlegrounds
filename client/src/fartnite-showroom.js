@@ -37,6 +37,7 @@ export function createLobbyShowroom(scene){
   beam.position.y=2.37;stand.add(beam);halos.push(beam);
   const light=new THREE.PointLight('#48dfff',i===1?9:5,i===1?8:6,1.8);light.position.set(0,.65,.1);stand.add(light);lamps.push(light);
   const fighter=createFighter(undefined,false,i===1?0:i===0?2:1);
+  fighter.userData.weapon.visible=false;
   fighter.position.y=.27;fighter.rotation.y=i===1?-.10:i===0?.22:-.20;
   stand.add(fighter);fighters.push(fighter);
  }
@@ -51,6 +52,7 @@ export function createLobbyShowroom(scene){
   skin=index;
   const old=fighters[1],p=old.parent;
   const next=createFighter(undefined,false,index);
+  next.userData.weapon.visible=false;
   next.position.copy(old.position);next.rotation.copy(old.rotation);
   p.remove(old);p.add(next);fighters[1]=next
  };
