@@ -210,8 +210,8 @@ export function createEnvironment(scene){
   const a=next()*2*PI,r=Math.sqrt(next())*238,x=Math.cos(a)*r,z=Math.sin(a)*r;
   if(LANDMARKS.some(p=>Math.hypot(p.x-x,p.z-z)<29))continue;
   if(Math.hypot(x,z)>233)continue;
-  if(i%9===0){const rock=boulder(scene,x,z,1+next()*1.6);harvest.push(rock);obstacles.push({x,z,radius:1.4});}
-  else{const t=tree(scene,x,z,i%4===0?1:0);harvest.push(t);obstacles.push({x,z,radius:1.25});}
+  if(i%9===0){const rock=boulder(scene,x,z,1+next()*1.6);harvest.push(rock);obstacles.push({x,z,radius:1.4,object:rock});}
+  else{const t=tree(scene,x,z,i%4===0?1:0);harvest.push(t);obstacles.push({x,z,radius:1.25,object:t});}
  }
  for(let i=0;i<28;i++){
   const cloud=new THREE.Group();const x=(next()-.5)*520,z=(next()-.5)*520,y=82+next()*62;
