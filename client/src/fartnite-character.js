@@ -137,8 +137,8 @@ export function createDetailedFighter(variant=0,enemy=false){
   }
  }
  if(skin.outfit==='jacket'||skin.outfit==='tech'){
-  oval(torso,skin.top,-.23,.70,.22,.28,.42,.17,0,0,-.06);
-  oval(torso,skin.top,.23,.70,.22,.28,.42,.17,0,0,.06);
+  oval(torso,skin.top,-.225,.69,.26,.158,.35,.058,0,0,-.06);
+  oval(torso,skin.top,.225,.69,.26,.158,.35,.058,0,0,.06);
   band(torso,color.accent,[0,.25,.39],[0,1.08,.31],.024);
   if(!enemy)for(let j=0;j<4;j++)oval(torso,color.accent,.35,.48+j*.13,.31,.034,.033,.018,0,0,0,GEO.detail)
  }else if(skin.outfit==='armor'){
