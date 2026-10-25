@@ -1,11 +1,7 @@
 // Original FartNite classic-style multiplayer lobby arrangement.
 // All progress, currency, cosmetics, and match records are local only.
-export const SCOUTS=[
- {name:'Meadow Runner',color:'#ceeb80'},
- {name:'Copper Courier',color:'#f5aa7f'},
- {name:'Tidal Scout',color:'#79d8df'},
- {name:'Violet Voyager',color:'#d9adf2'}
-];
+import {SKINS,STARTER_SKINS,SHOP_SKINS,SKIN_RARITIES} from './fartnite-skins.js';
+export const SCOUTS=SKINS.map(s=>({...s,color:s.accent}));
 export const AURAS=[
  {id:'aqua',name:'Aqua Reactor',color:'#42ebff',cost:0},
  {id:'mint',name:'Mint Horizon',color:'#b0fa81',cost:120},
@@ -22,7 +18,7 @@ const QUESTS=[
 ];
 const PASS=[['FOUNDERS BADGE',40],['HARBOR SUPPLY',70],['SURVEYOR RIBBON',100],['FIELD SCOUT BANNER',130],['ISLAND CHAMPION CREST',200]];
 const STORE='fartnite_lobby_season_zero_v1';
-const defaults=()=>({skin:0,aura:'aqua',owned:['aqua'],xp:0,credits:150,games:0,wins:0,elims:0,loot:0,builds:0,harvest:0,best:20,claimed:[],passClaimed:[],history:[],mode:'survival',settings:{shadows:true,motion:true,stats:true}});
+const defaults=()=>({skin:0,aura:'aqua',owned:['aqua'],ownedSkins:[...STARTER_SKINS],xp:0,credits:150,games:0,wins:0,elims:0,loot:0,builds:0,harvest:0,best:20,claimed:[],passClaimed:[],history:[],mode:'survival',settings:{shadows:true,motion:true,stats:true}});
 const escapeText=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const tier=data=>Math.floor(data.xp/350)+1;
 const pct=(v,goal)=>Math.max(0,Math.min(100,Math.round(v/goal*100)));
@@ -31,7 +27,9 @@ function read(){
   const old=JSON.parse(localStorage.getItem(STORE)||'null');
   if(!old||typeof old!=='object')return defaults();
   const d=defaults(),o={...d,...old,settings:{...d.settings,...old.settings}};
-  o.skin=Math.max(0,Math.min(3,Number(o.skin)||0));
+  o.skin=Math.max(0,Math.min(SKINS.length-1,Number(o.skin)||0));
+  o.ownedSkins=[...new Set([...STARTER_SKINS,...(Array.isArray(o.ownedSkins)?o.ownedSkins.filter(i=>Number.isInteger(i)&&i>=0&&i<SKINS.length):[])])];
+  if(!o.ownedSkins.includes(o.skin))o.skin=0;
   o.owned=(Array.isArray(o.owned)?o.owned:[]).filter(id=>AURAS.some(a=>a.id===id));
   if(!o.owned.includes('aqua'))o.owned.unshift('aqua');
   if(!o.owned.includes(o.aura))o.aura='aqua';
@@ -44,7 +42,7 @@ function read(){
 function cardButton(text,action,disabled=false){
  return '<button type="button" class="fn-action" '+action+(disabled?' disabled':'')+'>'+text+'</button>';
 }
-export function mountLobby(home,{play,onSkin,onAura,onSettings,how}){
+export function mountLobby(home,{play,onSkin,onAura,onSettings,how,onPreview}){
  const data=read(),persist=()=>{try{localStorage.setItem(STORE,JSON.stringify(data))}catch{}};
  let tabName='PLAY',notificationTimer=0;
  home.classList.add('fn-lobby');
@@ -98,10 +96,27 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how}){
   setText('#fnModeDescription',training?'1 player + 9 AI rivals':'1 player + 19 AI rivals')
  };
  function selectSkin(index){
-  if(index<0||index>=SCOUTS.length||!Number.isInteger(index))return;
-  data.skin=index;persist();onSkin(index);drawLeft();notify(SCOUTS[index].name.toUpperCase()+' EQUIPPED');
+  if(index<0||index>=SKINS.length||!Number.isInteger(index))return;
+  if(!data.ownedSkins.includes(index)){
+   onPreview?.(index);notify(SKINS[index].name.toUpperCase()+' — UNLOCK IN SUPPLY SHOP');
+   return
+  }
+  data.skin=index;persist();onSkin(index);drawLeft();notify(SKINS[index].name.toUpperCase()+' EQUIPPED');
   if(tabName==='LOCKER')renderTab()
  }
+ function purchaseSkin(index){
+  const skin=SKINS[index];
+  if(!skin||skin.starter||data.ownedSkins.includes(index))return;
+  if(data.credits<skin.price){notify('NOT ENOUGH CREDITS');return}
+  data.credits-=skin.price;data.ownedSkins.push(index);
+  persist();drawLeft();notify('UNLOCKED '+skin.name.toUpperCase());renderTab()
+ }
+ function rarityLabel(s){return s.rarity.toUpperCase()}
+ function skinTile(s,i){
+  const owned=data.ownedSkins.includes(i),selected=data.skin===i;
+  return '<button type="button" class="fn-scout-tile fn-skin-detail '+(selected?'selected ':'')+(owned?'':'locked')+'" data-skin="'+i+'" style="--swatch:'+s.color+';--rarity:'+SKIN_RARITIES[s.rarity]+'"><div class="fn-skin-portrait"><span class="fn-portrait-head"></span><span class="fn-portrait-body"></span><span class="fn-portrait-legs"></span></div><small>'+rarityLabel(s)+' • '+s.gender.toUpperCase()+'</small><strong>'+s.name.toUpperCase()+'</strong><em>'+(selected?'✓ EQUIPPED':owned?'EQUIP':'🔒 PREVIEW • '+s.price+' CR')+'</em></button>'
+ }
+
  function selectAura(id){
   if(!data.owned.includes(id))return;
   data.aura=id;persist();onAura(AURAS.find(a=>a.id===id));notify('PLATFORM: '+AURAS.find(a=>a.id===id).name.toUpperCase());
@@ -113,8 +128,9 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how}){
   const intro=text=>'<p class="fn-tab-intro">'+text+'</p>';
   let html='';
   if(tabName==='LOCKER'){
-   html=intro('Select your original scout. Changes appear instantly on the showcase and in matches.')+
-    '<div class="fn-scouter-grid">'+SCOUTS.map((skin,i)=>'<button type="button" class="fn-scout-tile '+(data.skin===i?'selected':'')+'" data-skin="'+i+'" style="--swatch:'+skin.color+'"><div class="fn-scout-gem">◆</div><small>FIELD SCOUT / 0'+(i+1)+'</small><strong>'+skin.name.toUpperCase()+'</strong><em>'+(data.skin===i?'✓ EQUIPPED':'EQUIP SCOUT')+'</em></button>').join('')+'</div>'+
+   html=intro('25 ORIGINAL 3D SKINS • Eight starters are yours. All 25 appear here. Click any locked skin to preview it on the stage; unlock it in Supply Shop.')+
+    '<div class="fn-roster-count"><strong>'+data.ownedSkins.length+' / 25 OWNED</strong><span>12 FEMALE • 13 MALE • LOCAL SAVE</span></div>'+
+    '<div class="fn-scouter-grid">'+SCOUTS.map(skinTile).join('')+'</div>'+
     '<h3 class="fn-subhead">PLATFORM AURA</h3><div class="fn-aura-grid">'+AURAS.filter(a=>data.owned.includes(a.id)).map(a=>'<button class="fn-aura-tile '+(data.aura===a.id?'selected':'')+'" style="--swatch:'+a.color+'" data-aura="'+a.id+'"><i></i><b>'+a.name+'</b><small>'+(data.aura===a.id?'ACTIVE':'EQUIP')+'</small></button>').join('')+'</div>'
   }else if(tabName==='PASS'){
    html=intro('Level up by playing. Claim unlocked rewards in your local Field Pass.')+'<div class="fn-pass-level">FIELD LEVEL <strong>'+tier(data)+'</strong><small>'+data.xp%350+' / 350 XP TO NEXT LEVEL</small></div><div class="fn-pass-list">'+PASS.map((q,i)=>{
@@ -127,7 +143,11 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how}){
     return '<div class="fn-mission"><div><b>'+q.name+'</b><small>'+q.text+'</small><i><em style="width:'+pct(n,q.goal)+'%"></em></i></div><strong>'+n+'/'+q.goal+'</strong>'+cardButton(claimed?'CLAIMED':n===q.goal?'CLAIM +'+q.reward:'+'+q.reward,'data-quest="'+q.id+'"',claimed||n!==q.goal)+'</div>'
    }).join('')+'</div>'
   }else if(tabName==='SHOP'){
-   html=intro('Unlock original glow effects using credits earned in matches. There are no paid purchases or online services.')+'<div class="fn-shop-grid">'+AURAS.map(a=>{
+   html=intro('17 ORIGINAL SHOP SKINS • Unlocked with credits from matches and challenges. Every skin stays visible in the Locker. No purchases with real money.')+
+    '<h3 class="fn-subhead">ORIGINAL CHARACTER SKINS</h3><div class="fn-skin-shop-grid">'+SHOP_SKINS.map(s=>{
+     const owned=data.ownedSkins.includes(s.id),equipped=data.skin===s.id;
+     return '<article class="fn-shop-skin" style="--swatch:'+s.accent+';--rarity:'+SKIN_RARITIES[s.rarity]+'"><div class="fn-skin-shop-avatar"><i class="fn-portrait-head"></i><i class="fn-portrait-body"></i><i class="fn-portrait-legs"></i></div><small>'+s.rarity.toUpperCase()+' • '+s.gender.toUpperCase()+'</small><h3>'+s.name.toUpperCase()+'</h3>'+cardButton(equipped?'EQUIPPED':owned?'EQUIP':'✦ '+s.price+' CREDITS','data-buy-skin="'+s.id+'"',equipped||(!owned&&data.credits<s.price))+'</article>'
+    }).join('')+'</div><h3 class="fn-subhead">PLATFORM AURAS</h3><div class="fn-shop-grid">'+AURAS.map(a=>{
     const owned=data.owned.includes(a.id),equipped=data.aura===a.id;
     return '<article class="fn-shop-card" style="--swatch:'+a.color+'"><div class="fn-shop-display"><i></i></div><small>PLATFORM AURA</small><h3>'+a.name+'</h3><p>Original character-platform light effect</p>'+cardButton(equipped?'EQUIPPED':owned?'EQUIP':a.cost+' CREDITS','data-buy="'+a.id+'"',equipped||(!owned&&data.credits<a.cost))+'</article>'
    }).join('')+'</div>'
@@ -141,6 +161,11 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how}){
   $('#fnTabContent').innerHTML=html;
   $('#fnTabContent').querySelectorAll('[data-skin]').forEach(el=>el.addEventListener('click',()=>selectSkin(Number(el.dataset.skin))));
   $('#fnTabContent').querySelectorAll('[data-aura]').forEach(el=>el.addEventListener('click',()=>selectAura(el.dataset.aura)));
+  $('#fnTabContent').querySelectorAll('[data-buy-skin]').forEach(el=>el.addEventListener('click',()=>{
+   const index=Number(el.dataset.buySkin);
+   if(data.ownedSkins.includes(index))selectSkin(index);
+   else purchaseSkin(index)
+  }));
   $('#fnTabContent').querySelectorAll('[data-buy]').forEach(el=>el.addEventListener('click',()=>{
    const id=el.dataset.buy,a=AURAS.find(a=>a.id===id);if(!a)return;
    if(data.owned.includes(id))selectAura(id);
@@ -161,6 +186,7 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how}){
   $('#fnHelpFromSettings')?.addEventListener('click',how)
  }
  function switchTab(name){
+  if(tabName==='LOCKER'&&name!=='LOCKER')onSkin(data.skin);
   tabName=name;$('#fnOverlay').classList.toggle('hidden',name==='PLAY');
   home.querySelectorAll('[data-tab]').forEach(el=>{const active=el.dataset.tab===name;el.classList.toggle('current',active);el.setAttribute('aria-current',active?'page':'false')});
   renderTab()
