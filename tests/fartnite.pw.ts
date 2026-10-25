@@ -6,7 +6,7 @@ test('FartNite opens as the active game with an original battle royale menu',asy
  await page.goto('/');
  await expect(page).toHaveTitle(/FartNite/);
  await expect(page.locator('#home')).toBeVisible();
- await expect(page.locator('#play')).toHaveText(/PLAY SOLO/);
+ await expect(page.locator('#play')).toHaveText(/READY!/);
  await expect(page.locator('#world canvas')).toBeVisible();
  await page.waitForTimeout(900);
  await page.screenshot({path:'artifacts/fartnite-lobby.png',animations:'disabled'});
