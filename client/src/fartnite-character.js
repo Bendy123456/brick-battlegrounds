@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {skinAt} from './fartnite-skins.js';
 import {makeWeaponArtwork} from './fartnite-art.js';
+import {smoothSurface,makeNeck,BODY_BASE_VERSION,BODY_PROPORTIONS} from './fartnite-body-base.js';
 
 // Real articulated geometry, not a flat image, colored cube character or branded asset.
 // A single stylized-anatomy rig drives lobby, Locker, AI and actual 3rd person matches.
@@ -107,51 +108,27 @@ function boot(p,colors,sign){
  block(p,colors.accent,0,-1.387,.317,.160,.039,.032);
  for(let j=0;j<3;j++)band(p,j%2?colors.accent:'#cabdb0',[-.091,-1.27-j*.061,.174],[.091,-1.27-j*.061,.174],.012)
 }
-function bodyShell(p,s,width){
- const female=s.gender==='female',levels=[
-  [0.07,width*.68,.252],[.20,width*.72,.264],[.41,width*.76,.27],
-  [.68,width*.94,.29],[.87,width,.285],[1.01,width*.86,.24],
-  [1.15,width*.46,.18]
- ];
- const xyz=[],norm=[],uv=[],segments=18;
- for(let k=0;k<levels.length;k++){
-  const [y,rx,rz]=levels[k];
-  for(let i=0;i<=segments;i++){
-   const a=i/segments*Math.PI*2;
-   xyz.push(Math.cos(a)*rx,y,Math.sin(a)*rz);
-   uv.push(i/segments,k/(levels.length-1))
-  }
- }
- const inds=[];for(let k=0;k<levels.length-1;k++)for(let i=0;i<segments;i++){
-  const a=k*(segments+1)+i,b=a+segments+1;
-  inds.push(a,b,a+1,a+1,b,b+1)
- }
- const geo=new THREE.BufferGeometry();
- geo.setAttribute('position',new THREE.Float32BufferAttribute(xyz,3));
- geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
- geo.setIndex(inds);geo.computeVertexNormals();
- const body=new THREE.Mesh(geo,material(s.top));body.castShadow=true;body.receiveShadow=true;p.add(body);
- return body
-}
 export function createDetailedFighter(variant=0,enemy=false){
  const skin=skinAt(variant);
- const female=skin.gender==='female',bodyScale=female?.91:1.05;
+ const female=skin.gender==='female',base=BODY_PROPORTIONS[skin.gender];
  const color={...skin,cloth:skin.top,pant:skin.pants,accent:skin.accent,
   seam:skin.gear==='tech'?'#d9e7e8':'#d0bea1',boot:skin.gear==='tech'?'#2c3440':'#453b37'};
  const root=new THREE.Group();
  const torso=new THREE.Group();torso.position.y=1.60;root.add(torso);
- const chestW=(female?.45:.55)*bodyScale,hipW=(female?.475:.44)*bodyScale;
+ const chestW=female?.398:.474,hipW=female?.405:.392;
  // Rounded anatomy with vest layers and waist taper; no cube-torso silhouette.
- bodyShell(torso,skin,chestW);
- oval(torso,skin.pants,0,-.024,0,hipW,.193,.264);
- oval(torso,color.boot,0,.085,0,hipW*1.09,.077,.319);
+ smoothSurface(torso,skin.gender,'body',material(skin.top));
+ makeNeck(torso,skin.gender,material(skin.skinTone));
+ oval(torso,skin.pants,0,-.095,0,hipW*.92,.137,.244);
+ oval(torso,color.boot,0,.085,0,hipW*1.05,.046,.29);
  oval(torso,color.accent,0,.104,.31,.12,.105,.08,0,0,0,GEO.detail);
  // Fabric panels, tiny seam highlights, body armor and utility shoulder harness.
  for(let sign of [-1,1]){
   band(torso,'#594c42',[sign*.3,.99,.23],[sign*.23,.15,.28],.055);
-  oval(torso,skin.top,sign*.24,.83,.125,.185,.37,.165,0,0,sign*.08);
-  oval(torso,skin.pants,sign*.22,-.12,0,.24,.26,.275);
-  oval(torso,color.boot,sign*.35,.10,.05,.12,.09,.19);
+  // Original layered outfit seam, without puffy artificial torso-muscle lobes.
+  band(torso,skin.accent,[sign*.315,.99,.20],[sign*.29,.20,.21],.024);
+  oval(torso,skin.pants,sign*.195,-.16,0,.19,.09,.220);
+  oval(torso,color.boot,sign*.30,.07,.045,.08,.055,.13);
   if(!enemy){
    // belt pouches with rounded edges, little stitching and buckle hardware
    oval(torso,'#695b4e',sign*.36,.025,.275,.155,.18,.12,0,0,-sign*.09);
@@ -165,9 +142,9 @@ export function createDetailedFighter(variant=0,enemy=false){
   band(torso,color.accent,[0,.25,.39],[0,1.08,.31],.024);
   if(!enemy)for(let j=0;j<4;j++)oval(torso,color.accent,.35,.48+j*.13,.31,.034,.033,.018,0,0,0,GEO.detail)
  }else if(skin.outfit==='armor'){
-  oval(torso,'#394d54',0,.64,.305,chestW*1.10,.44,.12);
-  oval(torso,skin.accent,0,.68,.40,.18,.19,.028,GEO.detail);
-  if(!enemy)for(let sign of [-1,1])oval(torso,skin.top,sign*.31,.80,.33,.17,.23,.10)
+  oval(torso,'#394d54',0,.64,.294,chestW*.96,.39,.071);
+  oval(torso,skin.accent,0,.68,.371,.16,.15,.02,GEO.detail);
+  if(!enemy)for(let sign of [-1,1])oval(torso,skin.top,sign*.28,.80,.322,.125,.19,.068)
  }else if(skin.outfit==='scarf'){
   oval(torso,skin.accent,0,1.08,.0,.49,.195,.34);
   oval(torso,skin.accent,.25,.69,.30,.16,.43,.095,0,0,-.12);
@@ -181,18 +158,17 @@ export function createDetailedFighter(variant=0,enemy=false){
  headModel(torso,skin,skin.theme==='coastal'||skin.theme==='aurora');
  // Arms pivot naturally at both shoulders. Upper arms taper into forearms.
  const armL=new THREE.Group(),armR=new THREE.Group();
- armL.position.set(-chestW-.13,1.0,-.005);armR.position.set(chestW+.13,1.0,-.005);
+ armL.position.set(-base.shoulder,1.025,-.005);armR.position.set(base.shoulder,1.025,-.005);
  for(const [arm,side] of [[armL,-1],[armR,1]]){
   torso.add(arm);
-  oval(arm,skin.top,0,-.107,0,.181,.19,.193,0,0,side*.12);
-  capsule(arm,skin.skinTone,side*.01,-.423,0,.131,.42,1.0).rotation.z=side*.06;
-  oval(arm,skin.skinTone,side*.015,-.715,.014,.125,.118,.115);
-  capsule(arm,skin.skinTone,side*.02,-.996,.011,.111,.32,.89);
-  oval(arm,'#454a50',side*.02,-1.12,.03,.126,.158,.122);
-  oval(arm,skin.skinTone,side*.02,-1.284,.034,.116,.125,.083);
+  // Continuous slender anatomical sleeve/arm geometry, shared by every costume.
+  smoothSurface(arm,skin.gender,'arm',material(skin.skinTone));
+  smoothSurface(arm,skin.gender,'sleeve',material(skin.top));
+  oval(arm,'#454a50',side*.02,-1.15,.03,.112,.12,.115);
+  oval(arm,skin.skinTone,side*.02,-1.27,.034,.098,.112,.076);
   // Distinct five-finger hand rather than a mitten or cube.
-  for(let i=0;i<4;i++)oval(arm,skin.skinTone,side*.02+(i-1.5)*.057,-1.421,.088,.034,.115,.045,0,0,(i-1.5)*.08,GEO.detail);
-  oval(arm,skin.skinTone,side*.17,-1.30,.12,.059,.13,.058,0,0,side*.43,GEO.detail);
+  for(let i=0;i<4;i++)oval(arm,skin.skinTone,side*.02+(i-1.5)*.046,-1.399,.083,.025,.095,.032,0,0,(i-1.5)*.08,GEO.detail);
+  oval(arm,skin.skinTone,side*.125,-1.30,.107,.046,.105,.048,0,0,side*.43,GEO.detail);
   if(!enemy){
    band(arm,skin.accent,[-.16,-.30,.12],[.16,-.28,.12],.033);
    for(let i=0;i<2;i++)band(arm,skin.gear==='tech'?skin.accent:'#ab967c',[-.13,-.88-i*.10,.13],[.13,-.89-i*.10,.13],.022)
@@ -201,13 +177,11 @@ export function createDetailedFighter(variant=0,enemy=false){
  // Each leg has capsule thighs and shins, belts, sculpted knee armor and laced boots.
  const legL=new THREE.Group(),legR=new THREE.Group();
  for(const [leg,side] of [[legL,-1],[legR,1]]){
-  leg.position.set(side*hipW*.54,1.56,0);root.add(leg);
-  oval(leg,skin.pants,0,-.364,0,.211,.425,.193,0,0,side*.05);
-  oval(leg,skin.pants,0,-.75,0,.171,.145,.17);
-  capsule(leg,skin.pants,0,-1.080,0,.143,.46,.94);
-  oval(leg,color.boot,0,-.785,.158,.145,.143,.061,0,0,0,GEO.detail);
-  oval(leg,skin.accent,0,-.765,.207,.094,.096,.026,0,0,0,GEO.detail);
-  for(let i=0;i<(enemy?0:3);i++)band(leg,i===1?skin.accent:'#574e45',[-.19,-.35-i*.13,.19],[.19,-.35-i*.13,.19],.030);
+  leg.position.set(side*base.hip,1.56,0);root.add(leg);
+  smoothSurface(leg,skin.gender,'leg',material(skin.pants));
+  oval(leg,color.boot,0,-.785,.150,.127,.12,.046,0,0,0,GEO.detail);
+  oval(leg,skin.accent,0,-.765,.194,.084,.08,.024,0,0,0,GEO.detail);
+  for(let i=0;i<(enemy?0:3);i++)band(leg,i===1?skin.accent:'#574e45',[-.145,-.35-i*.13,.17],[.145,-.35-i*.13,.17],.021);
   if(!enemy){
    oval(leg,'#756351',side*.22,-.42,.08,.112,.19,.14);
    block(leg,skin.accent,side*.22,-.29,.20,.10,.043,.07);
@@ -227,6 +201,6 @@ export function createDetailedFighter(variant=0,enemy=false){
  }
  const weapon=new THREE.Group();weapon.position.set(.40,.62,.48);torso.add(weapon);
  weapon.add(makeWeaponArtwork('ar'));weapon.userData.visualKind='ar';
- root.userData={torso,armL,armR,legL,legR,weapon,enemy,variant,skin,profile:skin.gender};
+ root.userData={torso,armL,armR,legL,legR,weapon,enemy,variant,skin,profile:skin.gender,bodyBase:BODY_BASE_VERSION};
  return root
 }
