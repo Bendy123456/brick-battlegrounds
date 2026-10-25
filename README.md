@@ -1,3 +1,7 @@
+# FartNite
+
+Current build: tactical arena FPS; this is a name change only, with existing gameplay retained.
+
 ## Arena V2: Cover Circuit C — original Blender airsoft cover rebuild
 
 **Selected aesthetic: realistic plywood + inflatable tournament bunkers (Option C).**
