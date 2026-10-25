@@ -39,3 +39,11 @@
  .fn-skin-portrait{height:70px}
  .fn-scout-tile.fn-skin-detail>strong{font-size:10px}
 }
+
+.fn-actual-model-thumbnail{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:contain;object-position:center;z-index:5;filter:drop-shadow(0 3px 5px #0009)}
+.fn-skin-portrait:has(.fn-actual-model-thumbnail) .fn-portrait-head,
+.fn-skin-portrait:has(.fn-actual-model-thumbnail) .fn-portrait-body,
+.fn-skin-portrait:has(.fn-actual-model-thumbnail) .fn-portrait-legs,
+.fn-skin-shop-avatar:has(.fn-actual-model-thumbnail) .fn-portrait-head,
+.fn-skin-shop-avatar:has(.fn-actual-model-thumbnail) .fn-portrait-body,
+.fn-skin-shop-avatar:has(.fn-actual-model-thumbnail) .fn-portrait-legs{display:none}
