@@ -6,11 +6,11 @@
   "scripts": {
     "dev": "vite --config client/vite.config.ts --host 0.0.0.0",
     "build": "vite build --config client/vite.config.ts",
-    "start": "node --import tsx server/src/index.ts",
+    "start": "node server-fartnite.js",
     "test": "vitest run",
     "check": "tsc --noEmit",
     "postinstall": "npm run build",
-    "e2e": "playwright test"
+    "e2e": "playwright test tests/fartnite.pw.ts"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.21.0",
