@@ -2,6 +2,7 @@
 // All progress, currency, cosmetics, and match records are local only.
 import {SKINS,STARTER_SKINS,SHOP_SKINS,SKIN_RARITIES} from './fartnite-skins.js';
 import {createSkinThumbnailLoader} from './fartnite-skin-thumbnails.js';
+import {createPartyClient} from './fartnite-party.js';
 export const SCOUTS=SKINS.map(s=>({...s,color:s.accent}));
 export const AURAS=[
  {id:'aqua',name:'Aqua Reactor',color:'#42ebff',cost:0},
@@ -43,7 +44,7 @@ function read(){
 function cardButton(text,action,disabled=false){
  return '<button type="button" class="fn-action" '+action+(disabled?' disabled':'')+'>'+text+'</button>';
 }
-export function mountLobby(home,{play,onSkin,onAura,onSettings,how,onPreview}){
+export function mountLobby(home,{play,onSkin,onAura,onSettings,how,onPreview,onPartyChange}){
  const data=read(),persist=()=>{try{localStorage.setItem(STORE,JSON.stringify(data))}catch{}};
  let tabName='PLAY',notificationTimer=0;
  home.classList.add('fn-lobby');
@@ -61,16 +62,16 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how,onPreview}){
  '<div class="fn-objectives-head">DAILY OBJECTIVES <span id="fnQuestDone">0 / 6</span></div>',
  '<div id="fnQuestRows"></div>',
  '<button type="button" class="fn-more-quests" data-jump="CHALLENGES">VIEW ALL OBJECTIVES &nbsp; ›</button></aside>',
- '<div class="fn-stage-heading">FARTNITE <b>FIELD SQUAD</b><small>CHARACTER SHOWCASE • SOLO GAME</small></div>',
- '<div class="fn-character-tags" aria-hidden="true"><div class="fn-tag-left"><b>TIDAL SCOUT</b><small>SHOWCASE</small></div><div class="fn-tag-center"><span>◆</span><b id="fnSkinName">MEADOW RUNNER</b><small>READY TO DEPLOY</small></div><div class="fn-tag-right"><b>COPPER COURIER</b><small>SHOWCASE</small></div></div>',
+ '<div class="fn-stage-heading">FARTNITE <b>FIELD SQUAD</b><small id="fnStageMode">SOLO • ONLY YOU</small></div>',
+ '<div class="fn-character-tags" aria-hidden="true"><div class="fn-tag-left hidden" id="fnPartyLeft"><b id="fnPartyLeftName"></b><small>IN YOUR PARTY</small></div><div class="fn-tag-center"><span>◆</span><b id="fnSkinName">MEADOW RUNNER</b><small>READY TO DEPLOY</small></div><div class="fn-tag-right hidden" id="fnPartyRight"><b id="fnPartyRightName"></b><small>IN YOUR PARTY</small></div></div>',
  '<div class="fn-stage-tip">CUSTOMIZE YOUR SCOUT IN THE LOCKER</div>',
  '<aside class="fn-ready" aria-label="Game mode and ready">',
  '<div class="fn-ready-overline">SELECTED MISSION <b>SOLO / AI</b></div>',
  '<h2 id="fnModeTitle">ISLAND SURVIVAL</h2><p id="fnModeDescription">1 player + 19 AI rivals</p>',
  '<button type="button" id="fnChangeMode" class="fn-change-mode">▣ &nbsp; CHANGE MODE</button>',
- '<div class="fn-fill"><span>PARTY STATUS</span><b>LOCAL SOLO</b></div>',
+ '<div class="fn-fill"><span>GAMEPLAY</span><b>SOLO VS AI</b></div>',
  '<button type="button" class="fn-ready-cta" id="play">▶ &nbsp; READY!</button>',
- '<small class="fn-ready-note">Press Ready to launch your solo match</small></aside>',
+ '<small class="fn-ready-note" id="fnReadyNote">Solo battle matches only for now</small></aside>',
  '<footer class="fn-bottom"><div><span class="fn-dot"></span><b>FARTNITE // SEASON ZERO</b><span>LOCAL SOLO PREVIEW</span></div><span>ORIGINAL GAME • NO EXTERNAL ACCOUNTS</span><div><button type="button" data-jump="LOCKER">◈ LOCKER</button><button id="how" type="button">? HELP / CONTROLS</button></div></footer>',
  '<div id="fnNotice" class="fn-notice" role="status" aria-live="polite"></div>',
  '<section id="fnOverlay" class="fn-overlay hidden" aria-label="Lobby tabs"><div class="fn-content-panel">',
@@ -103,7 +104,7 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how,onPreview}){
    onPreview?.(index);notify(SKINS[index].name.toUpperCase()+' — UNLOCK IN SUPPLY SHOP');
    return
   }
-  data.skin=index;persist();onSkin(index);drawLeft();notify(SKINS[index].name.toUpperCase()+' EQUIPPED');
+  data.skin=index;persist();onSkin(index);partyClient.setSkin(index);drawLeft();notify(SKINS[index].name.toUpperCase()+' EQUIPPED');
   if(tabName==='LOCKER')renderTab()
  }
  function purchaseSkin(index){
