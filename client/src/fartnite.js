@@ -656,6 +656,7 @@ const lobby=mountLobby($('home'),{
   showroom.setSkin(index);
  },
  onPreview:index=>showroom.setSkin(index),
+ onPartyChange:members=>showroom.setPartyMembers(members),
  onAura:a=>showroom.setAura(a),
  onSettings:s=>{renderer.shadowMap.enabled=s.shadows;$('qualityStats').style.display=s.stats?'':'none'},
  how:()=>{state.mode='how';showOnly('instructions')}
@@ -710,6 +711,7 @@ homeCamera(0);
 renderHUD();
 window.__FARTNITE_ART_QA__=()=>Object.freeze({
   title:'FartNite',level:'Bramble Island',lobbyMode:lobby.getMode(),activeSkin:SCOUTS[activeSkin].name,
+  partyMemberCount:lobby.getParty()?.members.length||1,partyCode:lobby.getParty()?.code||null,
   locations:LANDMARKS.map(l=>l.name),
   originalBuildingCount:world.obstacles.filter(o=>o.kind==='house').length,
   instancedEnvironmentSets:world.art.props.length,
