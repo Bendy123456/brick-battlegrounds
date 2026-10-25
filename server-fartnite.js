@@ -1,4 +1,5 @@
 import http from 'node:http';
+import {attachPartyServer} from './server-fartnite-party.js';
 import {readFile,stat} from 'node:fs/promises';
 import {extname,resolve,sep} from 'node:path';
 
@@ -19,4 +20,5 @@ const server=http.createServer(async(req,res)=>{
   res.end(req.method==='HEAD'?undefined:bytes);
  }catch{res.writeHead(404).end('Not found')}
 });
+attachPartyServer(server);
 server.listen(PORT,'0.0.0.0',()=>console.log('FartNite solo preview available on port '+PORT));
