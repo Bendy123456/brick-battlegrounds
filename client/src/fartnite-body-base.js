@@ -61,7 +61,7 @@ const profile={
   ]
  }
 };
-export const BODY_BASE_VERSION='smooth-humanoid-v2';
+export const BODY_BASE_VERSION='blank-humanoid-v3';
 export const BODY_HEIGHT=3.76;
 export const BODY_PROPORTIONS=Object.freeze({
  male:{shoulder:.565,hip:.23,wrist:.082,thigh:.226},
