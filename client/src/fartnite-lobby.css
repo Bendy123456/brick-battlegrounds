@@ -182,3 +182,45 @@
  .fn-scouter-grid{grid-template-columns:repeat(2,1fr)}
  .fn-bottom>div:first-child>span:last-child{display:none}
 }
+
+
+/* Real party invitation controls. Default stage contains only the host's model. */
+.fn-ready{bottom:9.5%;padding:10px 12px}
+.fn-ready h2{margin:7px 0 4px}
+.fn-ready p{margin:0 0 8px}
+.fn-party-controls{background:#071c3bc9;border:1px solid #6f96c17b;margin:8px 0;padding:8px;display:flex;flex-direction:column;gap:6px}
+.fn-party-status{display:flex;justify-content:space-between;gap:8px;color:#d7f6ee;font:900 11px 'Barlow Condensed',Impact,sans-serif;letter-spacing:.09em}
+.fn-party-status span{color:#c9e8ff}
+.fn-party-name-row{display:flex;align-items:center;gap:7px}
+.fn-party-name-row label{color:#bed7ef;font:900 9px Inter,Arial,sans-serif;letter-spacing:.06em;min-width:38px}
+.fn-party-name-row input,.fn-party-join-row input{background:#07162e;color:#f3f5fe;border:1px solid #648cc1;border-radius:0;min-width:0;outline:none;font:800 11px Inter,Arial,sans-serif;padding:7px}
+.fn-party-name-row input{flex:1}
+.fn-party-join-row{display:flex;align-items:stretch;gap:6px}
+.fn-party-join-row input{flex:1;text-transform:uppercase;letter-spacing:.11em}
+.fn-party-join-row button,.fn-party-buttons button,.fn-party-code button{background:#395d94;color:#f1f8ff;border:1px solid #9dbde3;font:900 12px 'Barlow Condensed',Impact,sans-serif;letter-spacing:.09em;padding:7px 10px}
+.fn-party-join-row button:hover,.fn-party-buttons button:hover,.fn-party-code button:hover{background:#4a7ab4}
+.fn-party-join-row button:disabled,.fn-party-buttons button:disabled{opacity:.45;cursor:default}
+.fn-party-buttons{display:flex;gap:6px}
+.fn-party-buttons button{flex:1}
+.fn-party-buttons #fnCreateParty{background:#9cc5de;color:#132d48}
+.fn-party-code{display:flex;align-items:center;gap:6px;background:#112c55;border:1px dashed #69cbea;padding:6px}
+.fn-party-code span{font:900 9px 'Barlow Condensed',sans-serif;color:#cbd9ed}
+.fn-party-code b{flex:1;font:900 16px 'Barlow Condensed',Impact,sans-serif;color:#fff29c;letter-spacing:.1em}
+.fn-party-list{display:flex;gap:5px;flex-wrap:wrap}
+.fn-party-list span{background:#325579;border:1px solid #6796b3;color:#e8f5ff;padding:3px 5px;font:800 10px 'Barlow Condensed',sans-serif}
+.fn-ready-cta:disabled{opacity:.56;cursor:not-allowed;filter:grayscale(.4);transform:none}
+.fn-ready-note{display:block;line-height:1.4;margin-top:6px}
+@media(max-height:700px){
+ .fn-ready{bottom:9.2%;padding:6px}
+ .fn-ready h2{font-size:23px}
+ .fn-party-controls{gap:4px;padding:5px;margin:5px 0}
+ .fn-party-name-row input,.fn-party-join-row input{padding:4px}
+ .fn-ready-cta{padding:7px 8px}
+}
+@media(max-width:710px){
+ .fn-ready{right:1.5%;width:34%;bottom:10%}
+ .fn-party-name-row{display:block}
+ .fn-party-name-row label{display:block;margin-bottom:4px}
+ .fn-party-name-row input{width:100%}
+ .fn-party-join-row input{font-size:9px;padding:5px}
+}
