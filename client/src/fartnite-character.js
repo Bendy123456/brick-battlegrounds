@@ -225,7 +225,7 @@ export function createDetailedFighter(variant=0,enemy=false){
   oval(torso,skin.accent,0,.056,.49,.14,.045,.027,GEO.detail);
   oval(torso,'#63574b',0,.69,-.35,.39,.42,.17)
  }
- const weapon=new THREE.Group();weapon.position.set(.40,2.22,.48);torso.add(weapon);
+ const weapon=new THREE.Group();weapon.position.set(.40,.62,.48);torso.add(weapon);
  weapon.add(makeWeaponArtwork('ar'));weapon.userData.visualKind='ar';
  root.userData={torso,armL,armR,legL,legR,weapon,enemy,variant,skin,profile:skin.gender};
  return root
