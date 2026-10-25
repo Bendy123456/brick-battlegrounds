@@ -47,3 +47,46 @@ test('solo match starts, renders the HUD, toggles building, map and pause',async
  await expect(page.locator('#hud')).toBeVisible();
  expect(errors).toEqual([]);
 });
+
+
+test('classic position lobby tabs, usable locker, mode and persistence',async({page})=>{
+ const errors:string[]=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');
+ await expect(page.locator('.fn-nav [data-tab]')).toHaveCount(8);
+ await expect(page.locator('.fn-progression')).toBeVisible();
+ await expect(page.locator('.fn-ready')).toBeVisible();
+ await expect(page.locator('#fnSkinName')).toBeVisible();
+ await page.screenshot({path:'artifacts/fartnite-classic-lobby.png',animations:'disabled'});
+ await page.locator('[data-tab="LOCKER"]').click();
+ await expect(page.locator('#fnPanelHeading')).toHaveText('LOCKER');
+ await expect(page.locator('[data-skin]')).toHaveCount(4);
+ await page.locator('[data-skin="2"]').click();
+ await expect(page.locator('.fn-scout-tile.selected')).toContainText('TIDAL SCOUT');
+ await page.locator('[data-tab="SHOP"]').click();
+ await expect(page.locator('#fnPanelHeading')).toHaveText('SHOP');
+ await expect(page.locator('.fn-shop-card')).toHaveCount(4);
+ await page.locator('[data-tab="PASS"]').click();
+ await expect(page.locator('.fn-pass-row')).toHaveCount(5);
+ await page.locator('[data-tab="CHALLENGES"]').click();
+ await expect(page.locator('.fn-mission')).toHaveCount(6);
+ await page.locator('[data-tab="PROFILE"]').click();
+ await expect(page.locator('.fn-profile-lead')).toContainText('TIDAL SCOUT');
+ await page.locator('[data-tab="LEADERBOARDS"]').click();
+ await expect(page.locator('.fn-empty-state')).toBeVisible();
+ await page.locator('[data-tab="SETTINGS"]').click();
+ await expect(page.locator('[data-setting]')).toHaveCount(3);
+ await page.locator('[data-setting="stats"]').uncheck();
+ await page.reload();
+ await page.locator('[data-tab="LOCKER"]').click();
+ await expect(page.locator('.fn-scout-tile.selected')).toContainText('TIDAL SCOUT');
+ await page.locator('[data-tab="SETTINGS"]').click();
+ await expect(page.locator('[data-setting="stats"]')).not.toBeChecked();
+ await page.locator('#fnClose').click();
+ await page.locator('#fnChangeMode').click();
+ await expect(page.locator('#fnModeTitle')).toHaveText('SCOUT TRAINING');
+ await page.locator('#play').click();
+ await expect(page.locator('#hud')).toBeVisible();
+ await expect(page.locator('#aliveText')).toHaveText('10');
+ expect(errors).toEqual([]);
+});
