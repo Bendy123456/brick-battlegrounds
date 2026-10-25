@@ -1,89 +1,58 @@
 import * as THREE from 'three';
 import {skinAt} from './fartnite-skins.js';
 import {makeWeaponArtwork} from './fartnite-art.js';
-import {smoothSurface,makeNeck,BODY_BASE_VERSION,BODY_PROPORTIONS} from './fartnite-body-base.js';
+import {humanoidGeometry,createHumanoidSkeleton,BODY_BASE_VERSION} from './fartnite-body-base.js';
 
-// Bare, neutral, NON-ANATOMICAL humanoid mannequins for all 25 character slots.
-// No clothing, hair, face, armor, pouches, backpack, footwear, or body details.
-// The boy and girl templates have subtle silhouette differences only.
-// This is intentionally a featureless stylized model, not a nude human.
-const materialCache=new Map();
-const headShape=new THREE.SphereGeometry(1,24,18);
-const handShape=new THREE.SphereGeometry(1,16,12);
-const footShape=new THREE.SphereGeometry(1,16,12);
-function finishFor(index){
- // Small neutral-tone variations make each of 25 slots a separate blank mannequin
- // while deliberately avoiding outfit colors and skin-like materials.
- const key=index;
- if(!materialCache.has(key)){
-  const neutral=new THREE.Color('#c3cbd3');
-  neutral.offsetHSL(0,0,(((index*11)%25)-12)*.004);
-  materialCache.set(key,new THREE.MeshStandardMaterial({
-   color:neutral,metalness:0,roughness:.88,flatShading:false
-  }));
+// The ENTIRE blank model — face, head, neck, chest, shoulders, arms, hands,
+// pelvis, thighs, ankles and feet — is ONE continuous skinned 3D mesh.
+// No stacked shapes, no exposed joint seams, no costume parts or fake skin textures.
+const finishes=new Map();
+function neutralMaterial(index){
+ const key=index%25;
+ if(!finishes.has(key)){
+  const tone=new THREE.Color('#c5cbd1');
+  tone.offsetHSL(0,0,((key*13)%25-12)*.0025);
+  finishes.set(key,new THREE.MeshStandardMaterial({
+   color:tone,roughness:.72,metalness:.015,flatShading:false,side:THREE.FrontSide
+  }))
  }
- return materialCache.get(key);
-}
-function part(group,geometry,mat,x,y,z,sx,sy,sz){
- const obj=new THREE.Mesh(geometry,mat);
- obj.position.set(x,y,z);
- obj.scale.set(sx,sy,sz);
- obj.castShadow=true;
- obj.receiveShadow=true;
- group.add(obj);
- return obj;
+ return finishes.get(key);
 }
 export function createDetailedFighter(variant=0,enemy=false){
- const skin=skinAt(variant),gender=skin.gender;
- const cfg=BODY_PROPORTIONS[gender],mat=finishFor(skin.id);
+ const skin=skinAt(variant);
+ const geometry=humanoidGeometry(skin.gender);
+ const mat=neutralMaterial(skin.id);
  const root=new THREE.Group();
- // Only the two body bases differ in width/shoulder-to-hip proportions.
- const torso=new THREE.Group();torso.position.y=1.60;root.add(torso);
- const torsoMesh=smoothSurface(torso,gender,'body',mat);
- makeNeck(torso,gender,mat);
+ const rig=createHumanoidSkeleton(skin.gender);
+ const body=new THREE.SkinnedMesh(geometry,mat);
+ body.name='OnePieceSmoothHumanoid';
+ body.frustumCulled=false; // GPU skin animation can move beyond static body bounds
+ body.castShadow=true;
+ body.receiveShadow=true;
+ root.add(body);
+ root.add(rig.root);
+ root.updateMatrixWorld(true);
+ body.bind(new THREE.Skeleton(rig.bones));
+ body.normalizeSkinWeights();
 
- // Entirely blank face/head: no hair, eyes, facial features, helmets or accessories.
- const head=part(torso,headShape,mat,0,1.54,.010,
-  gender==='male'?.305:.295,.388,gender==='male'?.288:.273);
- // Tiny bridge rounds the head-to-neck transition, not a facial feature.
- const armL=new THREE.Group(),armR=new THREE.Group();
- armL.position.set(-cfg.shoulder,1.025,-.005);
- armR.position.set(cfg.shoulder,1.025,-.005);
- for(const [arm,side] of [[armL,-1],[armR,1]]){
-  torso.add(arm);
-  // One seamless arm surface, instead of a separate muscular upper-arm mesh.
-  smoothSurface(arm,gender,'arm',mat);
-  part(arm,handShape,mat,0,-1.293,.027,.095,.145,.090);
-  part(arm,handShape,mat,side*.105,-1.266,.113,.041,.082,.053);
- }
- const legL=new THREE.Group(),legR=new THREE.Group();
- for(const [leg,side] of [[legL,-1],[legR,1]]){
-  leg.position.set(side*cfg.hip,1.56,0);root.add(leg);
-  smoothSurface(leg,gender,'leg',mat);
-  // Featureless feet blend with the legs; no boots or clothing lines.
-  part(leg,footShape,mat,0,-1.426,.10,.147,.101,.268);
- }
-
- // The weapon remains a separate gameplay-only attachment. It is hidden in
- // showroom/Locker/Shop and does not form part of any mannequin's body.
+ // Gameplay-only weapon, not part of the mannequin's visible anatomy.
+ // The existing showroom and thumbnail generator already hide this attachment.
  const weapon=new THREE.Group();
  weapon.position.set(.40,.62,.48);
- torso.add(weapon);
+ rig.torso.add(weapon);
  weapon.add(makeWeaponArtwork('ar'));
  weapon.userData.visualKind='ar';
 
- // All 25 remain selectable IDs, with small individual scale differences and
- // both real gender shapes; no prior costume material or accessory survives.
- const scale=.959+((skin.id*7)%25)*.0029;
+ // Twenty-five unique wardrobe IDs still exist, but every body is deliberately
+ // blank: only the gender-specific base and tiny neutral height differences vary.
+ const scale=.979+((skin.id*7)%25)*.0019;
  root.scale.setScalar(scale);
- torso.scale.x=.973+((skin.id*13)%25)*.0022;
- head.scale.setScalar(.976+((skin.id*9)%25)*.0021);
  root.userData={
-  torso,armL,armR,legL,legR,weapon,head,torsoMesh,enemy,
-  variant:skin.id,skin,profile:gender,bodyBase:BODY_BASE_VERSION,
-  appearance:'blank-humanoid',accessoryCount:0,
-  // Keep rendering tests and game stats able to identify the active template.
-  materialColor:mat.color.getHexString()
+  torso:rig.torso,armL:rig.armL,armR:rig.armR,
+  legL:rig.legL,legR:rig.legR,weapon,body,rootBone:rig.root,
+  variant:skin.id,skin,enemy,profile:skin.gender,
+  bodyBase:BODY_BASE_VERSION,appearance:'seamless-blank-humanoid',
+  accessoryCount:0,anatomyDrawMeshes:1,materialColor:mat.color.getHexString()
  };
  return root;
 }
