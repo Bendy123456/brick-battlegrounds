@@ -238,6 +238,7 @@ function endMatch(win){
 const collision=(x,z,r=.75)=>{
  if(Math.hypot(x,z)>ISLAND_RADIUS-8)return true;
  for(const o of world.obstacles){
+  if(o.object&&!o.object.visible)continue;
   if(o.kind==='house'){if(Math.abs(x-o.x)<o.radius+r&&Math.abs(z-o.z)<o.radius+r)return true}
   else if(Math.hypot(x-o.x,z-o.z)<o.radius+r)return true
  }
