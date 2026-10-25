@@ -1,4 +1,4 @@
-# BRICK BATTLEGROUNDS v0.4
+# FartNite — legacy ninja fighting build v0.4
 
 Browser 3D fighting game, based on the working v0.3 combat.
 
