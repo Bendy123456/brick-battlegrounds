@@ -216,6 +216,6 @@ test('new smooth mannequin body base carries across both genders and into gamepl
  await page.locator('#play').click();
  await expect(page.locator('#hud')).toBeVisible();
  const body=await page.evaluate(()=>(window as any).__FARTNITE_ART_QA__?.().bodyBase);
- expect(body).toBe('blank-humanoid-v3');
+ expect(body).toBe('seamless-humanoid-v4');
  expect(errors).toEqual([]);
 });
