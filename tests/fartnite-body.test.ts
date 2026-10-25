@@ -3,7 +3,7 @@ import {SKINS} from '../client/src/fartnite-skins.js';
 import {createDetailedFighter} from '../client/src/fartnite-character.js';
 import {BODY_BASE_VERSION,BODY_PROPORTIONS} from '../client/src/fartnite-body-base.js';
 
-describe('25 characters use shared smooth mannequin-inspired base anatomy',()=>{
+describe('25 characters use blank featureless male/female mannequin bodies',()=>{
  it('builds every original skin on the correct gender body, with working animation pivots',()=>{
   expect(SKINS).toHaveLength(25);
   const meshes=[];
@@ -13,6 +13,15 @@ describe('25 characters use shared smooth mannequin-inspired base anatomy',()=>{
    expect(rig.variant).toBe(i);
    expect(rig.profile).toBe(SKINS[i].gender);
    expect(rig.bodyBase).toBe(BODY_BASE_VERSION);
+   expect(rig.appearance).toBe('blank-humanoid');
+   expect(rig.accessoryCount).toBe(0);
+   expect(rig.torso.children.some(x=>x.userData?.kind==='cosmetic')).toBe(false);
+   expect(rig.torso.children.filter(x=>x.isMesh&&x!==rig.torsoMesh).length).toBe(2); // neck, featureless head
+   expect(rig.armL.children.filter(x=>x.isMesh).length).toBe(3); // continuous arm, palm, thumb
+   expect(rig.legL.children.filter(x=>x.isMesh).length).toBe(2); // smooth leg, bare foot
+   expect(rig.torsoMesh.material).toBe(rig.head.material);
+   expect(rig.legL.children[0].material).toBe(rig.torsoMesh.material);
+   expect(rig.skin.gender).toBe(SKINS[i].gender);
    for(const joint of ['torso','armL','armR','legL','legR','weapon'])expect(rig[joint]).toBeDefined();
    const body=rig.torso.children.find(x=>x.isMesh&&x.geometry?.attributes?.position?.count>1000);
    const upperArm=rig.armL.children.find(x=>x.isMesh&&x.geometry?.attributes?.position?.count>500);
@@ -24,7 +33,7 @@ describe('25 characters use shared smooth mannequin-inspired base anatomy',()=>{
    expect(Number.isFinite(root.scale.x)).toBe(true);
    meshes.push({body:body.geometry,arm:upperArm.geometry,leg:leg.geometry});
   }
-  // All 25 outfits reuse just two base meshes, not 25 heavy copies.
+  // All 25 blank bodies reuse just two gender-specific sets of mesh geometries.
   for(const kind of ['body','arm','leg']){
    expect(new Set(meshes.map(x=>x[kind])).size).toBe(2)
   }
