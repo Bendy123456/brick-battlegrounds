@@ -710,7 +710,7 @@ window.addEventListener('resize',()=>{
 homeCamera(0);
 renderHUD();
 window.__FARTNITE_ART_QA__=()=>Object.freeze({
-  title:'FartNite',level:'Bramble Island',lobbyMode:lobby.getMode(),activeSkin:SCOUTS[activeSkin].name,
+  title:'FartNite',level:'Bramble Island',lobbyMode:lobby.getMode(),activeSkin:SCOUTS[activeSkin].name,bodyBase:player.userData.bodyBase,bodyGender:player.userData.profile,
   partyMemberCount:lobby.getParty()?.members.length||1,partyCode:lobby.getParty()?.code||null,
   locations:LANDMARKS.map(l=>l.name),
   originalBuildingCount:world.obstacles.filter(o=>o.kind==='house').length,
