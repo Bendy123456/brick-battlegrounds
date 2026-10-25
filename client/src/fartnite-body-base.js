@@ -76,16 +76,23 @@ function makeGeometry(gender){
  const at=(i,j,k)=>k*plane+j*row+i;
  for(let k=0;k<=nz;k++)for(let j=0;j<=ny;j++)for(let i=0;i<=nx;i++)
   samples[at(i,j,k)]=bodyDistance(xs[i],ys[j],zs[k],gender);
+ // Smooth vertex normals come from the sampled SDF gradient at every grid node.
+ // This avoids millions of extra implicit-field evaluations during extraction.
+ const gradients=new Float32Array(samples.length*3);
+ for(let k=0;k<=nz;k++)for(let j=0;j<=ny;j++)for(let i=0;i<=nx;i++){
+  const id=at(i,j,k),sx=at(Math.max(0,i-1),j,k),ex=at(Math.min(nx,i+1),j,k);
+  const sy=at(i,Math.max(0,j-1),k),ey=at(i,Math.min(ny,j+1),k);
+  const sz=at(i,j,Math.max(0,k-1)),ez=at(i,j,Math.min(nz,k+1));
+  const dx=samples[ex]-samples[sx],dy=samples[ey]-samples[sy],dz=samples[ez]-samples[sz];
+  const m=Math.hypot(dx,dy,dz)||1;
+  gradients[id*3]=dx/m;gradients[id*3+1]=dy/m;gradients[id*3+2]=dz/m;
+ }
  const positions=[],normals=[],skinIds=[],skinWeights=[];
  const props=BODY_PROPORTIONS[gender];
- function vertex(px,py,pz){
+ function vertex(px,py,pz,ax,ay,az){
   positions.push(px,py,pz);
-  const h=.013;
-  let nx=bodyDistance(px+h,py,pz,gender)-bodyDistance(px-h,py,pz,gender);
-  let ny=bodyDistance(px,py+h,pz,gender)-bodyDistance(px,py-h,pz,gender);
-  let nz=bodyDistance(px,py,pz+h,gender)-bodyDistance(px,py,pz-h,gender);
-  const n=Math.hypot(nx,ny,nz)||1;nx/=n;ny/=n;nz/=n;
-  normals.push(nx,ny,nz);
+  const n=Math.hypot(ax,ay,az)||1;
+  normals.push(ax/n,ay/n,az/n);
   // Bone ordering: base=0, torso=1, L/R arms=2/3, L/R legs=4/5.
   let center=1,other=0,blend=1;
   // Arms smoothly blend from the torso at the shoulder. Since the character
@@ -108,15 +115,9 @@ function makeGeometry(gender){
  function emitTri(a,b,c){
   const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2];
   const vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
-  const cx=ux*0+uy*vz-uz*vy,cy=uz*vx-ux*vz,cz=ux*vy-uy*vx;
-  const center=[(a[0]+b[0]+c[0])/3,(a[1]+b[1]+c[1])/3,(a[2]+b[2]+c[2])/3];
-  const e=.009;
-  const grad=[
-   bodyDistance(center[0]+e,center[1],center[2],gender)-bodyDistance(center[0]-e,center[1],center[2],gender),
-   bodyDistance(center[0],center[1]+e,center[2],gender)-bodyDistance(center[0],center[1]-e,center[2],gender),
-   bodyDistance(center[0],center[1],center[2]+e,gender)-bodyDistance(center[0],center[1],center[2]-e,gender)
-  ];
-  if(cx*grad[0]+cy*grad[1]+cz*grad[2]<0){vertex(...a);vertex(...c);vertex(...b)}
+  const cx=uy*vz-uz*vy,cy=uz*vx-ux*vz,cz=ux*vy-uy*vx;
+  const gx=a[3]+b[3]+c[3],gy=a[4]+b[4]+c[4],gz=a[5]+b[5]+c[5];
+  if(cx*gx+cy*gy+cz*gz<0){vertex(...a);vertex(...c);vertex(...b)}
   else{vertex(...a);vertex(...b);vertex(...c)}
  }
  for(let k=0;k<nz;k++)for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){
@@ -132,7 +133,14 @@ function makeGeometry(gender){
    const cross=(a,b)=>{
     const v1=cornerValues[a],v2=cornerValues[b],t=v1/(v1-v2);
     const p=cornerPos[a],q=cornerPos[b];
-    return [p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t,p[2]+(q[2]-p[2])*t]
+    const aa=CORNERS[a],bb=CORNERS[b];
+    const ga=at(i+aa[0],j+aa[1],k+aa[2])*3,gb=at(i+bb[0],j+bb[1],k+bb[2])*3;
+    return [
+      p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t,p[2]+(q[2]-p[2])*t,
+      gradients[ga]+(gradients[gb]-gradients[ga])*t,
+      gradients[ga+1]+(gradients[gb+1]-gradients[ga+1])*t,
+      gradients[ga+2]+(gradients[gb+2]-gradients[ga+2])*t
+    ]
    };
    if(negative.length===1){
     const a=negative[0];
