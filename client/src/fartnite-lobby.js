@@ -1,6 +1,7 @@
 // Original FartNite classic-style multiplayer lobby arrangement.
 // All progress, currency, cosmetics, and match records are local only.
 import {SKINS,STARTER_SKINS,SHOP_SKINS,SKIN_RARITIES} from './fartnite-skins.js';
+import {createSkinThumbnailLoader} from './fartnite-skin-thumbnails.js';
 export const SCOUTS=SKINS.map(s=>({...s,color:s.accent}));
 export const AURAS=[
  {id:'aqua',name:'Aqua Reactor',color:'#42ebff',cost:0},
@@ -76,6 +77,7 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how,onPreview}){
  '<div class="fn-panel-head"><div><small>SEASON ZERO / FIELD TERMINAL</small><h2 id="fnPanelHeading">LOCKER</h2></div><button type="button" id="fnClose">✕ RETURN TO LOBBY</button></div>',
  '<div id="fnTabContent" class="fn-tab-content"></div></div></section>'
  ].join('');
+ const skinThumbs=createSkinThumbnailLoader(home);
  const $=selector=>home.querySelector(selector);
  const setText=(selector,txt)=>{const el=$(selector);if(el)el.textContent=String(txt)};
  const notify=txt=>{
@@ -114,7 +116,7 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how,onPreview}){
  function rarityLabel(s){return s.rarity.toUpperCase()}
  function skinTile(s,i){
   const owned=data.ownedSkins.includes(i),selected=data.skin===i;
-  return '<button type="button" class="fn-scout-tile fn-skin-detail '+(selected?'selected ':'')+(owned?'':'locked')+'" data-skin="'+i+'" style="--swatch:'+s.color+';--rarity:'+SKIN_RARITIES[s.rarity]+'"><div class="fn-skin-portrait"><span class="fn-portrait-head"></span><span class="fn-portrait-body"></span><span class="fn-portrait-legs"></span></div><small>'+rarityLabel(s)+' • '+s.gender.toUpperCase()+'</small><strong>'+s.name.toUpperCase()+'</strong><em>'+(selected?'✓ EQUIPPED':owned?'EQUIP':'🔒 PREVIEW • '+s.price+' CR')+'</em></button>'
+  return '<button type="button" class="fn-scout-tile fn-skin-detail '+(selected?'selected ':'')+(owned?'':'locked')+'" data-skin="'+i+'" style="--swatch:'+s.color+';--rarity:'+SKIN_RARITIES[s.rarity]+'"><div class="fn-skin-portrait" data-skin-thumb="'+i+'"><span class="fn-portrait-head"></span><span class="fn-portrait-body"></span><span class="fn-portrait-legs"></span></div><small>'+rarityLabel(s)+' • '+s.gender.toUpperCase()+'</small><strong>'+s.name.toUpperCase()+'</strong><em>'+(selected?'✓ EQUIPPED':owned?'EQUIP':'🔒 PREVIEW • '+s.price+' CR')+'</em></button>'
  }
 
  function selectAura(id){
@@ -146,7 +148,7 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how,onPreview}){
    html=intro('17 ORIGINAL SHOP SKINS • Unlocked with credits from matches and challenges. Every skin stays visible in the Locker. No purchases with real money.')+
     '<h3 class="fn-subhead">ORIGINAL CHARACTER SKINS</h3><div class="fn-skin-shop-grid">'+SHOP_SKINS.map(s=>{
      const owned=data.ownedSkins.includes(s.id),equipped=data.skin===s.id;
-     return '<article class="fn-shop-skin" style="--swatch:'+s.accent+';--rarity:'+SKIN_RARITIES[s.rarity]+'"><div class="fn-skin-shop-avatar"><i class="fn-portrait-head"></i><i class="fn-portrait-body"></i><i class="fn-portrait-legs"></i></div><small>'+s.rarity.toUpperCase()+' • '+s.gender.toUpperCase()+'</small><h3>'+s.name.toUpperCase()+'</h3>'+cardButton(equipped?'EQUIPPED':owned?'EQUIP':'✦ '+s.price+' CREDITS','data-buy-skin="'+s.id+'"',equipped||(!owned&&data.credits<s.price))+'</article>'
+     return '<article class="fn-shop-skin" style="--swatch:'+s.accent+';--rarity:'+SKIN_RARITIES[s.rarity]+'"><div class="fn-skin-shop-avatar" data-skin-thumb="'+s.id+'"><i class="fn-portrait-head"></i><i class="fn-portrait-body"></i><i class="fn-portrait-legs"></i></div><small>'+s.rarity.toUpperCase()+' • '+s.gender.toUpperCase()+'</small><h3>'+s.name.toUpperCase()+'</h3>'+cardButton(equipped?'EQUIPPED':owned?'EQUIP':'✦ '+s.price+' CREDITS','data-buy-skin="'+s.id+'"',equipped||(!owned&&data.credits<s.price))+'</article>'
     }).join('')+'</div><h3 class="fn-subhead">PLATFORM AURAS</h3><div class="fn-shop-grid">'+AURAS.map(a=>{
     const owned=data.owned.includes(a.id),equipped=data.aura===a.id;
     return '<article class="fn-shop-card" style="--swatch:'+a.color+'"><div class="fn-shop-display"><i></i></div><small>PLATFORM AURA</small><h3>'+a.name+'</h3><p>Original character-platform light effect</p>'+cardButton(equipped?'EQUIPPED':owned?'EQUIP':a.cost+' CREDITS','data-buy="'+a.id+'"',equipped||(!owned&&data.credits<a.cost))+'</article>'
@@ -159,6 +161,9 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how,onPreview}){
    html=intro('Change rendering and lobby animation settings. Changes are saved on this browser.')+'<div class="fn-setting-list">'+[['shadows','SOFT SHADOWS','Dynamic shadow rendering'],['motion','LOBBY MOTION','Animated showroom and lighting'],['stats','PERFORMANCE READOUT','FPS and draw calls during a match']].map(q=>'<label><span><b>'+q[1]+'</b><small>'+q[2]+'</small></span><input type="checkbox" data-setting="'+q[0]+'" '+(data.settings[q[0]]?'checked':'')+'></label>').join('')+cardButton('CONTROLS / HOW TO PLAY','id="fnHelpFromSettings"')+'</div>'
   }
   $('#fnTabContent').innerHTML=html;
+  if(tabName==='LOCKER'||tabName==='SHOP'){
+   skinThumbs.hydrate();skinThumbs.ensure();
+  }
   $('#fnTabContent').querySelectorAll('[data-skin]').forEach(el=>el.addEventListener('click',()=>selectSkin(Number(el.dataset.skin))));
   $('#fnTabContent').querySelectorAll('[data-aura]').forEach(el=>el.addEventListener('click',()=>selectAura(el.dataset.aura)));
   $('#fnTabContent').querySelectorAll('[data-buy-skin]').forEach(el=>el.addEventListener('click',()=>{
