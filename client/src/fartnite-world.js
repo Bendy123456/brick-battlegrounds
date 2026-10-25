@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {createDetailedFighter} from './fartnite-character.js';
 import {COLOR,makeArchitecture,makeCharacterDetails,makeWeaponArtwork,polishEnvironment,paintedWaterMaterial} from './fartnite-art.js';
 
 // All art in FartNite is original procedural geometry. No third-party game assets.
@@ -96,40 +97,7 @@ function road(scene,a,b){
  const mesh=new THREE.Mesh(geom,roadMat);mesh.receiveShadow=true;scene.add(mesh);
 }
 export function createFighter(color='#db886c',enemy=false,variant=0){
- const root=new THREE.Group();
- const torso=new THREE.Group();root.add(torso);
- box(torso,0,2.15,0,.91,1.35,.54,enemy?M.red:M.shirt);
- box(torso,0,2.28,.29,.72,.9,.12,enemy?M.brickDark:M.armor);
- box(torso,0,1.58,0,.89,.27,.58,M.woodDark);
- orb(torso,0,3.15,0,.38,.42,.38,M.tan);
- box(torso,0,3.48,-.04,.82,.2,.8,enemy?M.dark:M.hair);
- for(let i=0;i<4;i++)box(torso,-.28+i*.18,3.54,-.18,.13,.24,.26,enemy?M.dark:M.hair,.1);
- box(torso,-.12,3.17,.35,.052,.055,.027,M.black);
- box(torso,.12,3.17,.35,.052,.055,.027,M.black);
- const armL=new THREE.Group(),armR=new THREE.Group(),legL=new THREE.Group(),legR=new THREE.Group();
- armL.position.set(-.62,2.64,0);armR.position.set(.62,2.64,0);
- legL.position.set(-.24,1.45,0);legR.position.set(.24,1.45,0);
- torso.add(armL,armR);root.add(legL,legR);
- for(const arm of [armL,armR]){
-  box(arm,0,-.41,0,.31,.82,.35,enemy?M.brick:M.shirt);
-  orb(arm,0,-.89,.05,.19,.21,.2,M.tan)
- }
- for(const leg of [legL,legR]){
-  box(leg,0,-.65,0,.36,1.18,.41,M.pants);
-  box(leg,0,-1.28,.16,.38,.3,.62,M.dark);
- }
- box(torso,0,2.23,-.46,.86,1.1,.32,M.woodDark);
- box(torso,0,2.23,-.65,.65,.82,.2,enemy?M.dark:M.blue);
- const weapon=new THREE.Group();weapon.position.set(.42,2.25,.47);
- box(weapon,0,0,0,.15,.17,1.07,M.dark);
- box(weapon,0,.04,.57,.19,.12,.19,M.metal);
- box(weapon,0,-.20,-.1,.16,.42,.18,M.metal);
- box(weapon,0,.17,-.18,.25,.12,.31,M.dark);
- torso.add(weapon);
- root.userData={torso,armL,armR,legL,legR,weapon,enemy};
- makeCharacterDetails(root,variant,enemy);
- setWeaponVisual(root,'ar');
- return root;
+ return createDetailedFighter(variant,enemy);
 }
 export function setWeaponVisual(root,kind='ar'){
  const weapon=root.userData?.weapon;
@@ -143,9 +111,9 @@ export function animateFighter(root,time,speed,heading,pitch=0){
  const a=root.userData;if(!a)return;
  const swing=Math.sin(time*11)*Math.min(.9,speed*.09);
  a.legL.rotation.x=swing;a.legR.rotation.x=-swing;
- a.armL.rotation.x=-swing*.38-1.0;
- a.armR.rotation.x=swing*.3-1.1;
- a.armL.rotation.z=.18;a.armR.rotation.z=-.18;
+ a.armL.rotation.x=-swing*.67-.06;
+ a.armR.rotation.x=swing*.64-.13;
+ a.armL.rotation.z=.10;a.armR.rotation.z=-.10;
  a.torso.rotation.z=Math.sin(time*8)*Math.min(.035,speed*.006);
  a.torso.rotation.x=-Math.min(.12,speed*.012);
  a.weapon.rotation.x=-pitch*.45;
