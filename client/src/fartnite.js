@@ -558,7 +558,7 @@ window.addEventListener('keyup',e=>inputs.delete(e.code));
 window.addEventListener('blur',()=>{inputs.clear();state.mouseFire=false;state.ads=false});
 window.addEventListener('mousemove',e=>{
  if(state.mode!=='playing'||document.pointerLockElement!==renderer.domElement)return;
- state.yaw-=e.movementX*.0023;state.pitch=clamp(state.pitch-e.movementY*.0018,-.75,.70)
+ state.yaw+=e.movementX*.0023;state.pitch=clamp(state.pitch-e.movementY*.0018,-.75,.70)
 });
 renderer.domElement.addEventListener('mousedown',e=>{
  if(state.mode!=='playing')return;
