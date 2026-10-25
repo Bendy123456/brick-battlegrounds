@@ -1,14 +1,15 @@
 import * as THREE from 'three';
+import {COLOR,makeArchitecture,makeCharacterDetails,makeWeaponArtwork,polishEnvironment} from './fartnite-art.js';
 
 // All art in FartNite is original procedural geometry. No third-party game assets.
 export const SIZE=520, ISLAND_RADIUS=246;
 export const LANDMARKS=[
- {name:'MAPLE MEADOWS',x:-120,z:-105,kind:'village'},
- {name:'COPPER CROSSING',x:102,z:-88,kind:'village'},
- {name:'WILLOW WHARF',x:-145,z:100,kind:'port'},
- {name:'SUNSET ORCHARD',x:95,z:125,kind:'farm'},
- {name:'RIDGEWATCH',x:8,z:-164,kind:'outpost'},
- {name:'CLOVER COMMONS',x:5,z:25,kind:'village'}
+ {name:'BRAMBLE BOROUGH',x:-116,z:-96,kind:'village'},
+ {name:'EMBERFIELD YARD',x:112,z:-81,kind:'industrial'},
+ {name:'DRIFTWOOD QUAY',x:-144,z:113,kind:'port'},
+ {name:'SUNSPUN ACRES',x:95,z:125,kind:'farm'},
+ {name:'BEACON BLUFF',x:9,z:-166,kind:'outpost'},
+ {name:'LARKSPUR LANE',x:13,z:28,kind:'village'}
 ];
 const PI=Math.PI;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -52,25 +53,7 @@ function roof(group,w,d,y,material){
  mesh.castShadow=true;group.add(mesh)
 }
 function house(scene,x,z,style=0,angle=0){
- const g=new THREE.Group();g.position.set(x,terrainHeight(x,z),z);g.rotation.y=angle;
- const w=style===2?12:8.8,d=style===2?9:8,h=style===2?8.6:6.1;
- const wall=style===1?M.brick:style===2?M.wood:M.plaster;
- box(g,0,h*.5+.3,0,w,h,d,wall);
- box(g,0,.4,0,w+1,.8,d+1,M.stone);
- box(g,0,2,d/2+.08,2.1,3.5,.22,M.woodDark);
- box(g,-w*.29,3.4,d/2+.13,1.6,1.8,.22,M.window);
- box(g,w*.29,3.4,d/2+.13,1.6,1.8,.22,M.window);
- box(g,0,3.2,-d/2-.13,1.9,2.2,.22,M.window);
- box(g,w/2+.13,3.6,0,.2,2,1.4,M.window);
- box(g,-w/2-.13,3.6,0,.2,2,1.4,M.window);
- roof(g,w+1.4,d+1.2,h+2.9,style===1?M.blueRoof:M.redRoof);
- box(g,0,h+1.15,0,w+1.2,.38,d+1.2,style===1?M.blueRoof:M.redRoof);
- box(g,0,2.5,d/2+.24,2.1,.13,.14,M.gold);
- if(style===2){
-  box(g,0,h+5.2,0,3.3,.38,3.3,M.woodDark);
-  box(g,0,h+6.2,0,2.3,2.3,2.3,M.wood);
- }
- g.userData.kind='house';g.userData.radius=7;scene.add(g);return g;
+ return makeArchitecture(scene,x,z,style,angle,terrainHeight);
 }
 export function tree(scene,x,z,variant=0){
  const y=terrainHeight(x,z);const group=new THREE.Group();
@@ -78,9 +61,11 @@ export function tree(scene,x,z,variant=0){
  const h=5+((Math.abs(x+z)*.07)%5);
  cylinder(group,0,h*.51,0,.38,.57,h,M.trunk);
  if(variant===0){
-  orb(group,0,h+1,0,2.9,2.5,2.6,M.leaf);
-  orb(group,-1,h+1.7,0,1.8,1.8,1.8,M.leaf2);
-  orb(group,1.2,h+1.5,.3,2.1,1.8,1.7,M.leaf3);
+  const canopy=[M.leaf,M.leaf2,M.leaf3];
+  orb(group,0,h+1,0,2.75,2.35,2.65,canopy[Math.floor(Math.abs(x*.07+z*.03))%3]);
+  orb(group,-1.3,h+1.5,-.25,1.85,1.80,1.75,M.leaf2);
+  orb(group,1.4,h+1.5,.45,2,1.75,1.70,M.leaf3);
+  if(Math.abs(x+z)%3<1.5)orb(group,.4,h+2.4,0,1.55,1.18,1.55,M.leaf);
  }else{
   for(let i=0;i<3;i++){
    const c=new THREE.Mesh(new THREE.ConeGeometry(3.3-i*.7,4.5,7),M.leaf3);
@@ -110,7 +95,7 @@ function road(scene,a,b){
  geom.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geom.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geom.computeVertexNormals();
  const mesh=new THREE.Mesh(geom,roadMat);mesh.receiveShadow=true;scene.add(mesh);
 }
-export function createFighter(color='#db886c',enemy=false){
+export function createFighter(color='#db886c',enemy=false,variant=0){
  const root=new THREE.Group();
  const torso=new THREE.Group();root.add(torso);
  box(torso,0,2.15,0,.91,1.35,.54,enemy?M.red:M.shirt);
@@ -142,7 +127,16 @@ export function createFighter(color='#db886c',enemy=false){
  box(weapon,0,.17,-.18,.25,.12,.31,M.dark);
  torso.add(weapon);
  root.userData={torso,armL,armR,legL,legR,weapon,enemy};
+ makeCharacterDetails(root,variant,enemy);
+ setWeaponVisual(root,'ar');
  return root;
+}
+export function setWeaponVisual(root,kind='ar'){
+ const weapon=root.userData?.weapon;
+ if(!weapon)return;
+ weapon.clear();
+ weapon.add(makeWeaponArtwork(kind));
+ weapon.rotation.x=0;
 }
 export function animateFighter(root,time,speed,heading,pitch=0){
  const a=root.userData;if(!a)return;
@@ -160,26 +154,29 @@ function pond(scene,x,z,r){
  mesh.rotation.x=-PI/2;mesh.position.set(x,terrainHeight(x,z)+.18,z);scene.add(mesh);
 }
 export function createEnvironment(scene){
- scene.background=new THREE.Color('#89c6ef');
- scene.fog=new THREE.Fog('#a2cae7',190,690);
- const hemi=new THREE.HemisphereLight('#f7e7ca','#596e50',2.0);scene.add(hemi);
- const sun=new THREE.DirectionalLight('#fff0d9',2.5);sun.position.set(-80,160,-75);sun.castShadow=true;
- sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-230;sun.shadow.camera.right=230;
+ scene.background=new THREE.Color('#92cbe5');
+ scene.fog=new THREE.FogExp2('#b6d6ce',0.00185);
+ const hemi=new THREE.HemisphereLight('#c8e8ff','#8b9e68',1.82);scene.add(hemi);
+ const sun=new THREE.DirectionalLight('#ffdfac',2.65);sun.position.set(-105,130,-94);sun.castShadow=true;
+ sun.shadow.mapSize.set(1536,1536);sun.shadow.radius=3.4;sun.shadow.camera.left=-230;sun.shadow.camera.right=230;
  sun.shadow.camera.top=230;sun.shadow.camera.bottom=-230;sun.shadow.camera.near=1;sun.shadow.camera.far=430;
  sun.shadow.bias=-.0003;scene.add(sun);
- const water=new THREE.Mesh(new THREE.PlaneGeometry(2200,2200),new THREE.MeshStandardMaterial({color:'#2f99bd',metalness:.3,roughness:.38}));
+ const water=new THREE.Mesh(new THREE.PlaneGeometry(2200,2200),new THREE.MeshStandardMaterial({color:'#289cc0',metalness:.14,roughness:.34,emissive:'#0c6183',emissiveIntensity:.13}));
  water.rotation.x=-PI/2;water.position.y=-7;scene.add(water);
  const segments=118,geo=new THREE.PlaneGeometry(SIZE,SIZE,segments,segments);
  geo.rotateX(-PI/2);
  const pos=geo.attributes.position,colors=[];
- const grassA=new THREE.Color('#79b15d'),grassB=new THREE.Color('#afca6a'),sand=new THREE.Color('#e2c994');
+ const grassA=new THREE.Color('#67b552'),grassB=new THREE.Color('#b6ce72'),sand=new THREE.Color('#e8ca93'), earth=new THREE.Color('#b88a66');
  for(let i=0;i<pos.count;i++){
   const x=pos.getX(i),z=pos.getZ(i),y=terrainHeight(x,z);
   pos.setY(i,y);
   const d=Math.hypot(x*.97,z*1.02);
-  const mix=Math.sin(x*.045+z*.028)*.5+.5;
-  const col=grassA.clone().lerp(grassB,mix*.45);
-  if(d>ISLAND_RADIUS-18)col.lerp(sand,clamp((d-(ISLAND_RADIUS-18))/14,0,1));
+  const mix=(Math.sin(x*.045+z*.028)+Math.sin(x*.09-z*.062)*.3+1.3)/2.6;
+  const col=grassA.clone().lerp(grassB,clamp(mix*.86,0,1));
+  const worn=Math.sin(x*.021+z*.034)*Math.cos(z*.026-x*.019);
+  if(worn>.76)col.lerp(earth,(worn-.76)*1.3);
+  if(y>11)col.lerp(earth,clamp((y-11)*.095,0,.32));
+  if(d>ISLAND_RADIUS-21)col.lerp(sand,clamp((d-(ISLAND_RADIUS-21))/15,0,1));
   colors.push(col.r,col.g,col.b)
  }
  geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geo.computeVertexNormals();
@@ -190,13 +187,14 @@ export function createEnvironment(scene){
  }
  const obstacles=[],harvest=[],locations=[];
  for(const [index,loc] of LANDMARKS.entries()){
-  const count=loc.kind==='village'?7:loc.kind==='farm'?5:4;
+  const count=loc.kind==='village'?7:loc.kind==='farm'?6:loc.kind==='industrial'?5:4;
   for(let j=0;j<count;j++){
    const angle=(j/count)*2*PI+.4*index,dist=loc.kind==='village'?22+(j%2)*6:20+(j%3)*4;
    const x=loc.x+Math.cos(angle)*dist,z=loc.z+Math.sin(angle)*dist;
    if(Math.hypot(x,z)>235)continue;
-   const ob=house(scene,x,z,j%3,angle+PI);
-   obstacles.push({x,z,radius:5.4,kind:'house'});
+   const style=loc.kind==='industrial'?3:loc.kind==='farm'?2:loc.kind==='port'?j%3===0?5:1:loc.kind==='outpost'?j===0?5:4:j%5;
+   const ob=house(scene,x,z,style,angle+PI);
+   obstacles.push({x,z,radius:ob.userData.radius||5.4,kind:'house'});
   }
   const marker=new THREE.Group();marker.position.set(loc.x,terrainHeight(loc.x,loc.z),loc.z);
   cylinder(marker,0,.55,0,4,4,1.1,M.paleWood,12);
@@ -213,7 +211,7 @@ export function createEnvironment(scene){
   if(i%9===0){const rock=boulder(scene,x,z,1+next()*1.6);harvest.push(rock);obstacles.push({x,z,radius:1.4,object:rock});}
   else{const t=tree(scene,x,z,i%4===0?1:0);harvest.push(t);obstacles.push({x,z,radius:1.25,object:t});}
  }
- for(let i=0;i<28;i++){
+ for(let i=0;i<18;i++){
   const cloud=new THREE.Group();const x=(next()-.5)*520,z=(next()-.5)*520,y=82+next()*62;
   const cloudMat=new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.52+next()*.24,depthWrite:false});
   orb(cloud,0,0,0,11,3.3,6,cloudMat);
@@ -221,7 +219,8 @@ export function createEnvironment(scene){
   orb(cloud,8,0,0,7,3,5,cloudMat);
   cloud.position.set(x,y,z);cloud.castShadow=false;scene.add(cloud)
  }
- return {obstacles,harvest,water,land,sun,locations};
+ const art=polishEnvironment(scene,null,terrainHeight,LANDMARKS);
+ return {obstacles,harvest,water,land,sun,locations,art};
 }
 export function createBuild(scene,x,z,yaw,kind){
  const g=new THREE.Group();g.position.set(x,terrainHeight(x,z),z);g.rotation.y=yaw;
@@ -241,7 +240,10 @@ export function createBuild(scene,x,z,yaw,kind){
  g.userData={kind:'build',type:kind,radius:kind==='wall'?3:2};scene.add(g);return g;
 }
 export function weaponMesh(group,kind){
- const g=new THREE.Group();
+ const g=makeWeaponArtwork(kind);
+ group.add(g);return g;
+ /* Legacy placeholder omitted from the active scene.
+ const legacy=new THREE.Group();
  const scale=kind==='shotgun'?1.18:kind==='sniper'?1.5:kind==='smg'?.76:1;
  box(g,0,0,0,.28,.23,1.2*scale,M.dark);
  box(g,0,0,.68*scale,.12,.10,.62*scale,M.metal);
@@ -249,4 +251,5 @@ export function weaponMesh(group,kind){
  box(g,0,.2,-.1*scale,.20,.13,.34,M.dark);
  box(g,0,.05,-.6*scale,.28,.28,.40,M.wood);
  group.add(g);return g;
+ */
 }
