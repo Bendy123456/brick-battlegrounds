@@ -171,4 +171,4 @@ const maintenance=setInterval(()=>{
  }
 },4000);
 maintenance.unref?.();
-server.listen(PORT,'0.0.0.0',()=>console.log('BRICK BATTLEGROUNDS: http://localhost:'+PORT));
+server.listen(PORT,'0.0.0.0',()=>console.log('FartNite: http://localhost:'+PORT));
