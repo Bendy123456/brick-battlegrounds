@@ -6,8 +6,8 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML=`<div id="viewport"></
     <div class="menu-content">
       <header class="bb-brand">
         <div class="bb-brand-kicker">COVER CIRCUIT C <span>✦</span> THE ARENA V2</div>
-        <div class="bb-title"><span>BRICK</span><strong>BATTLEGROUNDS</strong></div>
-        <div class="bb-ribbon">AIRSOFT ARENA</div>
+        <div class="bb-title" aria-label="FartNite"><span>FART</span><strong>NITE</strong></div>
+        <div class="bb-ribbon">TACTICAL ARENA</div>
       </header>
       <div class="bb-modes" aria-label="Choose your game mode">
         <button class="bb-mode bb-bot" id="vsBot" type="button"><span class="bb-art" aria-hidden="true"><img class="bb-card-art" src="/menu-bot.svg" alt="" draggable="false"></span><span class="bb-mode-info"><span class="bb-mode-name">VS BOT</span><small>SOLO TRAINING<br>FIRST TO FIVE</small><b class="bb-arrow">➜</b></span></button>
