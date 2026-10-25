@@ -2,7 +2,7 @@
 // All progress, currency, cosmetics, and match records are local only.
 import {SKINS,STARTER_SKINS,SHOP_SKINS,SKIN_RARITIES} from './fartnite-skins.js';
 import {createSkinThumbnailLoader} from './fartnite-skin-thumbnails.js';
-import {createPartyClient} from './fartnite-party.js';
+import {mountPartyUI} from './fartnite-party-ui.js';
 export const SCOUTS=SKINS.map(s=>({...s,color:s.accent}));
 export const AURAS=[
  {id:'aqua',name:'Aqua Reactor',color:'#42ebff',cost:0},
@@ -47,6 +47,7 @@ function cardButton(text,action,disabled=false){
 export function mountLobby(home,{play,onSkin,onAura,onSettings,how,onPreview,onPartyChange}){
  const data=read(),persist=()=>{try{localStorage.setItem(STORE,JSON.stringify(data))}catch{}};
  let tabName='PLAY',notificationTimer=0;
+ let partyClient=null;
  home.classList.add('fn-lobby');
  home.innerHTML=[
  '<div class="fn-back-lines" aria-hidden="true"></div>',
@@ -207,7 +208,11 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how,onPreview,onP
  home.querySelectorAll('[data-jump]').forEach(el=>el.addEventListener('click',()=>switchTab(el.dataset.jump)));
  $('#fnClose').addEventListener('click',()=>switchTab('PLAY'));
  document.addEventListener('keydown',event=>{if(event.code==='Escape'&&tabName!=='PLAY'&&!home.classList.contains('hidden')){event.preventDefault();switchTab('PLAY')}});
- $('#play').addEventListener('click',()=>play(data.mode));
+ $('#play').addEventListener('click',()=>{
+  if(!partyClient.canStart()){notify('Group matches are not available yet. Leave the party to play solo.');return}
+  if(partyClient.getState())partyClient.leave();
+  play(data.mode)
+ });
  $('#how').addEventListener('click',how);
  $('#fnChangeMode').addEventListener('click',()=>{data.mode=data.mode==='survival'?'training':'survival';persist();drawMode()});
  function record(type,n=1){
@@ -220,6 +225,7 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how,onPreview,onP
   data.history.unshift({place:placement,elims,xp,date:new Date().toLocaleDateString()});
   data.history=data.history.slice(0,10);persist();drawLeft();
  }
+ partyClient=mountPartyUI(home,{getSkin:()=>data.skin,onMembers:onPartyChange,notify});
  drawLeft();drawMode();onSkin(data.skin);onAura(AURAS.find(a=>a.id===data.aura));onSettings({...data.settings});
- return {data,switchTab,selectSkin,record,recordMatch,getMode:()=>data.mode,motion:()=>Boolean(data.settings.motion),notify};
+ return {data,switchTab,selectSkin,record,recordMatch,getMode:()=>data.mode,motion:()=>Boolean(data.settings.motion),notify,getParty:()=>partyClient.getState(),leaveParty:()=>partyClient.leave()};
 }
