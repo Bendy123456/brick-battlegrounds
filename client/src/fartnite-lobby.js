@@ -168,6 +168,7 @@ export function mountLobby(home,{play,onSkin,onAura,onSettings,how}){
  home.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>switchTab(el.dataset.tab)));
  home.querySelectorAll('[data-jump]').forEach(el=>el.addEventListener('click',()=>switchTab(el.dataset.jump)));
  $('#fnClose').addEventListener('click',()=>switchTab('PLAY'));
+ document.addEventListener('keydown',event=>{if(event.code==='Escape'&&tabName!=='PLAY'&&!home.classList.contains('hidden')){event.preventDefault();switchTab('PLAY')}});
  $('#play').addEventListener('click',()=>play(data.mode));
  $('#how').addEventListener('click',how);
  $('#fnChangeMode').addEventListener('click',()=>{data.mode=data.mode==='survival'?'training':'survival';persist();drawMode()});
