@@ -24,6 +24,7 @@ function mesh(group,geo,color,x,y,z,sx,sy,sz,rx=0,ry=0,rz=0,metal=0){
  const m=new THREE.Mesh(geo,material(color,metal));m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.rotation.set(rx,ry,rz);m.castShadow=true;m.receiveShadow=true;group.add(m);return m
 }
 function oval(p,c,x,y,z,a,b,d,rx=0,ry=0,rz=0,geo=GEO.cloth){
+ if(rx?.isBufferGeometry){geo=rx;rx=0}
  return mesh(p,geo,c,x,y,z,a,b,d,rx,ry,rz)
 }
 function block(p,c,x,y,z,w,h,d,rx=0,ry=0,rz=0){
