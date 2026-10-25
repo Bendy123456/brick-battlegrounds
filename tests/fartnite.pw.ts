@@ -132,3 +132,65 @@ test('all 25 detailed 3D cosmetics appear and a purchased skin equips in both lo
  expect(live?.activeSkin).toBe('Neon Frontier');
  expect(errors).toEqual([]);
 });
+
+
+test('solo lobby shows no fake party members; actual joins and leaves control side characters',async({browser})=>{
+ const hostContext=await browser.newContext();
+ const guestContext=await browser.newContext();
+ const guest2Context=await browser.newContext();
+ const host=await hostContext.newPage();
+ const guest=await guestContext.newPage();
+ const guest2=await guest2Context.newPage();
+ const errors:string[]=[];
+ for(const p of [host,guest,guest2])p.on('pageerror',e=>errors.push(e.message));
+ try{
+  await host.goto('/');
+  await expect(host.locator('#fnPartyStatus')).toHaveText('ALONE IN LOBBY');
+  await expect(host.locator('#fnPartyLeft')).toBeHidden();
+  await expect(host.locator('#fnPartyRight')).toBeHidden();
+  await expect(host.locator('#play')).toBeEnabled();
+  await expect.poll(()=>host.evaluate(()=>(window as any).__FARTNITE_ART_QA__().partyMemberCount)).toBe(1);
+  await host.screenshot({path:'artifacts/fartnite-solo-only-player.png',animations:'disabled'});
+
+  await host.locator('#fnPlayerName').fill('Host Scout');
+  await host.locator('#fnCreateParty').click();
+  await expect(host.locator('#fnPartyStatus')).toHaveText('YOUR PARTY');
+  await expect(host.locator('#fnPartyCount')).toHaveText('1 / 3');
+  const code=(await host.locator('#fnPartyCode').textContent())?.trim()||'';
+  expect(code).toMatch(/^[A-F0-9]{6}$/);
+  await expect(host.locator('#fnPartyLeft')).toBeHidden();
+
+  await guest.goto('/');
+  await guest.locator('#fnPlayerName').fill('Guest One');
+  await guest.locator('#fnJoinCode').fill(code);
+  await guest.locator('#fnJoinParty').click();
+  await expect(host.locator('#fnPartyCount')).toHaveText('2 / 3');
+  await expect(host.locator('#fnPartyLeftName')).toHaveText('Guest One');
+  await expect(host.locator('#fnPartyLeft')).toBeVisible();
+  await expect(host.locator('#fnPartyRight')).toBeHidden();
+  await expect(guest.locator('#fnPartyLeftName')).toHaveText('Host Scout');
+  await expect(host.locator('#play')).toBeDisabled();
+  await host.screenshot({path:'artifacts/fartnite-two-real-party-members.png',animations:'disabled'});
+
+  await guest2.goto('/');
+  await guest2.locator('#fnPlayerName').fill('Guest Two');
+  await guest2.locator('#fnJoinCode').fill(code);
+  await guest2.locator('#fnJoinParty').click();
+  await expect(host.locator('#fnPartyCount')).toHaveText('3 / 3');
+  await expect(host.locator('#fnPartyRightName')).toHaveText('Guest Two');
+  await expect(host.locator('#fnPartyRight')).toBeVisible();
+  await host.screenshot({path:'artifacts/fartnite-three-real-party-members.png',animations:'disabled'});
+
+  await guest.locator('#fnLeaveParty').click();
+  await expect(host.locator('#fnPartyCount')).toHaveText('2 / 3');
+  await expect(host.locator('#fnPartyLeftName')).toHaveText('Guest Two');
+  await expect(host.locator('#fnPartyRight')).toBeHidden();
+  await host.locator('#fnLeaveParty').click();
+  await expect(guest2.locator('#fnPartyStatus')).toHaveText('ALONE IN LOBBY');
+  await expect(host.locator('#fnPartyLeft')).toBeHidden();
+  await expect(host.locator('#play')).toBeEnabled();
+  expect(errors).toEqual([]);
+ }finally{
+  await Promise.all([hostContext.close(),guestContext.close(),guest2Context.close()]);
+ }
+});
