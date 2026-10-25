@@ -26,8 +26,8 @@ describe('one-piece seamless humanoid models for every character slot',()=>{
    expect(rig.body.geometry.attributes.skinWeight.count).toBe(rig.body.geometry.attributes.position.count);
    expect(rig.body.skeleton.bones).toHaveLength(6);
    expect(rig.body.material).toBeDefined();
-   expect(model.children.filter(child=>child.isSkinnedMesh)).toHaveLength(1);
-   expect(model.children.filter(child=>child.isMesh&&!child.isSkinnedMesh)).toHaveLength(0);
+   expect(model.children.filter(child=>child instanceof THREE.SkinnedMesh)).toHaveLength(1);
+   expect(model.children.filter(child=>child instanceof THREE.Mesh&&!(child instanceof THREE.SkinnedMesh))).toHaveLength(0);
    for(const joint of ['torso','armL','armR','legL','legR','weapon'])
     expect(rig[joint]).toBeDefined();
    expect(rig.torso).toBeInstanceOf(THREE.Bone);
