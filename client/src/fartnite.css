@@ -180,3 +180,23 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
  .home-center{padding-top:20px}
  .quality-tag{left:9px;bottom:84px;font-size:8px}
 }
+
+/* Screenshot-reviewed 720px-height layout correction */
+@media(min-width:651px){
+ #home .home-center{padding-top:0;margin:auto 0 auto 4.4%}
+ #home .hero-title{font-size:clamp(72px,8vw,118px);line-height:.80;margin-top:14px}
+ #home .home-center p{margin:18px 0 15px}
+ #home .home-note{margin-top:16px}
+ #home .skin-picker{margin-top:14px;padding-top:9px}
+ #home #skinPicker .skin-card{min-height:51px;padding:6px 4px 7px;gap:4px}
+}
+@media(min-width:651px) and (max-height:760px){
+ #home{padding-top:23px;padding-bottom:13px}
+ #home .hero-title{font-size:clamp(63px,7.5vw,102px)}
+ #home .home-center p{margin:15px 0 12px}
+ #home .home-actions .play-button,#home .home-actions .outline-button{font-size:17px;padding:12px 21px}
+ #home .skin-picker{margin-top:9px;padding-top:7px}
+ #home .skin-label{margin-bottom:6px}
+ #home .skin-card{min-height:40px}
+ #home .home-footer{padding-top:8px}
+}
