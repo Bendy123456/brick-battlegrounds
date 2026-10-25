@@ -88,3 +88,8 @@ Working tabs: Lobby, Field Pass, Challenges, Locker, Supply Shop, Profile, Recor
 Backup branch: backup-fartnite-before-classic-lobby.
 
 New modules: client/src/fartnite-lobby.js, client/src/fartnite-lobby.css, client/src/fartnite-showroom.js. Browser tests cover tab interactions and persistence.
+## Real lobby parties (presence only)
+
+The lobby starts with **only your character** in the center. The left and right platforms remain completely hidden until a real person connects using your room code. Click **Create Party** to get a 6-character shareable code, or enter a friend's code and click **Join**. The connected roster updates live as up to two friends join or leave; it also shows each friend's currently equipped skin. A host disconnect or server restart closes the temporary party. There are no fake lobby teammates.
+
+**Important:** This currently implements realtime lobby presence and outfit previews, **not synchronized multiplayer battles**. The existing match is solo against AI. Ready is disabled when more than one member is present, rather than falsely promising you can deploy together. Leave your party to launch solo gameplay. Room codes are ephemeral and can be joined by anyone who knows them; do not treat them as private accounts.
