@@ -49,67 +49,89 @@ function capsule(p,c,x,y,z,r,span,scaleZ=1){
 }
 function headModel(parent,s,light){
  const root=new THREE.Group();root.position.set(0,1.43,.015);parent.add(root);
- const tone=s.skinTone,dark='#28242a',lip=s.gender==='female'?'#9b5b55':'#87584d';
- // Defined cranium, jaw, chin, ears, cheeks and a protruding nose give a clear profile.
- oval(root,tone,0,.055,0,.345,.395,.30,0,0,0,GEO.head);
- oval(root,tone,0,-.20,.06,.285,.20,.268);
- for(const sign of [-1,1]){
-  oval(root,tone,sign*.343,-.08,-.012,.09,.15,.085);
-  oval(root,'#8e5e59',sign*.345,-.08,.045,.026,.072,.012);
-  oval(root,s.hairColor,sign*.235,.25,.22,.105,.048,.05,0,0,-sign*.10,GEO.detail);
-  // white sclera + iris + dark pupil; eyebrow arc above eye.
-  oval(root,'#f0e8d8',sign*.142,.005,.267,.095,.052,.026,0,sign*.08);
-  oval(root,light? '#3e7369':'#526a82',sign*.142,.001,.296,.044,.049,.015,0,0,0,GEO.detail);
-  oval(root,'#161d28',sign*.142,-.003,.308,.022,.033,.008,0,0,0,GEO.detail);
-  oval(root,'#e9d8d2',sign*.154,.025,.32,.013,.014,.006,0,0,0,GEO.detail);
-  band(root,s.hairColor,[sign*.058,.091,.284],[sign*.233,.099,.24],.023);
-  oval(root,tone,sign*.20,-.13,.22,.11,.085,.07,GEO.detail);
+ const tone=s.skinTone,eye='#29363e',hair=s.hairColor;
+ // Stylized-human anatomy: narrow jaw, smaller eyes, real nose bridge, discrete ears.
+ oval(root,tone,0,.065,0,.300,.365,.270,0,0,0,GEO.head);
+ oval(root,tone,0,-.180,.042,.240,.18,.225);
+ for(const side of [-1,1]){
+  oval(root,tone,side*.297,-.085,-.01,.064,.109,.064);
+  oval(root,'#a96e61',side*.301,-.095,.047,.025,.060,.009);
+  oval(root,'#e1c5af',side*.105,.016,.247,.071,.031,.018);
+  oval(root,eye,side*.106,.012,.267,.028,.029,.014);
+  oval(root,'#dceef0',side*.102,.025,.279,.010,.009,.007);
+  band(root,hair,[side*.047,.104,.259],[side*.184,.118,.220],.019);
  }
- oval(root,tone,0,-.104,.305,.079,.121,.105,0,0,0,GEO.detail);
- oval(root,'#976a5a',0,-.19,.365,.064,.024,.014,0,0,0,GEO.detail);
- oval(root,lip,0,-.287,.287,.117,.023,.018,0,0,0,GEO.detail);
- oval(root,'#e3a695',0,-.297,.299,.057,.009,.011,0,0,0,GEO.detail);
- const hair=s.hairColor;
- oval(root,hair,0,.345,-.025,.361,.165,.322,0,0,0,GEO.head);
+ // These tiny details stay subtle at gameplay distance.
+ oval(root,tone,0,-.066,.259,.052,.095,.084,0,0,0,GEO.detail);
+ oval(root,'#b07564',0,-.146,.322,.040,.015,.013,0,0,0,GEO.detail);
+ oval(root,s.gender==='female'?'#975b59':'#885e52',0,-.240,.242,.090,.019,.014,0,0,0,GEO.detail);
+ // Hair base close to the scalp, built from tapered swept shapes rather than spheres.
+ oval(root,hair,0,.344,-.043,.313,.132,.275,0,0,0,GEO.head);
  const h=s.hair;
  if(h==='bob'){
-  oval(root,hair,-.30,.07,-.052,.105,.32,.19);
-  oval(root,hair,.30,.06,-.052,.11,.29,.19);
-  for(let j=0;j<7;j++)oval(root,hair,(j-3)*.088,.38,.13,.072,.21,.115,.15,0,j*.035);
+  for(const sign of [-1,1]){
+   oval(root,hair,sign*.251,.015,-.045,.071,.275,.110,0,0,sign*.1);
+  }
+  for(let j=0;j<6;j++){
+   const xx=(j-2.5)*.087;
+   oval(root,hair,xx,.356,.154,.061,.125,.082,-.28,0,xx*.5)
+  }
  }else if(h==='bun'||h==='ponytail'||h==='braid'){
-  oval(root,hair,0,.50,-.14,.19,.17,.18);
+  oval(root,hair,0,.473,-.135,.168,.139,.163);
   if(h==='ponytail'){
-   oval(root,hair,.13,.49,-.30,.15,.19,.16,0,0,-.36);
-   oval(root,hair,.25,.31,-.39,.12,.23,.13,0,0,-.52)
+   oval(root,hair,.115,.388,-.305,.106,.177,.117,0,0,-.23);
+   oval(root,hair,.150,.174,-.379,.085,.192,.100,0,0,-.13)
   }
-  if(h==='braid'){
-   for(let j=0;j<5;j++)oval(root,hair,-.16-.07*Math.sin(j*1.7),.27-j*.16,-.32,.102,.118,.098,0,0,j*.13,GEO.detail)
-  }
-  for(let j=0;j<8;j++){
-   const angle=j*.73;
-   oval(root,hair,Math.sin(angle)*.24,.38+Math.cos(angle)*.07,.10+Math.cos(angle)*.06,.105,.17,.135,0,0,Math.sin(angle)*.25)
+  if(h==='braid')for(let i=0;i<4;i++)
+   oval(root,hair,-.13-(i%2)*.047,.265-i*.135,-.300,.069,.087,.071);
+  for(let i=0;i<5;i++){
+   const x=(i-2)*.114;
+   oval(root,hair,x,.357,.162,.065,.114,.071,-.24,0,x*.55)
   }
  }else{
-  for(let j=0;j<9;j++){
-   const x=(j-4)*.09,yy=.42+Math.sin(j*1.53)*.07;
-   oval(root,hair,x,yy,.07,.09,.16+(j%3)*.035,.13,.14,0,-x*.5)
+  for(let i=0;i<7;i++){
+   const xx=(i-3)*.095;
+   const tuft=oval(root,hair,xx,.403+(i%3)*.024,.104,.068,.14+(i%3)*.024,.081,-.18,0,xx*.75);
+   tuft.rotation.z+=(i%2?-.1:.1)
   }
  }
- if(s.gear==='tech'){
-  band(root,s.accent,[-.30,.25,-.17],[.30,.25,-.17],.048)
- }
+ if(s.gear==='tech')band(root,s.accent,[-.225,.320,-.125],[.225,.320,-.125],.026);
  return root;
 }
 function boot(p,colors,sign){
- // Ankle, heel, sole, toe and individual lace eyelets: original chunky outdoors shoe.
- const c=colors.boot;
- oval(p,c,0,-1.285,.026,.198,.30,.225);
- oval(p,'#34343a',0,-1.494,.115,.227,.12,.36);
- oval(p,c,0,-1.434,.17,.224,.135,.30);
- oval(p,colors.accent,0,-1.403,.375,.18,.065,.10,GEO.detail);
- block(p,'#242b31',0,-1.54,.10,.46,.072,.69);
- for(let j=0;j<4;j++)band(p,j%2?colors.accent:'#b9afa0',[-.13,-1.21-j*.095,.256],[.13,-1.21-j*.095,.256],.017);
- band(p,'#434c52',[-.18,-1.29,-.11],[.18,-1.29,-.11],.044);
+ // Flat ankle, reinforced hiking toe, sole, stitched tongue and fine laces.
+ oval(p,colors.boot,0,-1.302,.014,.170,.235,.163);
+ oval(p,colors.boot,0,-1.448,.110,.193,.098,.294);
+ oval(p,'#34343a',0,-1.474,.161,.200,.080,.280);
+ block(p,'#242b31',0,-1.54,.105,.403,.069,.55);
+ block(p,colors.accent,0,-1.387,.317,.160,.039,.032);
+ for(let j=0;j<3;j++)band(p,j%2?colors.accent:'#cabdb0',[-.091,-1.27-j*.061,.174],[.091,-1.27-j*.061,.174],.012)
+}
+function bodyShell(p,s,width){
+ const female=s.gender==='female',levels=[
+  [0.07,width*.68,.252],[.20,width*.72,.264],[.41,width*.76,.27],
+  [.68,width*.94,.29],[.87,width,.285],[1.01,width*.86,.24],
+  [1.15,width*.46,.18]
+ ];
+ const xyz=[],norm=[],uv=[],segments=18;
+ for(let k=0;k<levels.length;k++){
+  const [y,rx,rz]=levels[k];
+  for(let i=0;i<=segments;i++){
+   const a=i/segments*Math.PI*2;
+   xyz.push(Math.cos(a)*rx,y,Math.sin(a)*rz);
+   uv.push(i/segments,k/(levels.length-1))
+  }
+ }
+ const inds=[];for(let k=0;k<levels.length-1;k++)for(let i=0;i<segments;i++){
+  const a=k*(segments+1)+i,b=a+segments+1;
+  inds.push(a,b,a+1,a+1,b,b+1)
+ }
+ const geo=new THREE.BufferGeometry();
+ geo.setAttribute('position',new THREE.Float32BufferAttribute(xyz,3));
+ geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+ geo.setIndex(inds);geo.computeVertexNormals();
+ const body=new THREE.Mesh(geo,material(s.top));body.castShadow=true;body.receiveShadow=true;p.add(body);
+ return body
 }
 export function createDetailedFighter(variant=0,enemy=false){
  const skin=skinAt(variant);
@@ -120,9 +142,8 @@ export function createDetailedFighter(variant=0,enemy=false){
  const torso=new THREE.Group();torso.position.y=1.60;root.add(torso);
  const chestW=(female?.45:.55)*bodyScale,hipW=(female?.475:.44)*bodyScale;
  // Rounded anatomy with vest layers and waist taper; no cube-torso silhouette.
- oval(torso,skin.top,0,.70,0,chestW,.60,.305);
- oval(torso,skin.top,0,.25,0,(female?.325:.405)*bodyScale,.45,.285);
- oval(torso,skin.pants,0,-.04,0,hipW,.26,.30);
+ bodyShell(torso,skin,chestW);
+ oval(torso,skin.pants,0,-.024,0,hipW,.193,.264);
  oval(torso,color.boot,0,.085,0,hipW*1.09,.077,.319);
  oval(torso,color.accent,0,.104,.31,.12,.105,.08,0,0,0,GEO.detail);
  // Fabric panels, tiny seam highlights, body armor and utility shoulder harness.
@@ -163,12 +184,12 @@ export function createDetailedFighter(variant=0,enemy=false){
  armL.position.set(-chestW-.13,1.0,-.005);armR.position.set(chestW+.13,1.0,-.005);
  for(const [arm,side] of [[armL,-1],[armR,1]]){
   torso.add(arm);
-  oval(arm,skin.top,0,-.13,0,.245,.27,.245,0,0,side*.12);
-  capsule(arm,skin.skinTone,side*.02,-.45,0,.158,.42,1.0).rotation.z=side*.08;
-  oval(arm,skin.skinTone,side*.01,-.76,.02,.168,.18,.17);
-  capsule(arm,skin.skinTone,side*.02,-1.02,.016,.135,.30,.95);
-  oval(arm,'#454a50',side*.02,-1.12,.03,.156,.205,.161);
-  oval(arm,skin.skinTone,side*.02,-1.29,.048,.143,.15,.095);
+  oval(arm,skin.top,0,-.107,0,.181,.19,.193,0,0,side*.12);
+  capsule(arm,skin.skinTone,side*.01,-.423,0,.131,.42,1.0).rotation.z=side*.06;
+  oval(arm,skin.skinTone,side*.015,-.715,.014,.125,.118,.115);
+  capsule(arm,skin.skinTone,side*.02,-.996,.011,.111,.32,.89);
+  oval(arm,'#454a50',side*.02,-1.12,.03,.126,.158,.122);
+  oval(arm,skin.skinTone,side*.02,-1.284,.034,.116,.125,.083);
   // Distinct five-finger hand rather than a mitten or cube.
   for(let i=0;i<4;i++)oval(arm,skin.skinTone,side*.02+(i-1.5)*.057,-1.421,.088,.034,.115,.045,0,0,(i-1.5)*.08,GEO.detail);
   oval(arm,skin.skinTone,side*.17,-1.30,.12,.059,.13,.058,0,0,side*.43,GEO.detail);
@@ -181,11 +202,11 @@ export function createDetailedFighter(variant=0,enemy=false){
  const legL=new THREE.Group(),legR=new THREE.Group();
  for(const [leg,side] of [[legL,-1],[legR,1]]){
   leg.position.set(side*hipW*.54,1.56,0);root.add(leg);
-  oval(leg,skin.pants,0,-.37,0,.255,.49,.245,0,0,side*.05);
-  oval(leg,skin.pants,0,-.78,0,.22,.21,.23);
-  capsule(leg,skin.pants,0,-1.10,0,.185,.47,1.05);
-  oval(leg,color.boot,0,-.78,.19,.192,.195,.084,0,0,0,GEO.detail);
-  oval(leg,skin.accent,0,-.77,.256,.12,.13,.031,GEO.detail);
+  oval(leg,skin.pants,0,-.364,0,.211,.425,.193,0,0,side*.05);
+  oval(leg,skin.pants,0,-.75,0,.171,.145,.17);
+  capsule(leg,skin.pants,0,-1.080,0,.143,.46,.94);
+  oval(leg,color.boot,0,-.785,.158,.145,.143,.061,0,0,0,GEO.detail);
+  oval(leg,skin.accent,0,-.765,.207,.094,.096,.026,0,0,0,GEO.detail);
   for(let i=0;i<(enemy?0:3);i++)band(leg,i===1?skin.accent:'#574e45',[-.19,-.35-i*.13,.19],[.19,-.35-i*.13,.19],.030);
   if(!enemy){
    oval(leg,'#756351',side*.22,-.42,.08,.112,.19,.14);
