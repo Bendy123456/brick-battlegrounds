@@ -22,7 +22,7 @@ const PORT=Number(process.env.PORT)||3000,dist=resolve('dist');
 const INPUT_STALE_MS=1800;
 const mime:Record<string,string>={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.wasm':'application/wasm','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.ico':'image/x-icon'};
 const app=http.createServer(async(req,res)=>{
- if(req.url?.split('?')[0]==='/health'){res.writeHead(200,{'Content-Type':'application/json'}).end('{"ok":true,"game":"airsoft-arena"}');return}
+ if(req.url?.split('?')[0]==='/health'){res.writeHead(200,{'Content-Type':'application/json'}).end('{"ok":true,"game":"fartnite"}');return}
  try{
   const url=new URL(req.url||'/', 'http://localhost'),pathname=decodeURIComponent(url.pathname);
   const target=pathname==='/'?'/index.html':pathname;
@@ -390,4 +390,4 @@ wss.on('connection',(sock:WebSocket)=>{
  ws.on('close',()=>endParticipant(ws,false));
  ws.on('error',()=>{try{ws.terminate()}catch{}});
 });
-app.listen(PORT,'0.0.0.0',()=>console.log('AIRSOFT ARENA online at port '+PORT+' (server authoritative)'));
+app.listen(PORT,'0.0.0.0',()=>console.log('FartNite online at port '+PORT+' (server authoritative)'));
